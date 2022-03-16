@@ -23,7 +23,7 @@ assert mal_id_cache_dir.exists()
 
 linear_history_file = this_dir / "linear_history.json"
 anime_cachefile = this_dir / "anime_info.json"
-manga_cachefile = this_dir / "manga_cache.json"
+manga_cachefile = this_dir / "manga_info.json"
 
 
 @dataclass
