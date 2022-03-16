@@ -8,24 +8,24 @@ set -e
 REPO='https://github.com/seanbreckenridge/mal-id-cache'
 
 iter() {
-  printf '[%s] Updating... \n' "$(date)"
-  [[ -e 'mal-id-cache' ]] || git clone "$REPO"
-  (cd mal-id-cache && git pull)
-  python3 generate_history.py linear-history > './data.jsonl' || exit $?
-  jq -s <data.jsonl >linear_history.json || exit $?
-  rm -f ./data.jsonl
-  python3 generate_history.py remote-update || exit $?
+	printf '[%s] Updating... \n' "$(date)"
+	[[ -e 'mal-id-cache' ]] || git clone "$REPO"
+	(cd mal-id-cache && git pull)
+	python3 generate_history.py linear-history >'./data.jsonl' || exit $?
+	jq -s <data.jsonl >linear_history.json || exit $?
+	rm -f ./data.jsonl
+	python3 generate_history.py remote-update || exit $?
 }
 
 main() {
-  iter
-  # if loop, then run this once a minute
-  [[ "$1" == '-l' ]] && {
-    while true; do
-      sleep 1m
-      iter
-    done
-  }
+	iter
+	# if loop, then run this once a minute
+	[[ "$1" == '-l' ]] && {
+		while true; do
+			sleep 1m
+			iter
+		done
+	}
 }
 
 main "$@" || exit $?

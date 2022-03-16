@@ -257,7 +257,7 @@ def remote_update() -> None:
                     write_to[sid] = {
                         "media_type": data["media_type"],
                         "title": data["title"],
-                        "img": _get_img(data["main_picture"]),
+                        "img": _get_img(data.get("main_picture", {})),
                         "mean": data.get("mean"),
                         "popularity": int(data["popularity"]),
                         "start_date": start_date_str,
