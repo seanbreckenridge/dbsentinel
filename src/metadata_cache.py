@@ -14,7 +14,7 @@ from malexport.exporter.mal_session import MalSession
 from malexport.exporter.account import Account
 from url_cache.core import URLCache, Summary
 
-from .paths import metadatacache_dir
+from src.paths import metadatacache_dir
 
 
 def _get_img(data: dict) -> str | None:
