@@ -1,7 +1,7 @@
 import io
 from pathlib import Path
 from datetime import datetime
-from typing import NamedTuple, Iterator
+from typing import NamedTuple, Iterator, Set
 from dataclasses import dataclass
 
 import orjson
@@ -108,3 +108,19 @@ def track_diffs() -> Iterator[Entry]:
         #        )
         #        state.remove(mal_id)
         #        assert mal_id not in state
+
+
+class Approved(NamedTuple):
+    anime: Set[int]
+    manga: Set[int]
+
+
+def approved_ids() -> Approved:
+    anime_file = mal_id_cache_dir / "cache" / "anime_cache.json"
+    manga_file = mal_id_cache_dir / "cache" / "manga_cache.json"
+    anime = orjson.loads(anime_file.read_text())
+    manga = orjson.loads(manga_file.read_text())
+    return Approved(
+        anime=set(anime["sfw"] + anime["nsfw"]),
+        manga=set(manga["sfw"] + manga["nsfw"]),
+    )

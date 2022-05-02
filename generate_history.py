@@ -25,10 +25,12 @@ def read_linear_history() -> list[Any]:
     return data
 
 
-@main.command(short_help="update using API")
+@main.command(short_help="request missing data using API")
 @click.option("--request-failed", is_flag=True, help="re-request failed entries")
 def update_metadata(request_failed: bool) -> None:
-
+    """
+    request missing entry metadata using MAL API
+    """
     mcache = MetadataCache()
     for hs in read_linear_history():
         sid = str(hs["entry_id"])
