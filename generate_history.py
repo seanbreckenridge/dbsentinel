@@ -15,7 +15,7 @@ from git.objects import Tree
 from git.objects.commit import Commit
 from git.repo.base import Repo
 from malexport.exporter.mal_session import MalSession
-
+from malexport.exporter.account import Account
 from url_cache.core import URLCache, Summary
 
 this_dir = Path(__file__).parent.absolute()
@@ -167,10 +167,6 @@ def api_request(session: MalSession, url: str) -> Any:
     resp: requests.Response = session.session.get(url)
     resp.raise_for_status()
     return resp.json()
-
-
-from malexport.exporter.account import Account
-from malexport.exporter.mal_session import MalSession
 
 
 @cache
