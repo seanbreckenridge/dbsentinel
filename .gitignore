@@ -1,7 +1,6 @@
 *.pdf
-mal-id-cache
+/data
 *.json*
-metadata/*
 
 # Created by https://www.toptal.com/developers/gitignore/api/python
 # Edit at https://www.toptal.com/developers/gitignore?templates=python

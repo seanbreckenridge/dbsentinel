@@ -3,17 +3,32 @@
 THIS_DIR="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
 cd "${THIS_DIR}" || exit $?
 
-set -e
+havecmd() {
+	local BINARY ERRMSG
+	BINARY="${1:?Must provide command to check}"
+	command -v "${BINARY}" >/dev/null 2>&1 && return 0
+	ERRMSG="requires '${BINARY}', could not find that on your \$PATH"
+	[[ -n "$2" ]] && ERRMSG="${ERRMSG}. $2"
+	printf '%s\n' "${ERRMSG}" 1>&2
+	return 1
+}
 
-REPO='https://github.com/seanbreckenridge/mal-id-cache'
+set -e
+havecmd python3
+havecmd jq
+havecmd sponge 'Typically available in the moreutils package'
+
+readonly REPO='https://github.com/seanbreckenridge/mal-id-cache'
+readonly REPO_TARGET='./data/mal-id-cache'
 
 iter() {
 	printf '[%s] Updating... \n' "$(date)"
-	[[ -e 'mal-id-cache' ]] || git clone "$REPO"
-	(cd mal-id-cache && git pull)
-	python3 generate_history.py linear-history >'./data.jsonl' || exit $?
-	jq -s <data.jsonl >linear_history.json || exit $?
-	rm -f ./data.jsonl
+	[[ ! -e './data' ]] && mkdir ./data
+	[[ -e "$REPO_TARGET" ]] || git clone "$REPO" "$REPO_TARGET"
+	(cd "$REPO_TARGET" && git pull)
+	python3 generate_history.py linear-history >'./data/data.jsonl' || exit $?
+	jq -s <./data/data.jsonl | sponge ./data/linear_history.json || exit $?
+	rm -f ./data/data.jsonl
 	python3 generate_history.py update-metadata || exit $?
 }
 
