@@ -14,7 +14,7 @@ iter() {
 	python3 generate_history.py linear-history >'./data.jsonl' || exit $?
 	jq -s <data.jsonl >linear_history.json || exit $?
 	rm -f ./data.jsonl
-	python3 generate_history.py remote-update || exit $?
+	python3 generate_history.py update-metadata || exit $?
 }
 
 main() {

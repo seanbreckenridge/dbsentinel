@@ -1,9 +1,9 @@
 import os
-import json
 import io
 import time
 from pathlib import Path
-from datetime import datetime, date
+from functools import cache
+from datetime import datetime
 from typing import NamedTuple, Iterator, Any
 from dataclasses import dataclass
 
@@ -14,8 +14,9 @@ import requests
 from git.objects import Tree
 from git.objects.commit import Commit
 from git.repo.base import Repo
-from malexport.parse.common import parse_date_safe
 from malexport.exporter.mal_session import MalSession
+
+from url_cache.core import URLCache, Summary
 
 this_dir = Path(__file__).parent.absolute()
 mal_id_cache_dir = this_dir / "mal-id-cache"
@@ -24,6 +25,7 @@ assert mal_id_cache_dir.exists()
 linear_history_file = this_dir / "linear_history.json"
 anime_cachefile = this_dir / "anime_info.json"
 manga_cachefile = this_dir / "manga_info.json"
+metadatacache_dir = this_dir / "metadata"
 
 
 @dataclass
@@ -154,64 +156,11 @@ def _get_img(data: dict) -> str | None:
     return None
 
 
-def _anime_data() -> dict[str, Any]:
-    anime_data = {}
-    if anime_cachefile.exists():
-        anime_data = orjson.loads(anime_cachefile.read_text())
-    return anime_data
-
-
-def _manga_data() -> dict[str, Any]:
-    manga_data = {}
-    if manga_cachefile.exists():
-        manga_data = orjson.loads(manga_cachefile.read_text())
-    return manga_data
-
-
-@main.command(short_help="use malexport data from my list")
-def local_cache() -> None:
-    try:
-        del os.environ["MAL_USERNAME"]
-        del os.environ["MALEXPORT_COMBINE_FILTER_TAGS"]
-    except Exception as e:
-        print(str(e))
-    from my.mal.export import anime, manga
-
-    anime_data = _anime_data()
-
-    for a in anime():
-        assert a.XMLData
-        assert a.APIList
-        anime_data[str(a.id)] = {
-            "media_type": a.APIList.media_type,
-            "title": a.XMLData.title,
-            "img": _get_img(a.APIList.main_picture),
-            "mean": a.APIList.mean,
-            "popularity": a.APIList.popularity,
-            "start_date": str(a.XMLData.start_date) if a.XMLData else None,
-        }
-
-    anime_cachefile.write_text(json.dumps(anime_data))
-
-    manga_data = _manga_data()
-
-    for m in manga():
-        assert m.XMLData
-        assert m.APIList
-        manga_data[str(m.id)] = {
-            "media_type": m.APIList.media_type,
-            "title": m.XMLData.title,
-            "img": _get_img(m.APIList.main_picture),
-            "mean": m.APIList.mean,
-            "popularity": m.APIList.popularity,
-            "start_date": str(m.APIList.start_date) if m.APIList.start_date else None,
-        }
-
-    manga_cachefile.write_text(json.dumps(manga_data))
-
-
 @backoff.on_exception(
-    lambda: backoff.constant(1), requests.exceptions.RequestException, max_tries=3
+    lambda: backoff.constant(5),
+    requests.exceptions.RequestException,
+    max_tries=3,
+    on_backoff=lambda _: mal_api_session().refresh_token(),
 )
 def api_request(session: MalSession, url: str) -> Any:
     time.sleep(1)
@@ -220,60 +169,50 @@ def api_request(session: MalSession, url: str) -> Any:
     return resp.json()
 
 
-@main.command(short_help="update using API")
-def remote_update() -> None:
-    from malexport.exporter.account import Account
-    from malexport.exporter.mal_session import MalSession
+from malexport.exporter.account import Account
+from malexport.exporter.mal_session import MalSession
 
-    BASE_URL = "https://api.myanimelist.net/v2/{etype}/{mal_id}?nsfw=true&fields=id,title,main_picture,alternative_titles,start_date,end_date,synopsis,mean,rank,popularity,num_list_users,num_scoring_users,nsfw,created_at,updated_at,media_type,status,genres,my_list_status,num_episodes,start_season,broadcast,source,average_episode_duration,rating,pictures,background,related_anime,related_manga,recommendations,studios,statistics"
 
+@cache
+def mal_api_session() -> MalSession:
     assert "MAL_USERNAME" in os.environ
     acc = Account.from_username(os.environ["MAL_USERNAME"])
     acc.mal_api_authenticate()
     assert acc.mal_session is not None
-    session: MalSession = acc.mal_session
+    return acc.mal_session
 
-    # not using safe_request, so lets just refresh when we call this
-    session.refresh_token()
 
-    hist = read_linear_history()
+class MetadataCache(URLCache):
+    def __init__(self, cache_dir: Path = metadatacache_dir) -> None:
+        self.mal_session = mal_api_session()
+        super().__init__(cache_dir=cache_dir)
 
-    anime_data = _anime_data()
-    manga_data = _manga_data()
+    def request_data(self, url: str) -> Any:
+        uurl = self.preprocess_url(url)
+        self.logger.info(f"requesting {uurl}")
+        try:
+            json_data = api_request(self.mal_session, uurl)
+        except requests.exceptions.RequestException as ex:
+            self.logger.exception(f"error requesting {uurl}", exc_info=ex)
+            self.logger.warning("Couldn't cache info, assuming this a deleted entry?")
+            return Summary(url=uurl, data={}, metadata={}, timestamp=datetime.now())
+        return Summary(url=uurl, data={}, metadata=json_data, timestamp=datetime.now())
 
-    try:
-        for hs in hist:
-            sid = str(hs["entry_id"])
-            stype = hs["e_type"]
-            write_to = anime_data if stype == "anime" else manga_data
-            if sid not in write_to:
-                try:
-                    click.echo(f"Requesting {stype}/{sid}")
-                    data = api_request(
-                        session, BASE_URL.format(etype=stype, mal_id=sid)
-                    )
-                    start_date: date | None = parse_date_safe(data.get("start_date"))
-                    start_date_str = str(start_date) if start_date is not None else None
-                    write_to[sid] = {
-                        "media_type": data["media_type"],
-                        "title": data["title"],
-                        "img": _get_img(data.get("main_picture", {})),
-                        "mean": data.get("mean"),
-                        "popularity": int(data["popularity"]),
-                        "start_date": start_date_str,
-                    }
-                    print(write_to[sid])
-                except requests.exceptions.RequestException:
-                    # entry doesnt exist anymore?
-                    click.echo("Couldn't cache info, assuming this a deleted entry?")
-                    write_to[sid] = None
-                    click.echo(f"could not cache {stype}/{sid} ({hs})", err=True)
-    except KeyboardInterrupt:
-        pass
 
-    anime_cachefile.write_text(json.dumps(anime_data))
-    manga_cachefile.write_text(json.dumps(manga_data))
+@main.command(short_help="update using API")
+def update_metadata() -> None:
+
+    BASE_URL = "https://api.myanimelist.net/v2/{etype}/{mal_id}?nsfw=true&fields=id,title,main_picture,alternative_titles,start_date,end_date,synopsis,mean,rank,popularity,num_list_users,num_scoring_users,nsfw,created_at,updated_at,media_type,status,genres,my_list_status,num_episodes,start_season,broadcast,source,average_episode_duration,rating,pictures,background,related_anime,related_manga,recommendations,studios,statistics"
+
+    mcache = MetadataCache()
+    for hs in read_linear_history():
+        sid = str(hs["entry_id"])
+        stype = hs["e_type"]
+        uurl = BASE_URL.format(etype=stype, mal_id=sid)
+        if not mcache.in_cache(uurl):
+            click.echo(f"Requesting {stype}/{sid}")
+            mcache.get(uurl)
 
 
 if __name__ == "__main__":
-    main(prog_name="traverse_history")
+    main(prog_name="generate_history")
