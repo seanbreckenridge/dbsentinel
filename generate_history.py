@@ -1,6 +1,7 @@
 import os
 import io
 import time
+import logging
 from pathlib import Path
 from functools import cache
 from datetime import datetime
@@ -97,7 +98,6 @@ def track_diffs() -> Iterator[Entry]:
 
         for is_nsfw in [True, False]:
             source = nsfw if is_nsfw else sfw
-            # source_combined = set(nsfw.union(sfw))
 
             # check if any items in the new 'source'
             # aren't already in state
@@ -113,21 +113,21 @@ def track_diffs() -> Iterator[Entry]:
                         dt=sn.dt,
                     )
 
-            # for some reason this doesnt work?
-            # makes lots of entries appear 20+ times
-            # check if any items in the current state aren't
-            # in the source (new items)
-            # for mal_id in list(state):
-            #    if mal_id not in source_combined:
-            #        yield Entry(
-            #            entry_id=mal_id,
-            #            e_type=sn.entry_type,
-            #            is_nsfw=is_nsfw,
-            #            dt=sn.dt,
-            #            action=False,
-            #        )
-            #        state.remove(mal_id)
-            #        assert mal_id not in state
+        # for some reason this doesnt work?
+        # makes lots of entries appear 20+ times
+        # check if any items in the current state aren't
+        # in the source (new items)
+        # for mal_id in list(state):
+        #    if mal_id not in sfw and mal_id not in nsfw:
+        #        yield Entry(
+        #            entry_id=mal_id,
+        #            e_type=sn.entry_type,
+        #            is_nsfw=None,
+        #            dt=sn.dt,
+        #            action=False,
+        #        )
+        #        state.remove(mal_id)
+        #        assert mal_id not in state
 
 
 @click.group()
@@ -137,7 +137,7 @@ def main() -> None:
 
 @main.command(short_help="create timeline using git history")
 def linear_history() -> None:
-    """Create a big yaml file with dates based on the git timestamps for when entries were added to cache"""
+    """Create a big json file with dates based on the git timestamps for when entries were added to cache"""
     for d in track_diffs():
         print(orjson.dumps(d).decode("utf-8"))
 
@@ -157,7 +157,7 @@ def _get_img(data: dict) -> str | None:
 
 
 @backoff.on_exception(
-    lambda: backoff.constant(5),
+    lambda: backoff.constant(3),
     requests.exceptions.RequestException,
     max_tries=3,
     on_backoff=lambda _: mal_api_session().refresh_token(),
@@ -165,6 +165,10 @@ def _get_img(data: dict) -> str | None:
 def api_request(session: MalSession, url: str) -> Any:
     time.sleep(1)
     resp: requests.Response = session.session.get(url)
+    if resp.status_code >= 400 and resp.status_code != 404:
+        click.echo(f"Error {resp.status_code}: {resp.text}", err=True)
+        time.sleep(60)
+        return api_request(session, url)
     resp.raise_for_status()
     return resp.json()
 
@@ -181,7 +185,7 @@ def mal_api_session() -> MalSession:
 class MetadataCache(URLCache):
     def __init__(self, cache_dir: Path = metadatacache_dir) -> None:
         self.mal_session = mal_api_session()
-        super().__init__(cache_dir=cache_dir)
+        super().__init__(cache_dir=cache_dir, loglevel=logging.INFO)
 
     def request_data(self, url: str) -> Any:
         uurl = self.preprocess_url(url)
@@ -196,7 +200,8 @@ class MetadataCache(URLCache):
 
 
 @main.command(short_help="update using API")
-def update_metadata() -> None:
+@click.option("--request-failed", is_flag=True, help="re-request failed entries")
+def update_metadata(request_failed: bool) -> None:
 
     BASE_URL = "https://api.myanimelist.net/v2/{etype}/{mal_id}?nsfw=true&fields=id,title,main_picture,alternative_titles,start_date,end_date,synopsis,mean,rank,popularity,num_list_users,num_scoring_users,nsfw,created_at,updated_at,media_type,status,genres,my_list_status,num_episodes,start_season,broadcast,source,average_episode_duration,rating,pictures,background,related_anime,related_manga,recommendations,studios,statistics"
 
@@ -206,8 +211,13 @@ def update_metadata() -> None:
         stype = hs["e_type"]
         uurl = BASE_URL.format(etype=stype, mal_id=sid)
         if not mcache.in_cache(uurl):
-            click.echo(f"Requesting {stype}/{sid}")
             mcache.get(uurl)
+        elif request_failed:
+            sdata = mcache.get(uurl)
+            if sdata.metadata == {}:
+                mcache.logger.info("re-requesting failed entry")
+                summary = mcache.request_data(uurl)
+                mcache.summary_cache.put(uurl, summary)
 
 
 if __name__ == "__main__":
