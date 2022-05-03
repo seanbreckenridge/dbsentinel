@@ -67,7 +67,7 @@ def _request_unapproved(url) -> List[Any]:
 REREQUEST_TIME = 60 * 10
 
 
-@lru_cache(maxsize=3)
+@lru_cache(maxsize=2)
 def _read_unapproved(path: Path, mtime: int) -> List[Any]:
     """
     Reads the unapproved anime/manga from the cache file,
