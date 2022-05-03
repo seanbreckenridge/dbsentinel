@@ -1,16 +1,22 @@
-import orjson
-import click
+import logging
 from typing import Any
 
+import orjson
+import click
+
 from src.paths import linear_history_file
-from src.metadata_cache import metadata_cache, request_metadata
+from src.metadata_cache import request_metadata
 from src.linear_history import track_diffs
 from src.ids import approved_ids, unapproved_ids
 
 
 @click.group()
-def main() -> None:
-    pass
+@click.option("--debug", is_flag=True, help="Enable debug logs")
+def main(debug: bool) -> None:
+    if debug:
+        import src.log
+
+        src.log.logger = src.log.setup(level=logging.DEBUG)
 
 
 @main.command(short_help="create timeline using git history")

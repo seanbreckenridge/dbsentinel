@@ -55,9 +55,11 @@ class MetadataCache(URLCache):
 
     BASE_URL = "https://api.myanimelist.net/v2/{etype}/{mal_id}?nsfw=true&fields=id,title,main_picture,alternative_titles,start_date,end_date,synopsis,mean,rank,popularity,num_list_users,num_scoring_users,nsfw,created_at,updated_at,media_type,status,genres,my_list_status,num_episodes,start_season,broadcast,source,average_episode_duration,rating,pictures,background,related_anime,related_manga,recommendations,studios,statistics"
 
-    def __init__(self, cache_dir: Path = metadatacache_dir) -> None:
+    def __init__(
+        self, cache_dir: Path = metadatacache_dir, loglevel: int = logging.INFO
+    ) -> None:
         self.mal_session = mal_api_session()
-        super().__init__(cache_dir=cache_dir, loglevel=logging.INFO)
+        super().__init__(cache_dir=cache_dir, loglevel=loglevel)
 
     def request_data(self, url: str) -> Summary:
         uurl = self.preprocess_url(url)
@@ -80,9 +82,6 @@ class MetadataCache(URLCache):
 @cache
 def metadata_cache() -> MetadataCache:
     return MetadataCache()
-
-
-logger = metadata_cache().logger
 
 
 def request_metadata(

@@ -7,7 +7,7 @@ import requests
 import orjson
 
 from src.paths import mal_id_cache_dir, unapproved_anime_path, unapproved_manga_path
-from src.common import logger
+from src.log import logger
 
 
 class Approved(NamedTuple):
