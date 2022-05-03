@@ -1,7 +1,7 @@
 from pathlib import Path
 
-roor_dir = Path(__file__).parent.parent.absolute()
-data_dir = roor_dir / "data"
+root_dir = Path(__file__).parent.parent.absolute()
+data_dir = root_dir / "data"
 if not data_dir.exists():
     data_dir.mkdir(parents=True)
 mal_id_cache_dir = data_dir / "mal-id-cache"
