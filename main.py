@@ -1,12 +1,10 @@
 import logging
-from typing import Any
 
 import orjson
 import click
 
-from src.paths import linear_history_file
 from src.metadata_cache import request_metadata
-from src.linear_history import track_diffs
+from src.linear_history import track_diffs, read_linear_history
 from src.ids import approved_ids, unapproved_ids
 
 
@@ -24,12 +22,6 @@ def linear_history() -> None:
     """Create a big json file with dates based on the git timestamps for when entries were added to cache"""
     for d in track_diffs():
         print(orjson.dumps(d).decode("utf-8"))
-
-
-def read_linear_history() -> list[Any]:
-    with open(linear_history_file) as f:
-        data = orjson.loads(f.read())
-    return data
 
 
 @main.command(short_help="request missing data using API")

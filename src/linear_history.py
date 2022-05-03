@@ -1,7 +1,7 @@
 import io
 from pathlib import Path
 from datetime import datetime
-from typing import NamedTuple, Iterator
+from typing import NamedTuple, Iterator, Any
 from dataclasses import dataclass
 
 import orjson
@@ -9,7 +9,7 @@ from git.objects import Tree
 from git.objects.commit import Commit
 from git.repo.base import Repo
 
-from src.paths import mal_id_cache_dir
+from src.paths import mal_id_cache_dir, linear_history_file
 from src.common import to_utc
 
 
@@ -108,3 +108,9 @@ def track_diffs() -> Iterator[Entry]:
         #        )
         #        state.remove(mal_id)
         #        assert mal_id not in state
+
+
+def read_linear_history() -> list[Any]:
+    with open(linear_history_file) as f:
+        data = orjson.loads(f.read())
+    return data
