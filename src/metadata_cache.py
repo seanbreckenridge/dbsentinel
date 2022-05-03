@@ -86,9 +86,15 @@ logger = metadata_cache().logger
 
 
 def request_metadata(
-    id_: str, stype: str, rerequest_failed: bool, mcache: MetadataCache
+    id_: str | int,
+    /,
+    entry_type: str,
+    *,
+    rerequest_failed: bool = False,
+    mcache: MetadataCache = metadata_cache(),
 ) -> Any:
-    api_url = mcache.__class__.BASE_URL.format(etype=stype, mal_id=id_)
+    assert entry_type in {"anime", "manga"}
+    api_url = mcache.__class__.BASE_URL.format(etype=entry_type, mal_id=id_)
     if not mcache.in_cache(api_url):
         mcache.get(api_url)
     elif rerequest_failed:

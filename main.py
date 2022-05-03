@@ -32,16 +32,15 @@ def update_metadata(request_failed: bool) -> None:
     """
     request missing entry metadata using MAL API
     """
-    mcache = metadata_cache()
     for hs in read_linear_history():
-        request_metadata(str(hs["entry_id"]), hs["entry_type"], request_failed, mcache)
+        request_metadata(hs["entry_id"], hs["e_type"], rerequest_failed=request_failed)
 
     unapproved = unapproved_ids()
     for aid in unapproved.anime:
-        request_metadata(str(aid), "anime", request_failed, mcache)
+        request_metadata(aid, "anime", rerequest_failed=request_failed)
 
     for mid in unapproved.manga:
-        request_metadata(str(mid), "manga", request_failed, mcache)
+        request_metadata(mid, "manga", rerequest_failed=request_failed)
 
 
 @main.command(short_help="print approved/unapproved counts")
