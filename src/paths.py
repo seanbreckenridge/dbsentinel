@@ -9,3 +9,10 @@ assert mal_id_cache_dir.exists()
 
 linear_history_file = data_dir / "linear_history.json"
 metadatacache_dir = data_dir / "metadata"
+
+unapproved_dir = data_dir / "unapproved"
+if not unapproved_dir.exists():
+    unapproved_dir.mkdir(parents=True)
+
+unapproved_anime_path = unapproved_dir / "anime.json"
+unapproved_manga_path = unapproved_dir / "manga.json"

@@ -3,8 +3,9 @@ import click
 from typing import Any
 
 from src.paths import linear_history_file
-from src.metadata_cache import MetadataCache
+from src.metadata_cache import metadata_cache, request_metadata
 from src.linear_history import track_diffs
+from src.ids import approved_ids, unapproved_ids
 
 
 @click.group()
@@ -31,18 +32,29 @@ def update_metadata(request_failed: bool) -> None:
     """
     request missing entry metadata using MAL API
     """
-    mcache = MetadataCache()
+    mcache = metadata_cache()
     for hs in read_linear_history():
-        sid = str(hs["entry_id"])
-        stype = hs["e_type"]
-        api_url = mcache.__class__.BASE_URL.format(etype=stype, mal_id=sid)
-        if not mcache.in_cache(api_url):
-            mcache.get(api_url)
-        elif request_failed:
-            sdata = mcache.get(api_url)
-            if sdata.metadata == {}:
-                mcache.logger.info("re-requesting failed entry")
-                mcache.refresh_data(api_url)
+        request_metadata(str(hs["entry_id"]), hs["entry_type"], request_failed, mcache)
+
+    unapproved = unapproved_ids()
+    for aid in unapproved.anime:
+        request_metadata(str(aid), "anime", request_failed, mcache)
+
+    for mid in unapproved.manga:
+        request_metadata(str(mid), "manga", request_failed, mcache)
+
+
+@main.command(short_help="print approved/unapproved counts")
+def counts() -> None:
+    """
+    print approved/unapproved counts for anime/manga
+    """
+    a = approved_ids()
+    u = unapproved_ids()
+    click.echo(f"Approved anime: {len(a.anime)}")
+    click.echo(f"Approved manga: {len(a.manga)}")
+    click.echo(f"Unapproved anime: {len(u.anime)}")
+    click.echo(f"Unapproved manga: {len(u.manga)}")
 
 
 if __name__ == "__main__":

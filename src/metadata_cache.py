@@ -75,3 +75,24 @@ class MetadataCache(URLCache):
         summary = self.request_data(uurl)
         self.summary_cache.put(uurl, summary)
         return summary
+
+
+@cache
+def metadata_cache() -> MetadataCache:
+    return MetadataCache()
+
+
+logger = metadata_cache().logger
+
+
+def request_metadata(
+    id_: str, stype: str, rerequest_failed: bool, mcache: MetadataCache
+) -> Any:
+    api_url = mcache.__class__.BASE_URL.format(etype=stype, mal_id=id_)
+    if not mcache.in_cache(api_url):
+        mcache.get(api_url)
+    elif rerequest_failed:
+        sdata = mcache.get(api_url)
+        if sdata.metadata == {}:
+            mcache.logger.info("re-requesting failed entry")
+            mcache.refresh_data(api_url)

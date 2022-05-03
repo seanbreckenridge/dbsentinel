@@ -26,10 +26,10 @@ iter() {
 	[[ ! -e './data' ]] && mkdir ./data
 	[[ -e "$REPO_TARGET" ]] || git clone "$REPO" "$REPO_TARGET"
 	(cd "$REPO_TARGET" && git pull)
-	python3 generate_history.py linear-history >'./data/data.jsonl' || exit $?
+	python3 main.py linear-history >'./data/data.jsonl' || exit $?
 	jq -s <./data/data.jsonl | sponge ./data/linear_history.json || exit $?
 	rm -f ./data/data.jsonl
-	python3 generate_history.py update-metadata || exit $?
+	python3 main.py update-metadata || exit $?
 }
 
 main() {
