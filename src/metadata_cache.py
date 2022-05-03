@@ -105,4 +105,3 @@ def request_metadata(
         mcache.logger.info("re-requesting entry")
         return mcache.refresh_data(api_url)
     return mcache.get(api_url)
-
