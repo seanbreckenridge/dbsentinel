@@ -15,6 +15,7 @@ from malexport.exporter.account import Account
 from url_cache.core import URLCache, Summary
 
 from src.paths import metadatacache_dir
+from src.log import logger
 
 
 def _get_img(data: dict) -> str | None:
@@ -25,19 +26,36 @@ def _get_img(data: dict) -> str | None:
     return None
 
 
+def backoff_handler(details: Any) -> None:
+    logger.warning(
+        f"backing off after {details.get('tries', '???')} tries, waiting {details.get('wait', '???')}"
+    )
+
+
 @backoff.on_exception(
     lambda: backoff.constant(3),
     requests.exceptions.RequestException,
     max_tries=3,
-    on_backoff=lambda _: mal_api_session().refresh_token(),
+    on_backoff=backoff_handler,
 )
-def api_request(session: MalSession, url: str) -> Any:
+def api_request(session: MalSession, url: str, recursed_times: int = 0) -> Any:
     time.sleep(1)
     resp: requests.Response = session.session.get(url)
-    if resp.status_code >= 400 and resp.status_code != 404:
+    if resp.status_code == 401:
+        refresh_token()
+        resp.raise_for_status()
+    # if this is an unexpected API failure, and not an expected 404/429/400, wait for a while before retrying
+    if resp.status_code == 429:
+        time.sleep(60)
+        resp.raise_for_status()
+    if (
+        recursed_times < 5
+        and resp.status_code >= 400
+        and resp.status_code not in (404, 400)
+    ):
         click.echo(f"Error {resp.status_code}: {resp.text}", err=True)
         time.sleep(60)
-        return api_request(session, url)
+        return api_request(session, url, recursed_times + 1)
     resp.raise_for_status()
     return resp.json()
 
@@ -49,6 +67,10 @@ def mal_api_session() -> MalSession:
     acc.mal_api_authenticate()
     assert acc.mal_session is not None
     return acc.mal_session
+
+
+def refresh_token() -> None:
+    mal_api_session().refresh_token()
 
 
 class MetadataCache(URLCache):
@@ -63,12 +85,12 @@ class MetadataCache(URLCache):
 
     def request_data(self, url: str) -> Summary:
         uurl = self.preprocess_url(url)
-        self.logger.info(f"requesting {uurl}")
+        logger.info(f"requesting {uurl}")
         try:
             json_data = api_request(self.mal_session, uurl)
         except requests.exceptions.RequestException as ex:
-            self.logger.exception(f"error requesting {uurl}", exc_info=ex)
-            self.logger.warning("Couldn't cache info, assuming this a deleted entry?")
+            logger.exception(f"error requesting {uurl}", exc_info=ex)
+            logger.warning("Couldn't cache info, assuming this a deleted entry?")
             return Summary(url=uurl, data={}, metadata={}, timestamp=datetime.now())
         return Summary(url=uurl, data={}, metadata=json_data, timestamp=datetime.now())
 
@@ -98,9 +120,9 @@ def request_metadata(
     if rerequest_failed:
         sdata = mcache.get(api_url)
         if sdata.metadata == {}:
-            mcache.logger.info("re-requesting failed entry")
+            logger.info("re-requesting failed entry")
             return mcache.refresh_data(api_url)
     elif force_rerequest:
-        mcache.logger.info("re-requesting entry")
+        logger.info("re-requesting entry")
         return mcache.refresh_data(api_url)
     return mcache.get(api_url)
