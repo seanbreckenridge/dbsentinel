@@ -86,8 +86,8 @@ def metadata_cache() -> MetadataCache:
 
 def request_metadata(
     id_: str | int,
-    /,
     entry_type: str,
+    /,
     *,
     rerequest_failed: bool = False,
     force_rerequest: bool = False,

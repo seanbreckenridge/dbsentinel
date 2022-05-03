@@ -20,15 +20,44 @@ havecmd sponge 'Typically available in the moreutils package'
 
 readonly REPO='https://github.com/seanbreckenridge/mal-id-cache'
 readonly REPO_TARGET='./data/mal-id-cache'
+readonly HASH_FILE='./data/hash'
+
+git_hash_changed() {
+	local ret git_hash
+	ret=1
+	cd "${REPO_TARGET}" || exit $?
+	git_hash="$(git rev-parse --short HEAD)"
+	echo "Git hash: ${git_hash}" 1>&2
+	cd "$THIS_DIR" || exit $?
+	# file exists
+	if [[ -f "${HASH_FILE}" ]]; then
+		# file existed, but hash has changed
+		if [[ "${git_hash}" != "$(cat "${HASH_FILE}")" ]]; then
+			echo 'Hash changed, updating cache...' >&2
+			ret=0
+			echo "${git_hash}" >"${HASH_FILE}"
+		else
+			echo 'Hash unchanged, not updating cache...' >&2
+		fi
+	else
+		# file didn't exist, create it
+		echo 'Hash not found, creating cache...' >&2
+		echo "${git_hash}" >"${HASH_FILE}"
+		ret=0
+	fi
+	return "${ret}"
+}
 
 iter() {
 	printf '[%s] Updating... \n' "$(date)"
 	[[ ! -e './data' ]] && mkdir ./data
 	[[ -e "$REPO_TARGET" ]] || git clone "$REPO" "$REPO_TARGET"
 	(cd "$REPO_TARGET" && git pull)
-	python3 main.py linear-history >'./data/data.jsonl' || exit $?
-	jq -s <./data/data.jsonl | sponge ./data/linear_history.json || exit $?
-	rm -f ./data/data.jsonl
+	if git_hash_changed; then
+		python3 main.py linear-history >'./data/data.jsonl' || exit $?
+		jq -s <./data/data.jsonl | sponge ./data/linear_history.json || exit $?
+		rm -f ./data/data.jsonl
+	fi
 	python3 main.py update-metadata || exit $?
 }
 
