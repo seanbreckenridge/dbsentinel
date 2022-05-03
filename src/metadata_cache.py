@@ -91,14 +91,18 @@ def request_metadata(
     entry_type: str,
     *,
     rerequest_failed: bool = False,
+    force_rerequest: bool = False,
     mcache: MetadataCache = metadata_cache(),
-) -> Any:
+) -> Summary:
     assert entry_type in {"anime", "manga"}
     api_url = mcache.__class__.BASE_URL.format(etype=entry_type, mal_id=id_)
-    if not mcache.in_cache(api_url):
-        mcache.get(api_url)
-    elif rerequest_failed:
+    if rerequest_failed:
         sdata = mcache.get(api_url)
         if sdata.metadata == {}:
             mcache.logger.info("re-requesting failed entry")
-            mcache.refresh_data(api_url)
+            return mcache.refresh_data(api_url)
+    elif force_rerequest:
+        mcache.logger.info("re-requesting entry")
+        return mcache.refresh_data(api_url)
+    return mcache.get(api_url)
+
