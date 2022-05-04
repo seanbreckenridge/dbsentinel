@@ -14,6 +14,7 @@ from malexport.exporter.mal_session import MalSession
 from malexport.exporter.account import Account
 from url_cache.core import URLCache, Summary
 
+from src.common import backoff_handler
 from src.paths import metadatacache_dir
 from src.log import logger
 
@@ -26,14 +27,8 @@ def _get_img(data: dict) -> str | None:
     return None
 
 
-def backoff_handler(details: Any) -> None:
-    logger.warning(
-        f"backing off after {details.get('tries', '???')} tries, waiting {details.get('wait', '???')}"
-    )
-
-
 @backoff.on_exception(
-    lambda: backoff.constant(3),
+    lambda: backoff.constant(5),
     requests.exceptions.RequestException,
     max_tries=3,
     on_backoff=backoff_handler,
@@ -41,22 +36,42 @@ def backoff_handler(details: Any) -> None:
 def api_request(session: MalSession, url: str, recursed_times: int = 0) -> Any:
     time.sleep(1)
     resp: requests.Response = session.session.get(url)
+
+    # sometimes 400 happens if the alternative titles are empty
+    if resp.status_code == 400 and "alternative_titles," in url:
+        if recursed_times > 2:
+            resp.raise_for_status()
+        logger.warning("trying to remove alternative titles and re-requesting")
+        url = url.replace("alternative_titles,", "")
+        return api_request(session, url, recursed_times + 1)
+
+    # if token expired, refresh
     if resp.status_code == 401:
+        logger.warning("token expired, refreshing")
         refresh_token()
         resp.raise_for_status()
+
     # if this is an unexpected API failure, and not an expected 404/429/400, wait for a while before retrying
     if resp.status_code == 429:
+        logger.warning("API rate limit exceeded, waiting")
         time.sleep(60)
         resp.raise_for_status()
+
+    # for any other error, backoff for a minute and then retry
+    # if over 5 times, raise the error
     if (
         recursed_times < 5
         and resp.status_code >= 400
-        and resp.status_code not in (404, 400)
+        and resp.status_code not in (404,)
     ):
         click.echo(f"Error {resp.status_code}: {resp.text}", err=True)
         time.sleep(60)
         return api_request(session, url, recursed_times + 1)
+
+    # fallthrough raises error if none of the conditions above match
     resp.raise_for_status()
+
+    # if we get here, we have a successful response
     return resp.json()
 
 
@@ -90,8 +105,16 @@ class MetadataCache(URLCache):
             json_data = api_request(self.mal_session, uurl)
         except requests.exceptions.RequestException as ex:
             logger.exception(f"error requesting {uurl}", exc_info=ex)
-            logger.warning("Couldn't cache info, assuming this a deleted entry?")
-            return Summary(url=uurl, data={}, metadata={}, timestamp=datetime.now())
+            logger.warning(ex.response.text)
+            logger.warning(
+                "Couldn't cache info, could be deleted or failed to cache because entry data is broken/unapproved causing the MAL API to fail"
+            )
+            return Summary(
+                url=uurl,
+                data={},
+                metadata={"error": ex.response.status_code},
+                timestamp=datetime.now(),
+            )
         return Summary(url=uurl, data={}, metadata=json_data, timestamp=datetime.now())
 
     def refresh_data(self, url: str) -> Summary:
@@ -99,6 +122,16 @@ class MetadataCache(URLCache):
         summary = self.request_data(uurl)
         self.summary_cache.put(uurl, summary)
         return summary
+
+
+def is_404(summary: Summary) -> bool:
+    if "error" in summary.metadata:
+        return summary.metadata["error"] == 404
+    return False
+
+
+def has_data(summary: Summary) -> bool:
+    return all(k in summary.metadata for k in ("title", "id"))
 
 
 @cache
@@ -119,8 +152,9 @@ def request_metadata(
     api_url = mcache.__class__.BASE_URL.format(etype=entry_type, mal_id=id_)
     if rerequest_failed:
         sdata = mcache.get(api_url)
-        if sdata.metadata == {}:
-            logger.info("re-requesting failed entry")
+        # if theres no data and this isnt a 404, retry
+        if not has_data(sdata) and not is_404(sdata):
+            logger.info("re-requesting failed entry: {}".format(sdata.metadata))
             return mcache.refresh_data(api_url)
     elif force_rerequest:
         logger.info("re-requesting entry")

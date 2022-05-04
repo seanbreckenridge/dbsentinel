@@ -5,7 +5,8 @@ import click
 
 from src.metadata_cache import request_metadata
 from src.linear_history import track_diffs, read_linear_history
-from src.ids import approved_ids, unapproved_ids
+from src.ids import approved_ids, unapproved_ids, estimate_all_users_max
+from src.index_requests import request_pages, currently_requesting, queue
 
 
 @click.group()
@@ -52,6 +53,34 @@ def counts() -> None:
     click.echo(f"Approved manga: {len(a.manga)}")
     click.echo(f"Unapproved anime: {len(u.anime)}")
     click.echo(f"Unapproved manga: {len(u.manga)}")
+
+
+@main.command(short_help="print page ranges from indexer")
+def pages() -> None:
+    """
+    print page ranges from indexer
+    """
+    click.echo("currently requesting: {}".format(currently_requesting()))
+    click.echo("queue: {}".format(queue()))
+
+
+@main.command(short_help="use user lists to find out if new entries have been approved")
+@click.option("--list-type", type=click.Choice(["anime", "manga"]), default="anime")
+@click.option("--request", is_flag=True, help="request new entries")
+@click.argument("USERNAMES", type=click.Path(exists=True))
+def estimate_user_recent(usernames: str, request: bool, list_type: str) -> None:
+    check_usernames: list[str] = []
+    with open(usernames, "r") as f:
+        for line in f:
+            check_usernames.append(line.strip())
+    assert len(check_usernames) > 0
+    check_pages = estimate_all_users_max(check_usernames, list_type)
+    click.echo(f"should check {check_pages} {list_type} pages".format(check_pages))
+    if request:
+        if check_pages == 0:
+            click.echo("no new entries found, skipping request")
+            return
+        request_pages(list_type, check_pages)
 
 
 if __name__ == "__main__":
