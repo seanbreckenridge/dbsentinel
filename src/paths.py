@@ -10,6 +10,9 @@ assert mal_id_cache_dir.exists()
 linear_history_file = data_dir / "linear_history.json"
 metadatacache_dir = data_dir / "metadata"
 
+sqlite_db_path = data_dir / "data.sqlite"
+sqlite_db_uri = "sqlite://{}".format(sqlite_db_path.absolute())
+
 unapproved_dir = data_dir / "unapproved"
 if not unapproved_dir.exists():
     unapproved_dir.mkdir(parents=True)

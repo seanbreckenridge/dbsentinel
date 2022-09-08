@@ -90,7 +90,13 @@ def refresh_token() -> None:
 
 class MetadataCache(URLCache):
 
-    BASE_URL = "https://api.myanimelist.net/v2/{etype}/{mal_id}?nsfw=true&fields=id,title,main_picture,alternative_titles,start_date,end_date,synopsis,mean,rank,popularity,num_list_users,num_scoring_users,nsfw,created_at,updated_at,media_type,status,genres,my_list_status,num_episodes,start_season,broadcast,source,average_episode_duration,rating,pictures,background,related_anime,related_manga,recommendations,studios,statistics"
+    BASE_ANIME_URL = "https://api.myanimelist.net/v2/anime/{}?nsfw=true"
+
+    ANIME_FIELDS = "fields=id,title,main_picture,alternative_titles,start_date,end_date,synopsis,mean,rank,popularity,num_list_users,num_scoring_users,nsfw,created_at,updated_at,media_type,status,genres,num_episodes,start_season,broadcast,source,average_episode_duration,rating,pictures,background,related_anime,related_manga,recommendations,studios,statistics"
+
+    BASE_MANGA_URL = r"https://api.myanimelist.net/v2/manga/{}?nsfw=true"
+
+    MANGA_FIELDS = "fields=id,title,main_picture,alternative_titles,start_date,end_date,synopsis,mean,rank,popularity,num_list_users,num_scoring_users,nsfw,created_at,updated_at,media_type,status,genres,num_volumes,num_chapters,authors{first_name,last_name},pictures,background,related_anime,related_manga,recommendations,serialization{name}"
 
     def __init__(
         self, cache_dir: Path = metadatacache_dir, loglevel: int = logging.INFO
@@ -149,7 +155,10 @@ def request_metadata(
     mcache: MetadataCache = metadata_cache(),
 ) -> Summary:
     assert entry_type in {"anime", "manga"}
-    api_url = mcache.__class__.BASE_URL.format(etype=entry_type, mal_id=id_)
+    if entry_type == "anime":
+        api_url = mcache.BASE_ANIME_URL.format(id_) + "&" + mcache.ANIME_FIELDS
+    else:
+        api_url = mcache.BASE_MANGA_URL.format(id_) + "&" + mcache.MANGA_FIELDS
     if rerequest_failed:
         sdata = mcache.get(api_url)
         # if theres no data and this isnt a 404, retry

@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 
 import orjson
 import click
@@ -7,6 +8,7 @@ from src.metadata_cache import request_metadata
 from src.linear_history import track_diffs, read_linear_history
 from src.ids import approved_ids, unapproved_ids, estimate_all_users_max
 from src.index_requests import request_pages, currently_requesting, queue
+from src.paths import sqlite_db_path
 
 
 @click.group()
@@ -69,10 +71,12 @@ def pages() -> None:
 @click.option("--request", is_flag=True, help="request new entries")
 @click.argument("USERNAMES", type=click.Path(exists=True))
 def estimate_user_recent(usernames: str, request: bool, list_type: str) -> None:
-    check_usernames: list[str] = []
-    with open(usernames, "r") as f:
-        for line in f:
-            check_usernames.append(line.strip())
+    check_usernames = list(
+        filter(
+            lambda l: l.strip(),
+            map(str.strip, Path(usernames).read_text().strip().splitlines()),
+        )
+    )
     assert len(check_usernames) > 0
     check_pages = estimate_all_users_max(check_usernames, list_type)
     click.echo(f"should check {check_pages} {list_type} pages".format(check_pages))
@@ -81,6 +85,22 @@ def estimate_user_recent(usernames: str, request: bool, list_type: str) -> None:
             click.echo("no new entries found, skipping request")
             return
         request_pages(list_type, check_pages)
+
+
+@main.group()
+def server() -> None:
+    """app/server related commands"""
+    pass
+
+
+@server.command()
+def delete_database() -> None:
+    """Delete the sqlite database"""
+    if sqlite_db_path.exists():
+        click.echo("Unlinking database...")
+        sqlite_db_path.unlink()
+    else:
+        click.echo("Database doesn't exist...")
 
 
 if __name__ == "__main__":

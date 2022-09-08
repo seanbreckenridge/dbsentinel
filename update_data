@@ -34,15 +34,15 @@ git_hash_changed() {
 	if [[ -f "${HASH_FILE}" ]]; then
 		# file existed, but hash has changed
 		if [[ "${git_hash}" != "$(cat "${HASH_FILE}")" ]]; then
-			echo 'Hash changed, updating cache...' >&2
+			echo 'Git hash changed, updating linear history...' >&2
 			ret=0
 			echo "${git_hash}" >"${HASH_FILE}"
 		else
-			echo 'Hash unchanged, not updating cache...' >&2
+			echo 'Hash unchanged, not updating linear history...' >&2
 		fi
 	else
 		# file didn't exist, create it
-		echo 'Hash not found, creating cache...' >&2
+		echo 'Hash not found, creating linear history...' >&2
 		echo "${git_hash}" >"${HASH_FILE}"
 		ret=0
 	fi
@@ -61,8 +61,10 @@ iter() {
 	fi
 	set -x
 	python3 main.py update-metadata || exit $?
-	evry 1 hour -update_malsentinal_user && {
-		python3 main.py estimate-user-recent ./usernames.txt --request || return $?
+	curl -s localhost:4001 >/dev/null && {
+		evry 10 minutes -update_malsentinal_user && {
+			python3 main.py estimate-user-recent ./usernames.txt --request || return $?
+		}
 	}
 	set +x
 }

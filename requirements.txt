@@ -1,6 +1,0 @@
-click
-orjson
-requests
-gitpython
-malexport
-url_cache>=0.0.5

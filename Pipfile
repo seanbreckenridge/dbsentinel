@@ -1,0 +1,19 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+click = "*"
+orjson = "*"
+requests = "*"
+malexport = {git = "https://github.com/seanbreckenridge/malexport/"}
+url-cache = ">=0.0.5"
+fastapi = "*"
+sqlmodel = "*"
+GitPython = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.10"
