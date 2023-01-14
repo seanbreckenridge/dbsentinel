@@ -515,7 +515,7 @@
         },
         "malexport": {
             "git": "https://github.com/seanbreckenridge/malexport/",
-            "ref": "9d3c9cf28c906acc2417aeefd39241d4c06706e6"
+            "ref": "00bf000f12d0861ac6c543fbe20d7f9ed9f45960"
         },
         "matplotlib-inline": {
             "hashes": [

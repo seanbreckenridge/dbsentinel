@@ -65,7 +65,7 @@ iter() {
 		python3 main.py update-metadata || exit $?
 	fi
 	if curl -s localhost:4001 >/dev/null; then
-		evry 10 minutes -update_malsentinal_user && {
+		evry 30 minutes -update_malsentinal_user && {
 			python3 main.py estimate-user-recent ./usernames.txt --request || return $?
 		}
 	elif [[ -n "$VULTR_UPDATE" ]]; then
@@ -77,6 +77,11 @@ iter() {
 			ssh vultr "curl -s \"${URL}\""
 		fi
 	fi
+	if curl -s localhost:5200/ping >/dev/null; then
+		evry 10m -malsentinel-full-db-update && curl -s localhost:5200/tasks/full_database_update
+	fi
+	# need to do some sort of locking while this is running, so that db doesnt get corrupted
+	pipenv run python3 main.py server process-tasks
 	set -e
 	set +x
 }

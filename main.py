@@ -3,7 +3,6 @@ from pathlib import Path
 
 import orjson
 import click
-from fastapi import FastAPI
 
 from src.metadata_cache import request_metadata
 from src.linear_history import track_diffs, read_linear_history
@@ -122,6 +121,26 @@ def estimate_page(entry_type: str, mal_id: int) -> None:
 @main.group()
 def server() -> None:
     """app/server related commands"""
+
+
+@server.command(short_help="run 'background' tasks")
+def process_tasks() -> None:
+    """run tasks"""
+    from app.tasks import process_queue
+    from asyncio import run
+
+    run(process_queue())
+
+
+@server.command(short_help="initialize database")
+def initialize_db() -> None:
+    """initialize database"""
+    from app.db import init_db
+    from app.db_entry_update import update_database
+    from asyncio import run
+
+    init_db()
+    run(update_database())
 
 
 @server.command()

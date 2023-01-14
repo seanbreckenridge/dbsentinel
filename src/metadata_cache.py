@@ -102,7 +102,10 @@ class MetadataCache(URLCache):
         self, cache_dir: Path = metadatacache_dir, loglevel: int = logging.INFO
     ) -> None:
         self.mal_session = mal_api_session()
-        super().__init__(cache_dir=cache_dir, loglevel=loglevel)
+        # expires once a year, if user doesnt request a refresh in some other way
+        super().__init__(
+            cache_dir=cache_dir, loglevel=loglevel, options={"expiry_duration": "54w"}
+        )
 
     def request_data(self, url: str) -> Summary:
         #
@@ -125,19 +128,21 @@ class MetadataCache(URLCache):
                 logger.warning("using existing cached data for this entry")
                 sc = self.summary_cache.get(uurl)
                 assert sc is not None
-                return sc
-            else:
-                logger.warning(
-                    "no existing cached data for this entry, saving error to cache"
-                )
-                # this just doesnt exist (deleted a long time ago etc.?)
-                # no way to get data for this
-                return Summary(
-                    url=uurl,
-                    data={},
-                    metadata={"error": ex.response.status_code},
-                    timestamp=datetime.now(),
-                )
+                breakpoint()
+                # check if this has a few keys, i.e. (this isnt {"error": 404})
+                if len(sc.metadata.keys()) > 5:
+                    return sc
+            logger.warning(
+                "no existing cached data for this entry, saving error to cache"
+            )
+            # this just doesnt exist (deleted a long time ago etc.?)
+            # no way to get data for this
+            return Summary(
+                url=uurl,
+                data={},
+                metadata={"error": ex.response.status_code},
+                timestamp=datetime.now(),
+            )
         return Summary(url=uurl, data={}, metadata=json_data, timestamp=datetime.now())
 
     def refresh_data(self, url: str) -> Summary:
