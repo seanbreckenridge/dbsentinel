@@ -60,24 +60,36 @@ iter() {
 		rm -f ./data/data.jsonl
 	fi
 	set -x
-	python3 main.py update-metadata || exit $?
-	curl -s localhost:4001 >/dev/null && {
+	set +e
+	if [[ -z "$SKIP_UPDATE_METADATA" ]]; then
+		python3 main.py update-metadata || exit $?
+	fi
+	if curl -s localhost:4001 >/dev/null; then
 		evry 10 minutes -update_malsentinal_user && {
 			python3 main.py estimate-user-recent ./usernames.txt --request || return $?
 		}
-	}
+	elif [[ -n "$VULTR_UPDATE" ]]; then
+		# manual update sshing as a stopgap
+		QUERY="$(python3 main.py estimate-user-recent ./usernames.txt --print-url)" || return $?
+		if [[ -n "$QUERY" ]]; then
+			URL="localhost:4001/api/pages?${QUERY}"
+			# shellcheck disable=SC2029
+			ssh vultr "curl -s \"${URL}\""
+		fi
+	fi
+	set -e
 	set +x
 }
 
 main() {
 	iter
 	# if loop, then run this once a minute
-	[[ "$1" == '-l' ]] && {
+	if [[ "$1" == '-l' ]]; then
 		while true; do
 			sleep 1m
 			iter
 		done
-	}
+	fi
 }
 
 main "$@" || exit $?

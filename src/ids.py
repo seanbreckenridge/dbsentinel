@@ -2,6 +2,7 @@ import time
 from pathlib import Path
 from functools import lru_cache
 from typing import NamedTuple, Set, List, Any
+from datetime import datetime
 
 import requests
 import orjson
@@ -77,7 +78,9 @@ def _read_unapproved(path: Path, mtime: int) -> List[Any]:
     Reads the unapproved anime/manga from the cache file,
     or from memory if the mtime hasnt changed
     """
-    logger.debug(f"Caching new unapproved path {path} with updated {mtime} in memory")
+    logger.debug(
+        f"Caching new unapproved path {path} with updated at {datetime.fromtimestamp(mtime)} in memory"
+    )
     data = orjson.loads(path.read_text())
     assert isinstance(data, list), f"unapproved data is not a list: {data}"
     return data

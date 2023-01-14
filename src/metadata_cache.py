@@ -105,6 +105,9 @@ class MetadataCache(URLCache):
         super().__init__(cache_dir=cache_dir, loglevel=loglevel)
 
     def request_data(self, url: str) -> Summary:
+        #
+        # this may never actually be the case, but just want to make sure if we
+        # add some refresh mechanism that that does not happen...
         uurl = self.preprocess_url(url)
         logger.info(f"requesting {uurl}")
         try:
@@ -115,12 +118,26 @@ class MetadataCache(URLCache):
             logger.warning(
                 "Couldn't cache info, could be deleted or failed to cache because entry data is broken/unapproved causing the MAL API to fail"
             )
-            return Summary(
-                url=uurl,
-                data={},
-                metadata={"error": ex.response.status_code},
-                timestamp=datetime.now(),
-            )
+            # prevent a broken entry from removing old, valid data
+            #
+            # If it has valid but failed now, we should just keep the old valid data
+            if self.summary_cache.has(uurl):
+                logger.warning("using existing cached data for this entry")
+                sc = self.summary_cache.get(uurl)
+                assert sc is not None
+                return sc
+            else:
+                logger.warning(
+                    "no existing cached data for this entry, saving error to cache"
+                )
+                # this just doesnt exist (deleted a long time ago etc.?)
+                # no way to get data for this
+                return Summary(
+                    url=uurl,
+                    data={},
+                    metadata={"error": ex.response.status_code},
+                    timestamp=datetime.now(),
+                )
         return Summary(url=uurl, data={}, metadata=json_data, timestamp=datetime.now())
 
     def refresh_data(self, url: str) -> Summary:

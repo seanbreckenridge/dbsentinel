@@ -3,10 +3,11 @@ from pathlib import Path
 
 import orjson
 import click
+from fastapi import FastAPI
 
 from src.metadata_cache import request_metadata
 from src.linear_history import track_diffs, read_linear_history
-from src.ids import approved_ids, unapproved_ids, estimate_all_users_max
+from src.ids import approved_ids, unapproved_ids, estimate_all_users_max, _estimate_page
 from src.index_requests import request_pages, currently_requesting, queue
 from src.paths import sqlite_db_path
 
@@ -69,8 +70,16 @@ def pages() -> None:
 @main.command(short_help="use user lists to find out if new entries have been approved")
 @click.option("--list-type", type=click.Choice(["anime", "manga"]), default="anime")
 @click.option("--request", is_flag=True, help="request new entries")
+@click.option(
+    "--print-url",
+    is_flag=True,
+    default=False,
+    help="print corresponding checker_mal url query params",
+)
 @click.argument("USERNAMES", type=click.Path(exists=True))
-def estimate_user_recent(usernames: str, request: bool, list_type: str) -> None:
+def estimate_user_recent(
+    usernames: str, request: bool, list_type: str, print_url: bool
+) -> None:
     check_usernames = list(
         filter(
             lambda l: l.strip(),
@@ -79,7 +88,13 @@ def estimate_user_recent(usernames: str, request: bool, list_type: str) -> None:
     )
     assert len(check_usernames) > 0
     check_pages = estimate_all_users_max(check_usernames, list_type)
-    click.echo(f"should check {check_pages} {list_type} pages".format(check_pages))
+    if print_url and check_pages > 0:
+        click.echo(f"type={list_type}&pages={check_pages}")
+    else:
+        click.echo(
+            f"should check {check_pages} {list_type} pages".format(check_pages),
+            err=True,
+        )
     if request:
         if check_pages == 0:
             click.echo("no new entries found, skipping request")
@@ -87,10 +102,26 @@ def estimate_user_recent(usernames: str, request: bool, list_type: str) -> None:
         request_pages(list_type, check_pages)
 
 
+@main.command(short_help="estimate which page to check for an ID")
+@click.option(
+    "-e",
+    "--entry-type",
+    type=click.Choice(["anime", "manga"]),
+    required=True,
+    default="anime",
+)
+@click.argument("MAL_ID", type=int)
+def estimate_page(entry_type: str, mal_id: int) -> None:
+    click.echo(
+        _estimate_page(
+            mal_id, list(reversed(sorted(getattr(approved_ids(), entry_type))))
+        )
+    )
+
+
 @main.group()
 def server() -> None:
     """app/server related commands"""
-    pass
 
 
 @server.command()
