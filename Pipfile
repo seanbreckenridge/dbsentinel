@@ -12,8 +12,14 @@ url-cache = ">=0.0.5"
 fastapi = "*"
 sqlmodel = "*"
 GitPython = "*"
+uvicorn = {extras = ["standard"], version = "*"}
+more-itertools = "*"
+ipdb = "*"
 
 [dev-packages]
 
 [requires]
 python_version = "3.10"
+
+[scripts]
+dev = 'uvicorn app.main:app --port 5200 --reload --reload-exclude data'
