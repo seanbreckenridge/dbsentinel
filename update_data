@@ -62,11 +62,13 @@ iter() {
 	set -x
 	set +e
 	if [[ -z "$SKIP_UPDATE_METADATA" ]]; then
-		python3 main.py update-metadata || exit $?
+		if wait-for-internet --text 'checking for internet....' --timeout 5; then
+			python3 main.py update-metadata || exit $?
+		fi
 	fi
 	if curl -s localhost:4001 >/dev/null; then
-		evry 30 minutes -update_malsentinal_user && {
-			python3 main.py estimate-user-recent ./usernames.txt --request || return $?
+		evry 10 minutes -update_malsentinal_user && {
+			python3 main.py estimate-user-recent ./usernames.txt --request --timid || return $?
 		}
 	elif [[ -n "$VULTR_UPDATE" ]]; then
 		# manual update sshing as a stopgap
@@ -80,8 +82,6 @@ iter() {
 	if curl -s localhost:5200/ping >/dev/null; then
 		evry 10m -malsentinel-full-db-update && curl -s localhost:5200/tasks/full_database_update
 	fi
-	# need to do some sort of locking while this is running, so that db doesnt get corrupted
-	pipenv run python3 main.py server process-tasks
 	set -e
 	set +x
 }
@@ -91,7 +91,7 @@ main() {
 	# if loop, then run this once a minute
 	if [[ "$1" == '-l' ]]; then
 		while true; do
-			sleep 1m
+			sleep 5m
 			iter
 		done
 	fi

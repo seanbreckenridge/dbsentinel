@@ -27,6 +27,11 @@ def _get_img(data: dict) -> str | None:
     return None
 
 
+from threading import Lock
+
+MAL_API_LOCK = Lock()
+
+
 @backoff.on_exception(
     lambda: backoff.constant(5),
     requests.exceptions.RequestException,
@@ -34,8 +39,9 @@ def _get_img(data: dict) -> str | None:
     on_backoff=backoff_handler,
 )
 def api_request(session: MalSession, url: str, recursed_times: int = 0) -> Any:
-    time.sleep(1)
-    resp: requests.Response = session.session.get(url)
+    with MAL_API_LOCK:
+        time.sleep(1)
+        resp: requests.Response = session.session.get(url)
 
     # sometimes 400 happens if the alternative titles are empty
     if resp.status_code == 400 and "alternative_titles," in url:

@@ -70,6 +70,9 @@ def pages() -> None:
 @click.option("--list-type", type=click.Choice(["anime", "manga"]), default="anime")
 @click.option("--request", is_flag=True, help="request new entries")
 @click.option(
+    "--timid", is_flag=True, help="only request new entries if not already requesting"
+)
+@click.option(
     "--print-url",
     is_flag=True,
     default=False,
@@ -77,7 +80,7 @@ def pages() -> None:
 )
 @click.argument("USERNAMES", type=click.Path(exists=True))
 def estimate_user_recent(
-    usernames: str, request: bool, list_type: str, print_url: bool
+    usernames: str, request: bool, timid: bool, list_type: str, print_url: bool
 ) -> None:
     check_usernames = list(
         filter(
@@ -98,6 +101,11 @@ def estimate_user_recent(
         if check_pages == 0:
             click.echo("no new entries found, skipping request")
             return
+        if timid:
+            cur = currently_requesting()
+            if cur is not None:
+                click.echo(f"timid: currently requesting {cur}, skipping request")
+                return
         request_pages(list_type, check_pages)
 
 
@@ -121,15 +129,6 @@ def estimate_page(entry_type: str, mal_id: int) -> None:
 @main.group()
 def server() -> None:
     """app/server related commands"""
-
-
-@server.command(short_help="run 'background' tasks")
-def process_tasks() -> None:
-    """run tasks"""
-    from app.tasks import process_queue
-    from asyncio import run
-
-    run(process_queue())
 
 
 @server.command(short_help="initialize database")

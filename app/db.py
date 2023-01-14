@@ -29,7 +29,7 @@ class AnimeMetadata(ApprovedData, table=True):
     title: str
     start_date: Optional[date]
     end_date: Optional[date]
-    nsfw: bool = Field(default=False)
+    nsfw: Optional[bool] = Field(default=None)
     json_data: Dict[str, Any] = Field(default={}, sa_column=Column(JSON))
 
 
@@ -38,26 +38,13 @@ class MangaMetadata(ApprovedData, table=True):
     title: str
     start_date: Optional[date]
     end_date: Optional[date]
-    nsfw: bool = Field(default=False)
+    nsfw: Optional[bool] = Field(default=None)
     json_data: Dict[str, Any] = Field(default={}, sa_column=Column(JSON))
 
 
 class EntryType(str, enum.Enum):
     ANIME = "anime"
     MANGA = "manga"
-
-
-class TaskType(str, enum.Enum):
-    FULL_DB_UPDATE = "full_db_update"
-    REFRESH_ENTRY = "refresh_entry"
-
-
-class Task(SQLModel, table=True):
-    id: int = Field(primary_key=True)
-    task_type: TaskType
-    task_data: Dict[str, Any] = Field(default={}, sa_column=Column(JSON))
-
-    added_at: datetime = Field(default_factory=datetime.now)
 
 
 connect_args = {"check_same_thread": False}

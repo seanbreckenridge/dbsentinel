@@ -1,5 +1,6 @@
 from typing import Optional, Set, Dict, Any
 from datetime import datetime, timezone
+from asyncio import sleep
 
 from urllib.parse import urlparse
 from malexport.parse.common import parse_date_safe
@@ -28,7 +29,7 @@ def api_url_to_parts(url: str) -> tuple[str, int]:
 def add_or_update(
     *,
     summary: Summary,
-    approved_status: Status | None = None,
+    current_approved_status: Status | None = None,
     old_status: Optional[Status] = None,
     in_db: Optional[Set[int]] = None,
     added_dt: Optional[datetime] = None,
@@ -48,7 +49,20 @@ def add_or_update(
     title = jdata.pop("title")
     start_date = parse_date_safe(jdata.pop("start_date", None))
     end_date = parse_date_safe(jdata.pop("end_date", None))
-    nsfw = jdata.pop("nsfw") != "white"
+
+    # try to figure out if this is sfw/nsfw
+    sfw: Optional[bool] = None
+    if rating := jdata.get("rating"):
+        if rating == "rx":
+            sfw = False
+    elif nsfw_val := jdata.get("nsfw"):
+        if sfw is None and nsfw_val == "white":
+            sfw = True
+    elif genres := jdata.get("genres"):
+        if sfw is None and "Hentai" in (g["name"] for g in genres):
+            sfw = False
+
+    nsfw = not sfw if sfw is not None else None
 
     # figure out if entry is the in db
     # if force rerequesting, dont have access to in_db/statuses
@@ -63,13 +77,16 @@ def add_or_update(
     if entry_in_db:
         # update the entry if the status has changed or if this didnt exist in the db
         if force_update or (
-            (approved_status is not None and approved_status != old_status)
+            (
+                current_approved_status is not None
+                and current_approved_status != old_status
+            )
             or old_status is None
         ):
             logger.info(f"updating data for {entry_type} {aid} (status changed)")
             kwargs = {}
-            if approved_status is not None:
-                kwargs["approved_status"] = approved_status
+            if current_approved_status is not None:
+                kwargs["approved_status"] = current_approved_status
             # update the status to deleted
             stmt = (
                 update(use_model)
@@ -88,12 +105,17 @@ def add_or_update(
                 sess.execute(stmt)
                 sess.commit()
     else:
+        if current_approved_status is None:
+            logger.warning(
+                f"trying to add {entry_type} {aid} with status as None! skipping..."
+            )
+            return
         logger.info(f"adding {entry_type} {aid} to db")
         # add the entry
         with Session(data_engine) as sess:
             sess.add(
                 use_model(
-                    approved_status=approved_status,
+                    approved_status=current_approved_status,
                     approved_at=added_dt,
                     id=aid,
                     title=title,
@@ -107,11 +129,7 @@ def add_or_update(
             sess.commit()
 
 
-async def update_database() -> None:
-    logger.info("Updating database...")
-
-    known: Set[str] = set()
-
+async def status_map() -> Dict[str, Any]:
     with Session(data_engine) as sess:
         in_db: Dict[str, Any] = {
             "anime_tup": set(
@@ -127,9 +145,21 @@ async def update_database() -> None:
     in_db["anime_status"] = {i: s for i, s in in_db["anime_tup"]}
     in_db["manga_status"] = {i: s for i, s in in_db["manga_tup"]}
 
+    return in_db
+
+
+async def update_database() -> None:
+    logger.info("Updating database...")
+
+    known: Set[str] = set()
+    in_db = await status_map()
+
     approved = approved_ids()
     logger.info("db: reading from linear history...")
-    for hs in read_linear_history():
+    for i, hs in enumerate(read_linear_history()):
+        # be nice to other tasks
+        if i % 10 == 0:
+            await sleep(0)
         dt = datetime.fromisoformat(hs["dt"]).replace(tzinfo=timezone.utc)
         approved_use: Set[int] = getattr(approved, hs["e_type"])
 
@@ -141,7 +171,7 @@ async def update_database() -> None:
 
         add_or_update(
             summary=request_metadata(hs["entry_id"], hs["e_type"]),
-            approved_status=current_id_status,
+            current_approved_status=current_id_status,
             old_status=in_db[f"{hs['e_type']}_status"].get(hs["entry_id"]),
             in_db=in_db[hs["e_type"]],
             added_dt=dt,
@@ -150,21 +180,25 @@ async def update_database() -> None:
 
     unapproved = unapproved_ids()
     logger.info("db: updating from unapproved anime history...")
-    for aid in unapproved.anime:
+    for i, aid in enumerate(unapproved.anime):
+        if i % 10 == 0:
+            await sleep(0)
         add_or_update(
             summary=request_metadata(aid, "anime"),
             old_status=in_db["anime_status"].get(aid),
-            approved_status=Status.UNAPPROVED,
+            current_approved_status=Status.UNAPPROVED,
             in_db=in_db["anime"],
         )
         known.add(f"anime_{aid}")
 
     logger.info("db: updating from unapproved manga history...")
-    for mid in unapproved.manga:
+    for i, mid in enumerate(unapproved.manga):
+        if i % 10 == 0:
+            await sleep(0)
         add_or_update(
             summary=request_metadata(mid, "manga"),
             old_status=in_db["manga_status"].get(mid),
-            approved_status=Status.UNAPPROVED,
+            current_approved_status=Status.UNAPPROVED,
             in_db=in_db["manga"],
         )
         known.add(f"manga_{mid}")
@@ -174,21 +208,23 @@ async def update_database() -> None:
     # those were denied or deleted (long time ago)
     all_keys = [p.absolute() for p in metadatacache_dir.rglob("*/key")]
     all_urls = set(p.read_text() for p in all_keys)
-    for entry_type, entry_id in map(api_url_to_parts, all_urls):
+    for i, (entry_type, entry_id) in enumerate(map(api_url_to_parts, all_urls)):
+        if i % 10 == 0:
+            await sleep(0)
         if f"{entry_type}_{entry_id}" not in known:
             # already inserted into the db
             if entry_id in in_db[entry_type]:
                 continue
             add_or_update(
                 summary=request_metadata(entry_id, entry_type),
-                approved_status=Status.DENIED,
+                current_approved_status=Status.DENIED,
             )
 
 
 async def refresh_entry(*, entry_id: int, entry_type: str) -> None:
-    logger.info(f"refreshing {entry_type} {entry_id}")
     summary = request_metadata(entry_id, entry_type, force_rerequest=True)
-    logger.info(f"refreshed data {summary.metadata}")
+    await sleep(0)
+    logger.info(f"db: refreshed data {summary.metadata}")
     add_or_update(
         summary=summary,
         force_update=True,
