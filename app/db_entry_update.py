@@ -9,11 +9,11 @@ from sqlmodel import Session
 from sqlmodel.sql.expression import select
 from url_cache.core import Summary
 
-from src.metadata_cache import request_metadata
-from src.linear_history import read_linear_history, Entry
-from src.ids import approved_ids, unapproved_ids
-from src.paths import metadatacache_dir
-from src.log import logger
+from mal_id.metadata_cache import request_metadata
+from mal_id.linear_history import read_linear_history, Entry
+from mal_id.ids import approved_ids, unapproved_ids
+from mal_id.paths import metadatacache_dir
+from mal_id.log import logger
 
 from app.db import Status, AnimeMetadata, MangaMetadata, data_engine
 

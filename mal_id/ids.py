@@ -10,9 +10,9 @@ import backoff
 from more_itertools import chunked
 from malexport.exporter.mal_list import BASE_URL
 
-from src.paths import mal_id_cache_dir, unapproved_anime_path, unapproved_manga_path
-from src.log import logger
-from src.common import backoff_handler
+from mal_id.paths import mal_id_cache_dir, unapproved_anime_path, unapproved_manga_path
+from mal_id.log import logger
+from mal_id.common import backoff_handler
 
 
 class Approved(NamedTuple):

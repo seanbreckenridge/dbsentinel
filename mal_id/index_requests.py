@@ -7,7 +7,7 @@ from typing import NamedTuple, Dict, Any, Optional, List, cast
 
 import requests
 
-from src.log import logger
+from mal_id.log import logger
 
 INDEX_BASE = "http://localhost:4001/api"
 

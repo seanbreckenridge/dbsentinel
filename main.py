@@ -4,20 +4,20 @@ from pathlib import Path
 import orjson
 import click
 
-from src.metadata_cache import request_metadata
-from src.linear_history import track_diffs, read_linear_history
-from src.ids import approved_ids, unapproved_ids, estimate_all_users_max, _estimate_page
-from src.index_requests import request_pages, currently_requesting, queue
-from src.paths import sqlite_db_path
+from mal_id.metadata_cache import request_metadata
+from mal_id.linear_history import track_diffs, read_linear_history
+from mal_id.ids import approved_ids, unapproved_ids, estimate_all_users_max, _estimate_page
+from mal_id.index_requests import request_pages, currently_requesting, queue
+from mal_id.paths import sqlite_db_path
 
 
 @click.group()
 @click.option("--debug", is_flag=True, help="Enable debug logs")
 def main(debug: bool) -> None:
     if debug:
-        import src.log
+        import mal_id.log
 
-        src.log.logger = src.log.setup(level=logging.DEBUG)
+        mal_id.log.logger = mal_id.log.setup(level=logging.DEBUG)
 
 
 @main.command(short_help="create timeline using git history")

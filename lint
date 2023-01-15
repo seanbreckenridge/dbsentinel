@@ -6,6 +6,6 @@ set -eu
 THIS_DIR="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
 cd "${THIS_DIR}" || exit $?
 
-flake8 main.py app/*.py src/*.py
-pytest --ignore=data app/*.py src/*.py
+flake8 main.py app/*.py mal_id/*.py
+pytest --ignore=data app/*.py mal_id/*.py
 mypy

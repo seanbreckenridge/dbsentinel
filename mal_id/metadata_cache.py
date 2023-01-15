@@ -15,9 +15,9 @@ from malexport.exporter.mal_session import MalSession
 from malexport.exporter.account import Account
 from url_cache.core import URLCache, Summary
 
-from src.common import backoff_handler
-from src.paths import metadatacache_dir
-from src.log import logger
+from mal_id.common import backoff_handler
+from mal_id.paths import metadatacache_dir
+from mal_id.log import logger
 
 
 def _get_img(data: dict) -> str | None:

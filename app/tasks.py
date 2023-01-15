@@ -5,7 +5,7 @@ from sqlmodel.sql.expression import select
 from pydantic import BaseModel
 from fastapi import Response
 
-from src.log import logger
+from mal_id.log import logger
 from app.db import (
     EntryType,
     data_engine,

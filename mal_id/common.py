@@ -7,7 +7,7 @@ def to_utc(dt: datetime) -> datetime:
 
 
 def backoff_handler(details: Any) -> None:
-    from src.log import logger
+    from mal_id.log import logger
 
     logger.warning(
         f"backing off after {details.get('tries', '???')} tries, waiting {details.get('wait', '???')}"

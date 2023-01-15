@@ -9,8 +9,8 @@ from git.objects import Tree
 from git.objects.commit import Commit
 from git.repo.base import Repo
 
-from src.paths import mal_id_cache_dir, linear_history_file
-from src.common import to_utc
+from mal_id.paths import mal_id_cache_dir, linear_history_file
+from mal_id.common import to_utc
 
 
 @dataclass

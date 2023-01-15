@@ -4,8 +4,8 @@ from datetime import datetime, date
 
 from sqlmodel import SQLModel, Field, create_engine, Session, Column, JSON
 
-from src.log import logger
-from src.paths import sqlite_db_uri
+from mal_id.log import logger
+from mal_id.paths import sqlite_db_uri
 
 from app.settings import settings
 
