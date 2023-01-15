@@ -1,13 +1,16 @@
 This is a work in progress
 
-A counterpart to <https://sean.fish/mal_unapproved/>. That lists entries that have yet to be approved
+A counterpart to <https://sean.fish/mal_unapproved/>. That lists entries that have yet to be approved, denied entries and deleted entries
 
 This lists entries that are approved, with the most recently approved entries at the top
 
-Planned stuff:
+# WORK IN PROGRESS
 
-- Display all the cached info as a basic SPA
-- Ping unapproved instance to get a list of all unapproved items periodically
-- API which the SPA requests to (and anyone else can use -- should allow CORS anything on it)
-- integrate with [notify-bot](https://github.com/seanbreckenridge/mal-notify-bot) so that sources added there get added to the website (also allow items which arent in #feed -- so this can source anything)
-- let a user request their list and only show items that arent on their list already
+- [ ] frontend with discord login
+- [ ] dashboard that shows stats etc.
+- [ ] API for deleted/denied/unapproved ids/names
+- [ ] roles to give people more permissions
+- [ ] let users refresh data for old entries
+- [ ] integrate with [notify-bot](https://github.com/seanbreckenridge/mal-notify-bot) so that sources added there get added to the website (also allow items which arent in #feed -- so this can source anything) -- only show on website through a domain allowlist
+- [ ] connect IDs to anilist (using local `URLCache`)
+- [ ] connect IDs to tmdb (manually, users can submit requests)
