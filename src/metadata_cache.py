@@ -39,6 +39,10 @@ MAL_API_LOCK = Lock()
     on_backoff=backoff_handler,
 )
 def api_request(session: MalSession, url: str, recursed_times: int = 0) -> Any:
+    return _api_request(session, url, recursed_times)
+
+
+def _api_request(session: MalSession, url: str, recursed_times: int = 0) -> Any:
     with MAL_API_LOCK:
         time.sleep(1)
         resp: requests.Response = session.session.get(url)
@@ -120,7 +124,10 @@ class MetadataCache(URLCache):
         uurl = self.preprocess_url(url)
         logger.info(f"requesting {uurl}")
         try:
-            json_data = api_request(self.mal_session, uurl)
+            if "skip_retry" in self.options and self.options["skip_retry"] is True:
+                json_data = _api_request(self.mal_session, uurl)
+            else:
+                json_data = api_request(self.mal_session, uurl)
         except requests.exceptions.RequestException as ex:
             logger.exception(f"error requesting {uurl}", exc_info=ex)
             logger.warning(ex.response.text)
@@ -134,7 +141,6 @@ class MetadataCache(URLCache):
                 logger.warning("using existing cached data for this entry")
                 sc = self.summary_cache.get(uurl)
                 assert sc is not None
-                breakpoint()
                 # check if this has a few keys, i.e. (this isnt {"error": 404})
                 if len(sc.metadata.keys()) > 5:
                     return sc
@@ -195,5 +201,10 @@ def request_metadata(
             return mcache.refresh_data(api_url)
     elif force_rerequest:
         logger.info("re-requesting entry")
-        return mcache.refresh_data(api_url)
+        try:
+            mcache.options["skip_retry"] = True
+            dat = mcache.refresh_data(api_url)
+        finally:
+            mcache.options["skip_retry"] = False
+        return dat
     return mcache.get(api_url)

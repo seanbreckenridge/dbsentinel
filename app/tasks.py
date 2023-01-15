@@ -41,10 +41,11 @@ def _fetch_data(
     use_model = AnimeMetadata if entry_type == "anime" else MangaMetadata
     with Session(data_engine) as sess:
         data = list(
-            sess.exec(select(use_model).where(use_model.id == entry_id).limit(1))
+            sess.exec(select(use_model).where(use_model.id == entry_id).limit(1))  # type: ignore
         )
-    assert type(data[0]) in {AnimeMetadata, MangaMetadata}
-    return data[0]
+    item = data[0][0]
+    assert type(item) in {AnimeMetadata, MangaMetadata}
+    return item
 
 
 from asyncio import Lock
