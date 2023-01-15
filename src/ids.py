@@ -69,7 +69,7 @@ def _request_unapproved(url: str) -> List[Any]:
         return data
 
 
-REREQUEST_TIME = 60 * 10
+REREQUEST_TIME = 60 * 5
 
 
 @lru_cache(maxsize=2)
