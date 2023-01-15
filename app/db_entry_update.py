@@ -1,5 +1,5 @@
 from typing import Optional, Set, Dict, Any
-from datetime import datetime, timezone
+from datetime import datetime
 from asyncio import sleep
 
 from urllib.parse import urlparse
@@ -10,7 +10,7 @@ from sqlmodel.sql.expression import select
 from url_cache.core import Summary
 
 from src.metadata_cache import request_metadata
-from src.linear_history import read_linear_history
+from src.linear_history import read_linear_history, Entry
 from src.ids import approved_ids, unapproved_ids
 from src.paths import metadatacache_dir
 from src.log import logger
@@ -168,27 +168,38 @@ async def update_database() -> None:
 
     approved = approved_ids()
     logger.info("db: reading from linear history...")
-    for i, hs in enumerate(read_linear_history()):
+    for i, hdict in enumerate(read_linear_history()):
+        hval = Entry.from_dict(hdict)
+
         # be nice to other tasks
         if i % 10 == 0:
             await sleep(0)
-        dt = datetime.fromisoformat(hs["dt"]).replace(tzinfo=timezone.utc)
-        approved_use: Set[int] = getattr(approved, hs["e_type"])
+        approved_use: Set[int] = getattr(approved, hval.e_type)
 
         # if its in the linear history, it was approved at one point
         # but it may not be anymore
         current_id_status = (
-            Status.APPROVED if hs["entry_id"] in approved_use else Status.DELETED
+            Status.APPROVED if hval.entry_id in approved_use else Status.DELETED
         )
 
+        old_status = in_db[f"{hval.e_type}_status"].get(hval.entry_id)
+        was_approved = False
+        if current_id_status == Status.APPROVED and old_status == Status.UNAPPROVED:
+            logger.info(
+                f"updating {hval.e_type} {hval.entry_id} to approved (was unapproved), rerequesting data"
+            )
+            was_approved = True
+
         add_or_update(
-            summary=request_metadata(hs["entry_id"], hs["e_type"]),
+            summary=request_metadata(
+                hval.entry_id, hval.e_type, force_rerequest=was_approved
+            ),
             current_approved_status=current_id_status,
-            old_status=in_db[f"{hs['e_type']}_status"].get(hs["entry_id"]),
-            in_db=in_db[hs["e_type"]],
-            added_dt=dt,
+            old_status=old_status,
+            in_db=in_db[hval.e_type],
+            added_dt=hval.dt,
         )
-        known.add(f"{hs['e_type']}_{hs['entry_id']}")
+        known.add(hval.key)
 
     unapproved = unapproved_ids()
     logger.info("db: updating from unapproved anime history...")

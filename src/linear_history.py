@@ -1,6 +1,6 @@
 import io
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import NamedTuple, Iterator, Any, cast
 from dataclasses import dataclass
 
@@ -20,6 +20,20 @@ class Entry:
     is_nsfw: bool
     dt: datetime
     action: bool = True  # true - added, false - removed
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "Entry":
+        return cls(
+            entry_id=d["entry_id"],
+            e_type=d["e_type"],
+            is_nsfw=d["is_nsfw"],
+            dt=datetime.fromisoformat(d["dt"]).replace(tzinfo=timezone.utc),
+            action=d["action"],
+        )
+
+    @property
+    def key(self) -> str:
+        return f"{self.e_type}_{self.entry_id}"
 
 
 JsonData = dict[str, list[int]]
