@@ -8,12 +8,12 @@ interface ILayout {
 
 export default function Layout(props: ILayout): ReactElement {
   return (
-    <>
+    <div className="flex min-h-screen w-full flex-col">
       <Navbar />
-      <div className="flex min-h-screen flex-col py-2">
-        {props.children}
+      <div className="flex flex-grow flex-col">{props.children}</div>
+      <div className="">
+        <Footer />
       </div>
-      <Footer />
-    </>
+    </div>
   );
 }

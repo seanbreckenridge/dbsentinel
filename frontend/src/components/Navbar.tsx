@@ -9,7 +9,7 @@ export default function Navbar() {
   const { data: sessionData } = useSession();
 
   return (
-    <nav className="mx-auto flex flex-wrap items-center bg-teal-500 py-2 px-3">
+    <nav className="mx-auto flex w-full flex-wrap items-center bg-teal-500 py-2 px-3">
       <ul className="container mx-auto flex w-full items-center p-4">
         <li className="text-xl font-bold text-slate-100">
           <Link href="/">Home</Link>
