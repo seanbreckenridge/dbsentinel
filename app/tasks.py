@@ -54,10 +54,10 @@ async def refresh_entry(
     """
     adds a request to update an entry to the database
     """
-    from .db_entry_update import refresh_entry
+    from app.db_entry_update import refresh_entry as refresh
 
     logger.info(f"starting refreshing {entry_type} {entry_id}")
-    await refresh_entry(
+    await refresh(
         entry_id=entry_id,
         entry_type=entry_type,
     )

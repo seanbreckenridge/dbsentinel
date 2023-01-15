@@ -84,7 +84,7 @@ def estimate_user_recent(
 ) -> None:
     check_usernames = list(
         filter(
-            lambda l: l.strip(),
+            lambda ln: ln.strip(),
             map(str.strip, Path(usernames).read_text().strip().splitlines()),
         )
     )

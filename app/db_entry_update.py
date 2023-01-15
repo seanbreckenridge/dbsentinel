@@ -26,6 +26,16 @@ def api_url_to_parts(url: str) -> tuple[str, int]:
     return entry_type, int(url_id)
 
 
+def test_api_url_to_parts() -> None:
+    assert api_url_to_parts(
+        "https://api.myanimelist.net/v2/manga/113372?nsfw=true&fields=id,title,main_picture,alternative_titles,start_date,end_date,synopsis,mean,rank,popularity,num_list_users,num_scoring_users,nsfw,created_at,updated_at,media_type,status,genres,num_volumes,num_chapters,authors{first_name,last_name},pictures,background,related_anime,related_manga,recommendations,serialization{name}"
+    ) == ("manga", 113372)
+
+    assert api_url_to_parts(
+        "https://api.myanimelist.net/v2/anime/48420?nsfw=true&fields=id,title,main_picture,alternative_titles,start_date,end_date,synopsis,mean,rank,popularity,num_list_users,num_scoring_users,nsfw,created_at,updated_at,media_type,status,genres,num_episodes,start_season,broadcast,source,average_episode_duration,rating,pictures,background,related_anime,related_manga,recommendations,studios,statistics"
+    ) == ("anime", 48420)
+
+
 def is_nsfw(jdata: Dict[str, Any]) -> bool:
     if "rating" in jdata:
         return bool(jdata["rating"] == "rx")

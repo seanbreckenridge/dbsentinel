@@ -5,6 +5,7 @@ from typing import Any
 from functools import cache
 from pathlib import Path
 from datetime import datetime
+from threading import Lock
 
 import click
 import backoff
@@ -28,8 +29,6 @@ def _get_img(data: dict) -> str | None:
         return img
     return None
 
-
-from threading import Lock
 
 MAL_API_LOCK = Lock()
 
