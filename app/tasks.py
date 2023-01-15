@@ -1,26 +1,25 @@
-from typing import Dict, Any, List, Union
-from datetime import datetime
-from asyncio import sleep
+from typing import Union
 
 from src.log import logger
 
-from fastapi import APIRouter, Depends
 from sqlalchemy import select
-from pydantic import BaseModel
 from sqlmodel import Session
 
 from app.db import (
     EntryType,
-    get_db,
     data_engine,
     AnimeMetadata,
     MangaMetadata,
 )
+from app.threaded_router import ThreadedRouter
 
-router = APIRouter()
+# each route only allows one connection to be made at a time
+# to rate limit requests to MAL
+# and prevent full_update from corrupting the db while its already running
+trouter = ThreadedRouter()
 
 
-@router.get("/full_database_update")
+@trouter.get("/full_database_update")
 async def full_update() -> str:
     """
     this is expensive! -- only do this when necessary
@@ -48,13 +47,7 @@ def _fetch_data(
     return item
 
 
-from asyncio import Lock
-
-# TODO: does this actually work here, look into fastapi??
-REFRESH_LOCK = Lock()
-
-
-@router.get("/refresh_entry")
+@trouter.get("/refresh_entry")
 async def refresh_entry(
     entry_type: EntryType, entry_id: int
 ) -> Union[AnimeMetadata, MangaMetadata]:
@@ -63,10 +56,9 @@ async def refresh_entry(
     """
     from .db_entry_update import refresh_entry
 
-    async with REFRESH_LOCK:
-        logger.info(f"starting refreshing {entry_type} {entry_id}")
-        await refresh_entry(
-            entry_id=entry_id,
-            entry_type=entry_type,
-        )
+    logger.info(f"starting refreshing {entry_type} {entry_id}")
+    await refresh_entry(
+        entry_id=entry_id,
+        entry_type=entry_type,
+    )
     return _fetch_data(entry_type, entry_id)

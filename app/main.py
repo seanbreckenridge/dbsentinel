@@ -19,7 +19,7 @@ def create_app() -> FastAPI:
     async def _ping() -> str:
         return "pong"
 
-    from .tasks import router as tasks_router
+    from .tasks import trouter as tasks_router
 
     current_app.include_router(tasks_router, prefix="/tasks")
 
