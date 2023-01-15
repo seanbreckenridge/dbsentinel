@@ -62,7 +62,7 @@ iter() {
 	set -x
 	set +e
 	if [[ -z "$SKIP_UPDATE_METADATA" ]]; then
-		if wait-for-internet --text 'checking for internet....' --timeout 5; then
+		if wait-for-internet --text 'checking for internet....' --timeout 1; then
 			python3 main.py update-metadata || exit $?
 		fi
 	fi

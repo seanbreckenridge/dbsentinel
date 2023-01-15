@@ -29,7 +29,7 @@ class AnimeMetadata(ApprovedData, table=True):
     title: str
     start_date: Optional[date]
     end_date: Optional[date]
-    nsfw: Optional[bool] = Field(default=None)
+    nsfw: bool
     json_data: Dict[str, Any] = Field(default={}, sa_column=Column(JSON))
 
 
@@ -38,7 +38,7 @@ class MangaMetadata(ApprovedData, table=True):
     title: str
     start_date: Optional[date]
     end_date: Optional[date]
-    nsfw: Optional[bool] = Field(default=None)
+    nsfw: bool
     json_data: Dict[str, Any] = Field(default={}, sa_column=Column(JSON))
 
 

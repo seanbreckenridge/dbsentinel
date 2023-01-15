@@ -26,6 +26,17 @@ def api_url_to_parts(url: str) -> tuple[str, int]:
     return entry_type, int(url_id)
 
 
+def is_nsfw(jdata: Dict[str, Any]) -> bool:
+    if "rating" in jdata:
+        return jdata["rating"] == "rx"
+    elif "nsfw" in jdata:
+        assert jdata["nsfw"] in {"white", "black", "grey", "gray"}
+        return jdata["nsfw"] != "white"
+    else:
+        assert "genres" in jdata
+        return "Hentai" in (g["name"] for g in jdata["genres"])
+
+
 def add_or_update(
     *,
     summary: Summary,
@@ -51,18 +62,7 @@ def add_or_update(
     end_date = parse_date_safe(jdata.pop("end_date", None))
 
     # try to figure out if this is sfw/nsfw
-    sfw: Optional[bool] = None
-    if rating := jdata.get("rating"):
-        if rating == "rx":
-            sfw = False
-    elif nsfw_val := jdata.get("nsfw"):
-        if sfw is None and nsfw_val == "white":
-            sfw = True
-    elif genres := jdata.get("genres"):
-        if sfw is None and "Hentai" in (g["name"] for g in genres):
-            sfw = False
-
-    nsfw = not sfw if sfw is not None else None
+    nsfw = is_nsfw(jdata)
 
     # figure out if entry is the in db
     # if force rerequesting, dont have access to in_db/statuses
