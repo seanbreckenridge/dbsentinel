@@ -3,6 +3,8 @@
 THIS_DIR="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
 cd "${THIS_DIR}" || exit $?
 
+source ./.env
+
 havecmd() {
 	local BINARY ERRMSG
 	BINARY="${1:?Must provide command to check}"
@@ -49,6 +51,13 @@ git_hash_changed() {
 	return "${ret}"
 }
 
+authd_curl() {
+	echo curl "$@"
+	set +x
+	curl --header "Authorization: ${BEARER_SECRET?:No secret set}" "$@"
+	set -x
+}
+
 iter() {
 	printf '[%s] Updating... \n' "$(date)"
 	[[ ! -e './data' ]] && mkdir ./data
@@ -79,8 +88,8 @@ iter() {
 			ssh vultr "curl -s \"${URL}\""
 		fi
 	fi
-	if curl -s localhost:5200/ping >/dev/null; then
-		evry 10m -malsentinel-full-db-update && curl -s localhost:5200/tasks/full_database_update
+	if authd_curl -s localhost:5200/ping >/dev/null; then
+		evry 10m -malsentinel-full-db-update && authd_curl -s localhost:5200/tasks/full_database_update
 	fi
 	set -e
 	set +x

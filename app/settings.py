@@ -3,6 +3,7 @@ from pydantic import BaseSettings
 
 class Settings(BaseSettings):
     SQL_ECHO: bool = True
+    BEARER_SECRET: str
 
     class Config:
         case_sensitive = True

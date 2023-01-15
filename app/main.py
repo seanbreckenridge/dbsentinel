@@ -1,8 +1,10 @@
-import os
-from fastapi import FastAPI
+from typing import Callable
+from fastapi import FastAPI, Response, Request
 
 
 def create_app() -> FastAPI:
+    from app.settings import settings
+
     current_app = FastAPI(title="malsentinel")
 
     @current_app.on_event("startup")
@@ -10,18 +12,22 @@ def create_app() -> FastAPI:
         from app.db import init_db
 
         init_db()
-        if "RUN_INITIAL_UPDATE" in os.environ:
-            from app.db_entry_update import update_database
-
-            await update_database()
 
     @current_app.get("/ping")
     async def _ping() -> str:
         return "pong"
 
     from .tasks import trouter as tasks_router
+    from .summary import router as summary_router
 
     current_app.include_router(tasks_router, prefix="/tasks")
+    current_app.include_router(summary_router, prefix="/summary")
+
+    @current_app.middleware("http")
+    async def _authenticate(request: Request, call_next: Callable) -> Response:
+        if request.headers.get("Authorization") != settings.BEARER_SECRET:
+            return Response(status_code=401, content="Unauthorized")
+        return await call_next(request)
 
     return current_app
 

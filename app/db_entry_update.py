@@ -230,6 +230,7 @@ async def update_database() -> None:
                 current_approved_status=Status.DENIED,
             )
 
+    logger.info("db: done with full update")
 
 async def refresh_entry(*, entry_id: int, entry_type: str) -> None:
     summary = request_metadata(entry_id, entry_type, force_rerequest=True)

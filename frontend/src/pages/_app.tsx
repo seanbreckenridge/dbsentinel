@@ -3,6 +3,10 @@ import { type Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
 
 import { api } from "../utils/api";
+import Layout from "../components/Layout";
+
+import { ToastContainer, Slide } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 import "../styles/globals.css";
 
@@ -12,7 +16,21 @@ const MyApp: AppType<{ session: Session | null }> = ({
 }) => {
   return (
     <SessionProvider session={session}>
-      <Component {...pageProps} />
+      <Layout>
+        <Component {...pageProps} />
+      </Layout>
+      <ToastContainer
+        className="impct-toast"
+        position="top-center"
+        autoClose={3000}
+        hideProgressBar
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        draggable={false}
+        pauseOnHover
+        transition={Slide}
+      />
     </SessionProvider>
   );
 };
