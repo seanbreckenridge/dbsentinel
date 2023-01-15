@@ -100,7 +100,7 @@ main() {
 	# if loop, then run this once a minute
 	if [[ "$1" == '-l' ]]; then
 		while true; do
-			sleep 5m
+			sleep 4m
 			iter
 		done
 	fi
