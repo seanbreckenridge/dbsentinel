@@ -11,7 +11,7 @@ router = APIRouter()
 
 
 @router.get("/")
-async def get_metadata_counts(db: Session = Depends(get_db)):
+async def get_metadata_counts(db: Session = Depends(get_db)) -> dict:
     anime_status_counts = db.exec(
         select(
             AnimeMetadata.approved_status, func.count(AnimeMetadata.approved_status)  # type: ignore

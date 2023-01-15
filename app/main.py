@@ -27,7 +27,7 @@ def create_app() -> FastAPI:
     async def _authenticate(request: Request, call_next: Callable) -> Response:
         if request.headers.get("Authorization") != settings.BEARER_SECRET:
             return Response(status_code=401, content="Unauthorized")
-        return await call_next(request)
+        return await call_next(request)  # type: ignore
 
     return current_app
 
