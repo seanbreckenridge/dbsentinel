@@ -10,7 +10,7 @@ DEFAULT_LEVEL = logging.INFO
 # logzero handles adding handling/modifying levels fine
 # can be imported/configured multiple times
 def setup(level: Optional[int] = None) -> logging.Logger:
-    chosen_level = level or int(os.environ.get("MALSENTINEL_LOGS", DEFAULT_LEVEL))
+    chosen_level = level or int(os.environ.get("DBSENTINEL_LOGS", DEFAULT_LEVEL))
     lgr: logging.Logger = setup_logger(name=__package__, level=chosen_level)
     return lgr
 

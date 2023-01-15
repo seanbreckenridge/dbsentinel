@@ -11,8 +11,8 @@ const Home: NextPage = () => {
   return (
     <>
       <Head>
-        <title>Malsentinel</title>
-        <meta name="description" content="malsentinel " />
+        <title>DBsentinel</title>
+        <meta name="description" content="query deleted/denied MAL info, connections to other databases" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main>
@@ -27,10 +27,8 @@ const Home: NextPage = () => {
               <div className="text-2xl">Loading...</div>
             ) : (
               <div className="container mx-auto w-full">
-                  <div className="text-2xl">
-                    Global Stats
-                  </div>
-                <div className="flex w-full flex-col justify-center sm:flex-row items-center">
+                <div className="text-2xl">Global Stats</div>
+                <div className="flex w-full flex-col items-center justify-center sm:flex-row">
                   {Object.keys(summary.data).map((key) => (
                     <div key={key}>
                       <div className="m-2 flex flex-col items-center rounded-md border-2 border-gray-300 p-5">

@@ -3,10 +3,10 @@ export default function Footer() {
   return (
     <footer className="h-30 my-5 flex w-full flex-col items-center justify-center border-t text-sm">
       <p>
-        {`${new Date().getFullYear()} © malsentinel `}
+        {`${new Date().getFullYear()} © dbsentinel `}
         <a
           className="text-blue-400 hover:text-blue-300"
-          href="https://github.com/seanbreckenridge/malsentinel"
+          href="https://github.com/seanbreckenridge/dbsentinel"
         >
           source code
         </a>

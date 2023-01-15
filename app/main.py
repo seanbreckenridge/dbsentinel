@@ -5,7 +5,7 @@ from fastapi import FastAPI, Response, Request
 def create_app() -> FastAPI:
     from app.settings import settings
 
-    current_app = FastAPI(title="malsentinel")
+    current_app = FastAPI(title="dbsentinel")
 
     @current_app.on_event("startup")
     async def _startup() -> None:

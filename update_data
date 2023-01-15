@@ -76,7 +76,7 @@ iter() {
 		fi
 	fi
 	if curl -s localhost:4001 >/dev/null; then
-		evry 10 minutes -update_malsentinal_user && {
+		evry 10 minutes -update_dbsentinal_user && {
 			python3 main.py estimate-user-recent ./usernames.txt --request --timid || return $?
 		}
 	elif [[ -n "$VULTR_UPDATE" ]]; then
@@ -89,7 +89,7 @@ iter() {
 		fi
 	fi
 	if authd_curl -s localhost:5200/ping >/dev/null; then
-		evry 10m -malsentinel-full-db-update && authd_curl -s localhost:5200/tasks/full_database_update
+		evry 10m -dbsentinel-full-db-update && authd_curl -s localhost:5200/tasks/full_database_update
 	fi
 	set -e
 	set +x
