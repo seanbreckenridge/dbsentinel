@@ -4,8 +4,9 @@ from asyncio import sleep
 
 from urllib.parse import urlparse
 from malexport.parse.common import parse_date_safe
-from sqlalchemy import update, select
+from sqlalchemy import update
 from sqlmodel import Session
+from sqlmodel.sql.expression import select
 from url_cache.core import Summary
 
 from src.metadata_cache import request_metadata
@@ -81,8 +82,9 @@ def add_or_update(
         entry_in_db = aid in in_db
     elif force_update:
         with Session(data_engine) as sess:
-            entry_req = list(sess.exec(select(use_model).where(use_model.id == aid)))  # type: ignore[attr-defined, call-overload]
-            entry_in_db = len(entry_req) > 0
+            assert hasattr(use_model, "id")
+            entry_req = sess.exec(select(use_model).where(use_model.id == aid)).first()
+            entry_in_db = entry_req is not None
 
     if entry_in_db:
         # update the entry if the status has changed or if this didnt exist in the db

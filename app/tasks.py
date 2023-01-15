@@ -1,10 +1,11 @@
 from typing import Union
 
-from src.log import logger
-
-from sqlalchemy import select
 from sqlmodel import Session
+from sqlmodel.sql.expression import select
+from pydantic import BaseModel
+from fastapi import Response
 
+from src.log import logger
 from app.db import (
     EntryType,
     data_engine,
@@ -38,21 +39,29 @@ def _fetch_data(
     entry_type: EntryType, entry_id: int
 ) -> Union[AnimeMetadata, MangaMetadata]:
     use_model = AnimeMetadata if entry_type == "anime" else MangaMetadata
+    assert hasattr(use_model, "id")
     with Session(data_engine) as sess:
-        data = list(
-            sess.exec(select(use_model).where(use_model.id == entry_id).limit(1))  # type: ignore
-        )
-    item = data[0][0]
-    assert isinstance(item, (AnimeMetadata, MangaMetadata))
-    return item
+        data = sess.exec(
+            select(use_model).where(use_model.id == entry_id).limit(1)
+        ).first()
+
+    if not data:
+        raise ValueError(f"no data for {entry_type} {entry_id}")
+
+    assert isinstance(data, (AnimeMetadata, MangaMetadata))
+    return data
+
+
+class Error(BaseModel):
+    error: str
 
 
 @trouter.get("/refresh_entry")
 async def refresh_entry(
-    entry_type: EntryType, entry_id: int
-) -> Union[AnimeMetadata, MangaMetadata]:
+    entry_type: EntryType, entry_id: int, response: Response
+) -> Union[AnimeMetadata, MangaMetadata, Error]:
     """
-    adds a request to update an entry to the database
+    refreshes a single entry in the database
     """
     from app.db_entry_update import refresh_entry as refresh
 
@@ -61,4 +70,9 @@ async def refresh_entry(
         entry_id=entry_id,
         entry_type=entry_type,
     )
-    return _fetch_data(entry_type, entry_id)
+    try:
+        response.status_code = 200
+        return _fetch_data(entry_type, entry_id)
+    except ValueError as ve:
+        response.status_code = 404
+        return Error(error=str(ve))
