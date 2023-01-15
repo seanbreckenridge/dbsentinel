@@ -6,8 +6,10 @@ This lists entries that are approved, with the most recently approved entries at
 
 # WORK IN PROGRESS
 
-- [ ] frontend with discord login
-- [ ] dashboard that shows stats etc.
+- [x] data backend upadtes using other services
+- [x] task API to connect frontend to data backend
+- [x] frontend with discord login
+- [x] dashboard that shows stats etc.
 - [ ] API for deleted/denied/unapproved ids/names
 - [ ] roles to give people more permissions
 - [ ] let users refresh data for old entries
