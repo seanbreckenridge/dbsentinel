@@ -21,8 +21,10 @@ from src.log import logger
 
 def _get_img(data: dict) -> str | None:
     if img := data.get("medium"):
+        assert isinstance(img, str)
         return img
     if img := data.get("large"):
+        assert isinstance(img, str)
         return img
     return None
 
@@ -117,11 +119,14 @@ class MetadataCache(URLCache):
             cache_dir=cache_dir, loglevel=loglevel, options={"expiry_duration": "54w"}
         )
 
-    def request_data(self, url: str) -> Summary:
+    def request_data(self, url: str, preprocess_url: bool = True) -> Summary:
         #
         # this may never actually be the case, but just want to make sure if we
         # add some refresh mechanism that that does not happen...
-        uurl = self.preprocess_url(url)
+        if preprocess_url:
+            uurl = self.preprocess_url(url)
+        else:
+            uurl = url
         logger.info(f"requesting {uurl}")
         try:
             if "skip_retry" in self.options and self.options["skip_retry"] is True:
@@ -166,7 +171,7 @@ class MetadataCache(URLCache):
 
 def is_404(summary: Summary) -> bool:
     if "error" in summary.metadata:
-        return summary.metadata["error"] == 404
+        return bool(summary.metadata["error"] == 404)
     return False
 
 

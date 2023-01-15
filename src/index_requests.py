@@ -3,7 +3,7 @@ Interact with the /api/pages index endpoint.
 https://github.com/Hiyori-API/checker_mal
 """
 
-from typing import NamedTuple, Dict, Any, Optional, List
+from typing import NamedTuple, Dict, Any, Optional, List, cast
 
 import requests
 
@@ -16,12 +16,12 @@ def _debug() -> Dict[str, Any]:
     debug_url = f"{INDEX_BASE}/debug"
     req = requests.get(debug_url)
     req.raise_for_status()
-    return req.json()
+    return cast(Dict[str, Any], req.json())
 
 
 class Index(NamedTuple):
     list_type: str
-    count: int
+    page_count: int
 
 
 def currently_requesting() -> Optional[Index]:
@@ -36,7 +36,7 @@ def currently_requesting() -> Optional[Index]:
     assert cur["type"] in {"anime", "manga"}
     return Index(
         list_type=cur["type"],
-        count=cur["timeframe"],
+        page_count=cur["timeframe"],
     )
 
 
@@ -47,7 +47,7 @@ def queue() -> List[Index]:
     for list_type, count in debug["requests"]:
         assert list_type in {"anime", "manga"}
         assert count > 0
-        reqs.append(Index(list_type=list_type, count=count))
+        reqs.append(Index(list_type=list_type, page_count=count))
     return reqs
 
 

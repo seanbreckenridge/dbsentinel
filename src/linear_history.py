@@ -1,7 +1,7 @@
 import io
 from pathlib import Path
 from datetime import datetime
-from typing import NamedTuple, Iterator, Any
+from typing import NamedTuple, Iterator, Any, cast
 from dataclasses import dataclass
 
 import orjson
@@ -42,7 +42,8 @@ def _get_blob(tree: Tree, keys: list[str]) -> JsonData | None:
             buf = io.BytesIO(blob.data_stream.read()).read().decode("utf-8")
             if buf.strip() == "":
                 continue
-            return orjson.loads(buf)
+            data = cast(JsonData, orjson.loads(buf))
+            return data
         except KeyError:
             continue
         except orjson.JSONDecodeError:
@@ -113,4 +114,5 @@ def track_diffs() -> Iterator[Entry]:
 def read_linear_history() -> list[Any]:
     with open(linear_history_file) as f:
         data = orjson.loads(f.read())
+    assert isinstance(data, list)
     return data

@@ -43,7 +43,7 @@ def _fetch_data(
             sess.exec(select(use_model).where(use_model.id == entry_id).limit(1))  # type: ignore
         )
     item = data[0][0]
-    assert type(item) in {AnimeMetadata, MangaMetadata}
+    assert isinstance(item, (AnimeMetadata, MangaMetadata))
     return item
 
 

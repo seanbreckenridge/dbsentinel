@@ -28,13 +28,13 @@ def api_url_to_parts(url: str) -> tuple[str, int]:
 
 def is_nsfw(jdata: Dict[str, Any]) -> bool:
     if "rating" in jdata:
-        return jdata["rating"] == "rx"
+        return bool(jdata["rating"] == "rx")
     elif "nsfw" in jdata:
         assert jdata["nsfw"] in {"white", "black", "grey", "gray"}
-        return jdata["nsfw"] != "white"
+        return bool(jdata["nsfw"] != "white")
     else:
         assert "genres" in jdata
-        return "Hentai" in (g["name"] for g in jdata["genres"])
+        return bool("Hentai" in (g["name"] for g in jdata["genres"]))
 
 
 def add_or_update(
@@ -71,7 +71,7 @@ def add_or_update(
         entry_in_db = aid in in_db
     elif force_update:
         with Session(data_engine) as sess:
-            entry_req = list(sess.exec(select(use_model).where(use_model.id == aid)))
+            entry_req = list(sess.exec(select(use_model).where(use_model.id == aid)))  # type: ignore[attr-defined, call-overload]
             entry_in_db = len(entry_req) > 0
 
     if entry_in_db:
@@ -90,7 +90,7 @@ def add_or_update(
             # update the status to deleted
             stmt = (
                 update(use_model)
-                .where(use_model.id == aid)
+                .where(use_model.id == aid)  # type: ignore[attr-defined]
                 .values(
                     title=title,
                     start_date=start_date,

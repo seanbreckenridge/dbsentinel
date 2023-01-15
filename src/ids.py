@@ -56,7 +56,7 @@ UNAPPROVED_API_BASE = "https://sean.fish/mal_unapproved/api/"
 SANITY_CHECK_AMOUNT = 10
 
 
-def _request_unapproved(url) -> List[Any]:
+def _request_unapproved(url: str) -> List[Any]:
     logger.info("Requesting unapproved: {}".format(url))
     req = requests.get(url)
     req.raise_for_status()
