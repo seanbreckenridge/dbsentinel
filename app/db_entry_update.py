@@ -234,7 +234,8 @@ async def update_database() -> None:
     for i, (entry_type, entry_id) in enumerate(map(api_url_to_parts, all_urls)):
         if i % 10 == 0:
             await sleep(0)
-        if f"{entry_type}_{entry_id}" not in known:
+        key = f"{entry_type}_{entry_id}"
+        if key not in known:
             # already inserted into the db
             if entry_id in in_db[entry_type]:
                 continue
@@ -242,6 +243,7 @@ async def update_database() -> None:
                 summary=request_metadata(entry_id, entry_type),
                 current_approved_status=Status.DENIED,
             )
+            known.add(key)
 
     logger.info("db: done with full update")
 
