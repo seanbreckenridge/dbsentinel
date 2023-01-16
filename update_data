@@ -76,28 +76,28 @@ iter() {
 	[[ -e "$REPO_TARGET" ]] || git clone "$REPO" "$REPO_TARGET"
 	(cd "$REPO_TARGET" && git pull)
 	if git_hash_changed; then
-		python3 main.py linear-history >'./data/data.jsonl' || exit $?
+		python3 main.py mal linear-history >'./data/data.jsonl' || exit $?
 		jq -s <./data/data.jsonl | sponge ./data/linear_history.json || exit $?
 		rm -f ./data/data.jsonl
 	fi
 	set -x
 	set +e
-	if ! python3 main.py check-mal; then
+	if ! python3 main.py mal check-mal; then
 		echo 'mal is down, skipping updates...'
 		return 1
 	fi
 	if [[ -z "$SKIP_UPDATE_METADATA" ]]; then
 		if wait-for-internet --text 'checking for internet....' --timeout 1; then
-			python3 main.py update-metadata || return $?
+			python3 main.py mal update-metadata || return $?
 		fi
 	fi
 	if curl -s localhost:4001 >/dev/null; then
 		evry 10 minutes -update_dbsentinal_user && {
-			python3 main.py estimate-user-recent ./usernames.txt --request --timid || return $?
+			python3 main.py mal estimate-user-recent ./usernames.txt --request --timid || return $?
 		}
 	elif [[ -n "$VULTR_UPDATE" ]]; then
 		# manual update sshing as a stopgap
-		QUERY="$(python3 main.py estimate-user-recent ./usernames.txt --print-url)" || return $?
+		QUERY="$(python3 main.py mal estimate-user-recent ./usernames.txt --print-url)" || return $?
 		if [[ -n "$QUERY" ]]; then
 			URL="localhost:4001/api/pages?${QUERY}"
 			# shellcheck disable=SC2029

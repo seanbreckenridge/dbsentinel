@@ -26,14 +26,19 @@ def main(debug: bool) -> None:
         mal_id.log.logger = mal_id.log.setup(level=logging.DEBUG)
 
 
-@main.command(short_help="create timeline using git history")
+@main.group(short_help="relating to myanimelist/ids")
+def mal() -> None:
+    pass
+
+
+@mal.command(short_help="create timeline using git history")
 def linear_history() -> None:
     """Create a big json file with dates based on the git timestamps for when entries were added to cache"""
     for d in track_diffs():
         print(orjson.dumps(d).decode("utf-8"))
 
 
-@main.command(short_help="make sure MAL is not down")
+@mal.command(short_help="make sure MAL is not down")
 def check_mal() -> None:
     from mal_id.metadata_cache import check_mal as heartbeat
 
@@ -41,7 +46,7 @@ def check_mal() -> None:
         sys.exit(1)
 
 
-@main.command(short_help="request missing data using API")
+@mal.command(short_help="request missing data using API")
 @click.option("--request-failed", is_flag=True, help="re-request failed entries")
 def update_metadata(request_failed: bool) -> None:
     """
@@ -63,20 +68,7 @@ def update_metadata(request_failed: bool) -> None:
         request_metadata(mid, "manga", rerequest_failed=request_failed)
 
 
-@main.command(short_help="print approved/unapproved counts")
-def counts() -> None:
-    """
-    print approved/unapproved counts for anime/manga
-    """
-    a = approved_ids()
-    u = unapproved_ids()
-    click.echo(f"Approved anime: {len(a.anime)}")
-    click.echo(f"Approved manga: {len(a.manga)}")
-    click.echo(f"Unapproved anime: {len(u.anime)}")
-    click.echo(f"Unapproved manga: {len(u.manga)}")
-
-
-@main.command(short_help="print page ranges from indexer")
+@mal.command(short_help="print page ranges from indexer")
 def pages() -> None:
     """
     print page ranges from indexer
@@ -85,7 +77,7 @@ def pages() -> None:
     click.echo("queue: {}".format(queue()))
 
 
-@main.command(short_help="use user lists to find out if new entries have been approved")
+@mal.command(short_help="use user lists to find out if new entries have been approved")
 @click.option("--list-type", type=click.Choice(["anime", "manga"]), default="anime")
 @click.option("--request", is_flag=True, help="request new entries")
 @click.option(
@@ -128,7 +120,7 @@ def estimate_user_recent(
         request_pages(list_type, check_pages)
 
 
-@main.command(short_help="estimate which page to check for an ID")
+@mal.command(short_help="estimate which page to check for an ID")
 @click.option(
     "-e",
     "--entry-type",

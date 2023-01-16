@@ -11,9 +11,7 @@ export default function Layout(props: ILayout): ReactElement {
     <div className="flex min-h-screen w-full flex-col">
       <Navbar />
       <div className="flex flex-grow flex-col">{props.children}</div>
-      <div className="">
-        <Footer />
-      </div>
+      <Footer />
     </div>
   );
 }

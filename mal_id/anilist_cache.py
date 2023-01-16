@@ -106,7 +106,6 @@ class AnilistCache(URLCache):
         media_type = uurl.split("/")[-2]
         anilist_data = self.fetch_anilist_data(mal_id, media_type)
         if anilist_data is None:
-            logger.info(f"Anilist ID for {media_type} {mal_id} not found")
             return Summary(
                 url=uurl,
                 data={},

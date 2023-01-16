@@ -13,6 +13,7 @@ This lists entries that are approved, with the most recently approved entries at
 - [x] proxy images from MAL incase they get deleted
 - [x] add command to refresh summary for entries with missing images
 - [x] frontend to view approved/denied/deleted/unapproved entries
+- [ ] compare against my list to find deleted entries, request that many pages
 - [ ] roles to give people more permissions
   - [ ] let users refresh data for old entries
   - [x] connect IDs to anilist (using local `URLCache`)
