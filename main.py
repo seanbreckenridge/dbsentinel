@@ -6,7 +6,12 @@ import click
 
 from mal_id.metadata_cache import request_metadata
 from mal_id.linear_history import track_diffs, read_linear_history
-from mal_id.ids import approved_ids, unapproved_ids, estimate_all_users_max, _estimate_page
+from mal_id.ids import (
+    approved_ids,
+    unapproved_ids,
+    estimate_all_users_max,
+    _estimate_page,
+)
 from mal_id.index_requests import request_pages, currently_requesting, queue
 from mal_id.paths import sqlite_db_path
 
@@ -132,14 +137,15 @@ def server() -> None:
 
 
 @server.command(short_help="initialize database")
-def initialize_db() -> None:
+@click.option("--refresh-images", is_flag=True, default=False, help="refresh images")
+def initialize_db(refresh_images: bool) -> None:
     """initialize database"""
     from app.db import init_db
     from app.db_entry_update import update_database
     from asyncio import run
 
     init_db()
-    run(update_database())
+    run(update_database(refresh_images=refresh_images))
 
 
 @server.command()

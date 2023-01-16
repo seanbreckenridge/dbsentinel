@@ -1,5 +1,8 @@
 import io
+import json
 import time
+import shutil
+import atexit
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -17,7 +20,28 @@ client = boto3.client(
     aws_secret_access_key=settings.S3_SECRET_KEY,
 )
 
-db = pickledb.load(image_data, auto_dump=True)
+
+def setup_db() -> pickledb.PickleDB:
+    backup = f"{image_data}.bak"
+    try:
+        pdb = pickledb.load(image_data, auto_dump=True)
+    except Exception:
+        assert Path(backup).exists()
+        logger.warning(
+            f"image_proxy: failed to load {image_data}, restoring from backup"
+        )
+        shutil.copy(backup, image_data)
+        pdb = pickledb.load(image_data, auto_dump=True)
+
+    Path(backup).write_text(json.dumps(pdb.db))
+
+    atexit.register(pdb.dump)
+
+    logger.info(f"image_proxy: loaded {len(pdb.db)} entries from {image_data}")
+    return pdb
+
+
+db = setup_db()
 
 
 def _prefix_url(path: str) -> str:

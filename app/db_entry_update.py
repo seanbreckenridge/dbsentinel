@@ -74,15 +74,25 @@ def add_or_update(
     in_db: Optional[Set[int]] = None,
     added_dt: Optional[datetime] = None,
     force_update: bool = False,
+    refresh_images: bool = False,
 ) -> None:
     entry_type, url_id = api_url_to_parts(summary.url)
     assert entry_type in ("anime", "manga")
-    use_model = AnimeMetadata if entry_type == "anime" else MangaMetadata
 
     jdata = dict(summary.metadata)
     if "error" in jdata:
         logger.debug(f"skipping http error in {entry_type} {url_id}: {jdata['error']}")
         return
+
+    img = summary_proxy_image(summary)
+    # may be that the summary is so old a new image has been added instead
+    if img is None and refresh_images:
+        summary = request_metadata(url_id, entry_type, force_rerequest=True)
+        img = summary_proxy_image(summary)
+        if img is not None:
+            logger.info(f"db: successfully refreshed image {img}")
+
+    use_model = AnimeMetadata if entry_type == "anime" else MangaMetadata
 
     # pop data from the json that get stored in the db
     aid = int(jdata.pop("id"))
@@ -92,8 +102,6 @@ def add_or_update(
 
     # try to figure out if this is sfw/nsfw
     nsfw = is_nsfw(jdata)
-
-    summary_proxy_image(summary)
 
     # figure out if entry is the in db
     # if force rerequesting, dont have access to in_db/statuses
@@ -180,7 +188,7 @@ async def status_map() -> Dict[str, Any]:
     return in_db
 
 
-async def update_database() -> None:
+async def update_database(refresh_images: bool = False) -> None:
     logger.info("Updating database...")
 
     known: Set[str] = set()
@@ -218,6 +226,7 @@ async def update_database() -> None:
             old_status=old_status,
             in_db=in_db[hval.e_type],
             added_dt=hval.dt,
+            refresh_images=refresh_images,
         )
         known.add(hval.key)
 
@@ -231,6 +240,7 @@ async def update_database() -> None:
             old_status=in_db["anime_status"].get(aid),
             current_approved_status=Status.UNAPPROVED,
             in_db=in_db["anime"],
+            refresh_images=refresh_images,
         )
         known.add(f"anime_{aid}")
 
@@ -243,6 +253,7 @@ async def update_database() -> None:
             old_status=in_db["manga_status"].get(mid),
             current_approved_status=Status.UNAPPROVED,
             in_db=in_db["manga"],
+            refresh_images=refresh_images,
         )
         known.add(f"manga_{mid}")
 
@@ -262,6 +273,7 @@ async def update_database() -> None:
             add_or_update(
                 summary=request_metadata(entry_id, entry_type),
                 current_approved_status=Status.DENIED,
+                refresh_images=refresh_images,
             )
             known.add(key)
 
