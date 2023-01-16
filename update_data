@@ -70,9 +70,13 @@ iter() {
 	fi
 	set -x
 	set +e
+	if ! python3 main.py check-mal; then
+		echo 'mal is down, skipping updates...'
+		return 1
+	fi
 	if [[ -z "$SKIP_UPDATE_METADATA" ]]; then
 		if wait-for-internet --text 'checking for internet....' --timeout 1; then
-			python3 main.py update-metadata || exit $?
+			python3 main.py update-metadata || return $?
 		fi
 	fi
 	if curl -s localhost:4001 >/dev/null; then

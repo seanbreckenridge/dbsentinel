@@ -189,6 +189,14 @@ async def status_map() -> Dict[str, Any]:
 
 
 async def update_database(refresh_images: bool = False) -> None:
+    #  make sure MAL API is up
+
+    from mal_id.metadata_cache import check_mal
+
+    if not check_mal():
+        logger.warning("mal api is down, skipping db update")
+        return
+
     logger.info("Updating database...")
 
     known: Set[str] = set()

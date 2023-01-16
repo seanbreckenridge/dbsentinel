@@ -6,6 +6,7 @@ import atexit
 from pathlib import Path
 from urllib.parse import urlparse
 
+import backoff
 import httpx
 import boto3  # type: ignore[import]
 import pickledb  # type: ignore[import]
@@ -46,6 +47,16 @@ db = setup_db()
 
 def _prefix_url(path: str) -> str:
     return f"{settings.S3_URL_PREFIX}/{path}"
+
+
+@backoff.on_exception(backoff.expo, httpx.HTTPError, max_tries=3)
+def _get_image(url: str) -> bytes | None:
+    with httpx.Client() as client:
+        resp = client.get(url)
+        if resp.status_code == 404:
+            return None
+        resp.raise_for_status()
+        return resp.content
 
 
 def proxy_image(url: str) -> str | None:

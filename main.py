@@ -1,3 +1,4 @@
+import sys
 import logging
 from pathlib import Path
 
@@ -32,12 +33,25 @@ def linear_history() -> None:
         print(orjson.dumps(d).decode("utf-8"))
 
 
+@main.command(short_help="make sure MAL is not down")
+def check_mal() -> None:
+    from mal_id.metadata_cache import check_mal as heartbeat
+
+    if not heartbeat():
+        sys.exit(1)
+
+
 @main.command(short_help="request missing data using API")
 @click.option("--request-failed", is_flag=True, help="re-request failed entries")
 def update_metadata(request_failed: bool) -> None:
     """
     request missing entry metadata using MAL API
     """
+    from mal_id.metadata_cache import check_mal as heartbeat
+
+    if not heartbeat():
+        sys.exit(1)
+
     for hs in read_linear_history():
         request_metadata(hs["entry_id"], hs["e_type"], rerequest_failed=request_failed)
 
@@ -143,6 +157,12 @@ def initialize_db(refresh_images: bool) -> None:
     from app.db import init_db
     from app.db_entry_update import update_database
     from asyncio import run
+
+    # check if MAL api is down
+    from mal_id.metadata_cache import check_mal as heartbeat
+
+    if not heartbeat():
+        sys.exit(1)
 
     init_db()
     run(update_database(refresh_images=refresh_images))
