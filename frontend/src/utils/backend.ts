@@ -36,6 +36,8 @@ async function requestBackend<T>({
     headers: headersWithAuth,
   });
 
+  // console.log(resp.data);
+
   if (resp.status !== 200) {
     throw new Error(`requestBackend failed: ${resp.status}`);
   }

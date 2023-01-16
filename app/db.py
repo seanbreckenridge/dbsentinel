@@ -21,7 +21,7 @@ class ApprovedBase(SQLModel, table=False):
     # approved status of the entry
     id: int = Field(primary_key=True)
     title: str
-    nsfw: bool
+    nsfw: Optional[bool]
     json_data: Dict[str, Any] = Field(default={}, sa_column=Column(JSON))
     approved_status: Status = Field(default=Status.UNAPPROVED)
     approved_at: Optional[datetime] = Field(default=None)

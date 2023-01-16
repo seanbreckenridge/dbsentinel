@@ -11,8 +11,14 @@ export default function Navbar() {
   return (
     <nav className="mx-auto flex w-full flex-wrap items-center bg-teal-500 py-2 px-3">
       <ul className="flex-grow-1 container mx-auto flex w-full items-center p-4">
-        <li className="mr-auto text-xl font-bold text-slate-100">
+        <li className="mr-4 text-xl font-bold text-slate-100">
           <Link href="/">Home</Link>
+        </li>
+        <li className="mr-4 text-xl font-bold text-slate-100">
+          <Link href="/query">Query</Link>
+        </li>
+        <li className="mr-auto text-xl font-bold text-slate-100">
+          <Link href="/about">About</Link>
         </li>
         {/* settings icon */}
         {sessionData && (

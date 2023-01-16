@@ -24,9 +24,13 @@ const QueryInputValidator = z.object({
   end_date: z.string().optional(),
   nsfw: z.boolean().optional(),
   json_data: z.object({}).optional(),
-  approved_status: z
-    .enum(["approved", "denied", "unapproved", "deleted"])
-    .optional(),
+  approved_status: z.enum([
+    "approved",
+    "denied",
+    "unapproved",
+    "deleted",
+    "all",
+  ]),
   offset: z.number().default(0),
   limit: z.number(),
 });
@@ -40,7 +44,7 @@ const QueryOutputValidator = z.object({
     z.object({
       id: z.number(),
       title: z.string(),
-      nsfw: z.boolean(),
+      nsfw: z.boolean().nullish(),
       json_data: z.any(),
       approved_status: z.enum(["approved", "denied", "unapproved", "deleted"]),
     })

@@ -38,15 +38,16 @@ def test_api_url_to_parts() -> None:
     ) == ("anime", 48420)
 
 
-def is_nsfw(jdata: Dict[str, Any]) -> bool:
+# ???
+# who even knows what gray nsfw means??
+# some that have hentai in manga are marked grey, others arent?
+def is_nsfw(jdata: Dict[str, Any]) -> Optional[bool]:
     if "rating" in jdata:
         return bool(jdata["rating"] == "rx")
-    elif "nsfw" in jdata:
-        assert jdata["nsfw"] in {"white", "black", "grey", "gray"}
-        return bool(jdata["nsfw"] != "white")
     else:
-        assert "genres" in jdata
-        return bool("Hentai" in (g["name"] for g in jdata["genres"]))
+        if "genres" in jdata:
+            return bool("Hentai" in (g["name"] for g in jdata["genres"]))
+    return None
 
 
 def _get_img_url(data: dict) -> str | None:

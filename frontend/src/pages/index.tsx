@@ -1,5 +1,6 @@
 import { type NextPage } from "next";
 import Head from "next/head";
+import Link from "next/link";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { type Summary } from "../server/api/routers/data";
 
@@ -29,7 +30,7 @@ const Home: NextPage = () => {
             ) : !summary.data ? (
               <div className="text-2xl">Loading...</div>
             ) : (
-              <div className="container mx-auto w-full">
+              <div className="container mx-auto flex w-full flex-col justify-center">
                 <div className="text-2xl">Global Stats</div>
                 <div className="flex w-full flex-col items-center justify-center sm:flex-row">
                   {Object.keys(summary.data).map((key) => (
@@ -44,7 +45,17 @@ const Home: NextPage = () => {
                             className="flex w-full flex-row justify-between"
                             key={item.status}
                           >
-                            <div className="mr-6">{item.status}</div>
+                            <div
+                              className="mr-6"
+                              title={`Query ${item.status} ${key} data`}
+                            >
+                              <Link
+                                className="text-blue-500 transition-colors duration-200 hover:text-blue-700"
+                                href={`/query/?media_type=${key}&status=${item.status}`}
+                              >
+                                {item.status}
+                              </Link>
+                            </div>
                             <div>{item.count}</div>
                           </div>
                         ))}
@@ -52,6 +63,11 @@ const Home: NextPage = () => {
                     </div>
                   ))}
                 </div>
+                <caption className="text-xs text-gray-500">
+                  <div className="text-center">
+                    Click on a status to query data
+                  </div>
+                </caption>
               </div>
             )}
           </div>
@@ -62,27 +78,3 @@ const Home: NextPage = () => {
 };
 
 export default Home;
-
-const AuthShowcase: React.FC = () => {
-  const { data: sessionData } = useSession();
-
-  const { data: secretMessage } = api.example.getSecretMessage.useQuery(
-    undefined, // no input
-    { enabled: sessionData?.user !== undefined }
-  );
-
-  return (
-    <div className="flex flex-col items-center justify-center gap-4">
-      <p className="text-center text-2xl text-white">
-        {sessionData && <span>Logged in as {sessionData.user?.name}</span>}
-        {secretMessage && <span> - {secretMessage}</span>}
-      </p>
-      <button
-        className="rounded-full bg-white/10 px-10 py-3 font-semibold text-white no-underline transition hover:bg-white/20"
-        onClick={sessionData ? () => void signOut() : () => void signIn()}
-      >
-        {sessionData ? "Sign out" : "Sign in"}
-      </button>
-    </div>
-  );
-};

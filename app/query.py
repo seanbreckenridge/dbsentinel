@@ -1,3 +1,4 @@
+import enum
 from typing import List, Optional, Dict, Any, Union
 from datetime import datetime, date
 
@@ -17,10 +18,18 @@ from app.db import (
 router = APIRouter()
 
 
+class StatusIn(str, enum.Enum):
+    APPROVED = "approved"
+    UNAPPROVED = "unapproved"
+    DELETED = "deleted"
+    DENIED = "denied"
+    ALL = "all"
+
+
 class QueryModelOut(BaseModel):
     id: int
     title: str
-    nsfw: bool
+    nsfw: Optional[bool]
     json_data: Dict[str, Any]
     approved_status: Status
 
@@ -38,7 +47,7 @@ class QueryIn(BaseModel):
     end_date: Optional[date]
     nsfw: Optional[bool]
     json_data: Optional[Dict[str, Union[str, int, bool]]]
-    approved_status: Optional[Status]
+    approved_status: StatusIn = Field(default=StatusIn.ALL)
     order_by: Optional[str] = Field(
         default="id",
         regex="^(id|title|start_date|end_date|approved_status|approved_at|updated_at)$",
@@ -88,7 +97,7 @@ async def get_metadata_counts(
             else:
                 query = query.where(model.json_data.get(key, None) == value)
 
-    if info.approved_status is not None:
+    if info.approved_status != StatusIn.ALL:
         query = query.where(model.approved_status == info.approved_status)
 
     # order/sort

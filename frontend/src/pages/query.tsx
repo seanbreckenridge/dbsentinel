@@ -1,5 +1,7 @@
 import { type NextPage } from "next";
 import Head from "next/head";
+import Image from "next/image";
+import { useRouter } from "next/router";
 import { useState, useRef, useEffect } from "react";
 import ReactPaginate from "react-paginate";
 import { type QueryOutput } from "../server/api/routers/data";
@@ -18,20 +20,26 @@ const Query: NextPage = () => {
   const [entryType, setEntryType] = useState("anime");
   const [sfw, setSfw] = useState(true);
   const [nsfw, setNsfw] = useState(false);
-  const [approvedStatus, setApprovedStatus] = useState("approved");
+  const [approvedStatus, setApprovedStatus] = useState("all");
   const [page, setPage] = useState(0);
   const [limit, setLimit] = useState(100);
-  const pageCount = useRef(1);
+
+  // cant use this immediately, need to wait till the user interacts with the page some
+  // without it, the page will constantly reload when the user is typing
+  const pageCountRef = useRef(1);
+  const usePageRef = useRef(false);
+
+  const router = useRouter();
 
   const resetPagination = () => {
     setPage(0);
-    pageCount.current = 1;
+    pageCountRef.current = 1;
   };
 
   let nsfwQuery = undefined;
-  if (sfw && !nsfw) {
+  if (sfw) {
     nsfwQuery = false;
-  } else if (!sfw && nsfw) {
+  } else if (nsfw) {
     nsfwQuery = true;
   }
 
@@ -42,27 +50,54 @@ const Query: NextPage = () => {
       title: title.length > 0 ? title : undefined,
       nsfw: nsfwQuery,
       approved_status:
+        approvedStatus === "all" ||
         approvedStatus === "approved" ||
         approvedStatus === "denied" ||
         approvedStatus === "unapproved" ||
         approvedStatus === "deleted"
           ? approvedStatus
-          : undefined,
+          : "all",
       offset: page * limit,
       limit: limit,
     },
     {
       onSuccess: (data: QueryOutput) => {
-        pageCount.current = Math.ceil(data.total_count / limit);
+        pageCountRef.current = Math.ceil(data.total_count / limit);
       },
     }
   );
 
   useEffect(() => {
     if (query.data) {
-      pageCount.current = Math.ceil(query.data.total_count / limit);
+      pageCountRef.current = Math.ceil(query.data.total_count / limit);
     }
   }, [limit, query.data, query.data?.total_count]);
+
+  useEffect(() => {
+    const qr = router.query;
+    if (qr.media_type) {
+      if (qr.media_type === "anime" || qr.media_type === "manga") {
+        setEntryType(qr.media_type);
+      }
+    }
+
+    if (qr.status) {
+      if (
+        qr.status === "approved" ||
+        qr.status === "denied" ||
+        qr.status === "unapproved" ||
+        qr.status === "deleted"
+      ) {
+        setApprovedStatus(qr.status);
+      }
+    }
+  }, [router.query]);
+
+  const pageCount = usePageRef.current
+    ? pageCountRef.current
+    : query.data
+    ? Math.ceil(query.data.total_count / limit)
+    : 1;
 
   return (
     <>
@@ -105,7 +140,7 @@ const Query: NextPage = () => {
 
 .pagination {
   align-items: center;
-  background-color: #0fbcf9;
+  background-color: #65d6d2;
   display: flex;
   flex-direction: row;
   height: 60px;
@@ -122,7 +157,7 @@ const Query: NextPage = () => {
           `}</style>
       </Head>
       <main className="container mx-auto flex min-h-screen flex-col items-center justify-start">
-        <section className="flex w-full flex-col items-start justify-center border-2 border-black p-3">
+        <section className="flex w-full flex-col items-start justify-center p-3">
           <form
             className="flex w-full flex-col items-start justify-center"
             onSubmit={(e) => e.preventDefault()}
@@ -136,21 +171,64 @@ const Query: NextPage = () => {
                 value={title}
                 onChange={(e) => {
                   setTitle(e.target.value);
+                  usePageRef.current = true;
                   resetPagination();
                 }}
               />
             </label>
-            <label htmlFor="entryType" className="m-1">
-              Type
-              <select
-                className="ml-2 rounded-md border-2 border-gray-300 p-2"
-                value={entryType}
-                onChange={(e) => setEntryType(e.target.value.toLowerCase())}
-              >
-                <option value="anime">Anime</option>
-                <option value="manga">Manga</option>
-              </select>
-            </label>
+            <div className="m-1 flex flex-row items-center justify-start">
+              <label htmlFor="entryType" className="m-1">
+                Type
+                <select
+                  className="ml-2 rounded-md border-2 border-gray-300 p-2"
+                  value={entryType}
+                  onChange={(e) => {
+                    setEntryType(e.target.value.toLowerCase());
+                    usePageRef.current = true;
+                  }}
+                >
+                  <option value="anime">Anime</option>
+                  <option value="manga">Manga</option>
+                </select>
+              </label>
+              <label htmlFor="approvedStatus" className="m-1">
+                Approved Status
+                <select
+                  className="ml-2 rounded-md border-2 border-gray-300 p-2"
+                  value={approvedStatus}
+                  onChange={(e) => {
+                    setApprovedStatus(e.target.value.toLowerCase());
+                    usePageRef.current = true;
+                  }}
+                >
+                  <option value="all">All</option>
+                  <option value="approved">Approved</option>
+                  <option value="denied">Denied</option>
+                  <option value="unapproved">Unapproved</option>
+                  <option value="deleted">Deleted</option>
+                </select>
+              </label>
+              <label htmlFor="limit" className="m-1">
+                Per Page
+                <select
+                  className="ml-2 rounded-md border-2 border-gray-300 p-2"
+                  value={limit}
+                  onChange={(e) => {
+                    setLimit(parseInt(e.target.value));
+                    resetPagination();
+                    usePageRef.current = true;
+                  }}
+                >
+                  <option value="10">10</option>
+                  <option value="25">25</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                  <option value="250">250</option>
+                  <option value="500">500</option>
+                  <option value="1000">1000</option>
+                </select>
+              </label>
+            </div>
             <div className="m-1 flex flex-row items-center justify-start">
               <label htmlFor="sfw" className="m-1">
                 SFW
@@ -158,7 +236,14 @@ const Query: NextPage = () => {
                   className="ml-2 rounded-md border-2 border-gray-300 p-2"
                   type="checkbox"
                   checked={sfw}
-                  onChange={(e) => setSfw(e.target.checked)}
+                  onChange={(e) => {
+                    setSfw(e.target.checked);
+                    usePageRef.current = true;
+                    // i.e.,: if user is selecting sfw, then we want to unselect nsfw
+                    if (nsfw) {
+                      setNsfw(false);
+                    }
+                  }}
                 />
               </label>
               <label htmlFor="nsfw" className="m-1">
@@ -167,53 +252,30 @@ const Query: NextPage = () => {
                   className="ml-2 rounded-md border-2 border-gray-300 p-2"
                   type="checkbox"
                   checked={nsfw}
-                  onChange={(e) => setNsfw(e.target.checked)}
+                  onChange={(e) => {
+                    setNsfw(e.target.checked);
+                    usePageRef.current = true;
+                    if (sfw) {
+                      setSfw(false);
+                    }
+                  }}
                 />
               </label>
             </div>
-            <label htmlFor="approvedStatus" className="m-1">
-              Approved Status
-              <select
-                className="ml-2 rounded-md border-2 border-gray-300 p-2"
-                value={approvedStatus}
-                onChange={(e) =>
-                  setApprovedStatus(e.target.value.toLowerCase())
-                }
-              >
-                <option value="approved">Approved</option>
-                <option value="denied">Denied</option>
-                <option value="unapproved">Unapproved</option>
-                <option value="deleted">Deleted</option>
-              </select>
-            </label>
-            <label htmlFor="limit" className="m-1">
-              Per Page
-              <select
-                className="ml-2 rounded-md border-2 border-gray-300 p-2"
-                value={limit}
-                onChange={(e) => {
-                  setLimit(parseInt(e.target.value));
-                  resetPagination();
-                }}
-              >
-                <option value="10">10</option>
-                <option value="25">25</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-                <option value="250">250</option>
-                <option value="500">500</option>
-                <option value="1000">1000</option>
-              </select>
-            </label>
           </form>
         </section>
-        <section className="flex w-full flex-col items-start justify-center border-2 border-black p-3">
+        <hr className="w-full" />
+        <section className="flex w-full flex-col items-center justify-center p-3">
+          <p className="mb-1">Total Results: {query.data?.total_count}</p>
           <ReactPaginate
             breakLabel="..."
             nextLabel={<FontAwesomeIcon icon={faChevronRight} />}
-            onPageChange={(e) => setPage(e.selected)}
+            onPageChange={(e) => {
+              setPage(e.selected);
+              usePageRef.current = true;
+            }}
             pageRangeDisplayed={3}
-            pageCount={pageCount.current}
+            pageCount={pageCount}
             containerClassName="pagination"
             activeClassName={"item active "}
             breakClassName={"item break-me "}
@@ -225,18 +287,71 @@ const Query: NextPage = () => {
           className="flex w-full flex-col  items-center px-4 text-center"
           id="results"
         >
-          <div className="flex flex-col items-center justify-center">
+          <div className="flex w-full flex-col items-center justify-center">
             {query.error ? (
               <div className="text-red-500">
                 Error: {JSON.stringify(query.error.message)}
               </div>
             ) : query.data ? (
-              <div className="container mx-auto">
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {query.data.results.map((entry) => (
-                    <div key={entry.id}>{entry.title}</div>
-                  ))}
-                </div>
+              <div className="container mx-auto flex w-full flex-col items-center justify-center">
+                <table className="table-fixed">
+                  <thead>
+                    <tr className="border-2 border-black bg-gray-100">
+                      <th className="px-4 py-2">Image</th>
+                      <th className="px-4 py-2">ID</th>
+                      <th className="px-4 py-2">SFW</th>
+                      <th className="px-4 py-2">Title</th>
+                      <th className="px-4 py-2">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {query.data.results.map((entry) => {
+                      const img = entry.json_data?.main_picture?.medium;
+                      const imgStyle = {
+                        filter: entry.nsfw ? "blur(5px)" : "none",
+                      };
+                      return (
+                        <tr key={entry.id}>
+                          <td className="mx-auto w-1/12 border px-4 py-2">
+                            <a
+                              title="View Image"
+                              href={img ? img : "javascript:void(0)"}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              <Image
+                                className="mx-auto my-auto"
+                                style={imgStyle}
+                                src={img}
+                                alt="..."
+                                width={100}
+                                height={100}
+                              />
+                            </a>
+                          </td>
+                          <td className="w-1/12 border px-4 py-2">
+                            {entry.id}
+                          </td>
+                          <td className="w-1/12 border px-4 py-2">
+                            <div>
+                            {((entry.nsfw === null) || (entry.nsfw === undefined))
+                              ? "Unknown"
+                              : entry.nsfw
+                              ? "NSFW"
+                              : "SFW"}
+                            </div>
+                          </td>
+                          <td className="w-4/12 border px-4 py-2">
+                            {entry.title}
+                          </td>
+                          <td className="w-1/12 border px-4 py-2">
+                            {entry.approved_status}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             ) : (
               <div className="text-gray-500">Loading...</div>

@@ -193,7 +193,7 @@ def server() -> None:
     default=False,
     help="refresh images which couldnt be cached",
 )
-def initialize_db(refresh_images: bool, force_update_all: bool) -> None:
+def initialize_db(refresh_images: bool) -> None:
     """initialize database"""
     from app.db import init_db
     from app.db_entry_update import update_database
