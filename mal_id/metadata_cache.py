@@ -172,15 +172,15 @@ class MetadataCache(URLCache):
         self.summary_cache.put(uurl, summary)
         return summary
 
+    @staticmethod
+    def is_404(summary: Summary) -> bool:
+        if "error" in summary.metadata:
+            return bool(summary.metadata["error"] == 404)
+        return False
 
-def is_404(summary: Summary) -> bool:
-    if "error" in summary.metadata:
-        return bool(summary.metadata["error"] == 404)
-    return False
-
-
-def has_data(summary: Summary) -> bool:
-    return all(k in summary.metadata for k in ("title", "id"))
+    @staticmethod
+    def has_data(summary: Summary) -> bool:
+        return all(k in summary.metadata for k in ("title", "id"))
 
 
 @cache
@@ -205,7 +205,7 @@ def request_metadata(
     if rerequest_failed:
         sdata = mcache.get(api_url)
         # if theres no data and this isnt a 404, retry
-        if not has_data(sdata) and not is_404(sdata):
+        if not MetadataCache.has_data(sdata) and not MetadataCache.is_404(sdata):
             logger.info("re-requesting failed entry: {}".format(sdata.metadata))
             return mcache.refresh_data(api_url)
     elif force_rerequest:

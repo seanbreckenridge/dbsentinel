@@ -24,9 +24,8 @@ class AnilistCache(URLCache):
         uurl = url.strip("/")
         return super().preprocess_url(uurl)
 
-    def fetch_anilist_data(
-        self, mal_id: int, media_type: str
-    ) -> Optional[Dict[str, Any]]:
+    @staticmethod
+    def fetch_anilist_data(mal_id: int, media_type: str) -> Optional[Dict[str, Any]]:
         query = """query($id: Int, $type: MediaType){Media(idMal: $id, type: $type){
             id
             idMal
