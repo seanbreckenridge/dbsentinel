@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     S3_SECRET_KEY: str
     S3_BUCKET: str
     S3_URL_PREFIX: str
+    IMAGE_CACHE_AUTO_DUMP: bool
 
     class Config:
         case_sensitive = True

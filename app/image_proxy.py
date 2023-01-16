@@ -22,24 +22,29 @@ client = boto3.client(
     aws_secret_access_key=settings.S3_SECRET_KEY,
 )
 
+AUTO_DUMP = settings.IMAGE_CACHE_AUTO_DUMP
+
 
 def setup_db() -> pickledb.PickleDB:
     backup = f"{image_data}.bak"
     try:
-        pdb = pickledb.load(image_data, auto_dump=True)
+        pdb = pickledb.load(image_data, auto_dump=AUTO_DUMP)
     except Exception:
         assert Path(backup).exists()
         logger.warning(
             f"image_proxy: failed to load {image_data}, restoring from backup"
         )
         shutil.copy(backup, image_data)
-        pdb = pickledb.load(image_data, auto_dump=True)
+        pdb = pickledb.load(image_data, auto_dump=AUTO_DUMP)
 
     Path(backup).write_text(json.dumps(pdb.db))
 
-    atexit.register(pdb.dump)
+    if not AUTO_DUMP:
+        atexit.register(pdb.dump)
 
-    logger.info(f"image_proxy: loaded {len(pdb.db)} entries from {image_data}")
+    logger.info(
+        f"image_proxy: loaded {len(pdb.db)} entries from {image_data} {AUTO_DUMP=} "
+    )
     return pdb
 
 
