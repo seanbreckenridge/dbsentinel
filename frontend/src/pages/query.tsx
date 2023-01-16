@@ -319,10 +319,8 @@ const Query: NextPage = () => {
                   </thead>
                   <tbody>
                     {query.data.results.map((entry) => {
-                      const img = entry.json_data?.main_picture?.medium;
-                      const imgStyle = {
-                        filter: (blurNSFW && entry.nsfw === true) ? "blur(5px)" : "none",
-                      };
+                      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                      const img = (entry.json_data?.main_picture?.medium || "") as string;
                       return (
                         <tr key={entry.id}>
                           <td className="mx-auto w-1/12 border px-4 py-2">
@@ -334,7 +332,12 @@ const Query: NextPage = () => {
                             >
                               <Image
                                 className="mx-auto my-auto"
-                                style={imgStyle}
+                                style={{
+                                  filter:
+                                    blurNSFW && entry.nsfw === true
+                                      ? "blur(5px)"
+                                      : "none",
+                                }}
                                 src={img}
                                 alt="..."
                                 width={100}
@@ -347,11 +350,11 @@ const Query: NextPage = () => {
                           </td>
                           <td className="w-1/12 border px-4 py-2">
                             <div>
-                            {((entry.nsfw === null) || (entry.nsfw === undefined))
-                              ? "Unknown"
-                              : entry.nsfw
-                              ? "NSFW"
-                              : "SFW"}
+                              {entry.nsfw === null || entry.nsfw === undefined
+                                ? "Unknown"
+                                : entry.nsfw
+                                ? "NSFW"
+                                : "SFW"}
                             </div>
                           </td>
                           <td className="w-4/12 border px-4 py-2">
