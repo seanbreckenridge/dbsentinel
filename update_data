@@ -25,6 +25,9 @@ readonly REPO='https://github.com/seanbreckenridge/mal-id-cache'
 readonly REPO_TARGET='./data/mal-id-cache'
 readonly HASH_FILE='./data/hash'
 
+readonly ARM_REPO_URL='https://github.com/kawaiioverflow/arm'
+ARM_REPO='./data/arm'
+
 git_hash_changed() {
 	local ret git_hash
 	ret=1
@@ -58,9 +61,18 @@ authd_curl() {
 	set -x
 }
 
+update_arm() {
+	[[ -d "${ARM_REPO}" ]] || git clone "${ARM_REPO_URL}" "${ARM_REPO}"
+	(
+		cd "${ARM_REPO}" || return $?
+		git pull
+	)
+}
+
 iter() {
 	printf '[%s] Updating... \n' "$(date)"
 	[[ ! -e './data' ]] && mkdir ./data
+	update_arm || return $?
 	[[ -e "$REPO_TARGET" ]] || git clone "$REPO" "$REPO_TARGET"
 	(cd "$REPO_TARGET" && git pull)
 	if git_hash_changed; then

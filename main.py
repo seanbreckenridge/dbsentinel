@@ -145,7 +145,15 @@ def estimate_page(entry_type: str, mal_id: int) -> None:
     )
 
 
-@main.command(short_help="update anilist ids")
+@main.group("dbs", short_help="for interacting with other dbs")
+def dbs() -> None:
+    """
+    e.g. anilist, syobocal
+    """
+    pass
+
+
+@dbs.command(short_help="update anilist ids")
 def anilist_update() -> None:
     """
     update anilist ids
@@ -162,6 +170,15 @@ def anilist_update() -> None:
 
     for mal_id in approved.manga:
         ac.get("https://myanimelist.net/manga/{}".format(mal_id))
+
+
+@dbs.command(short_help="print syobocal urls which have MAL urls")
+def dump_syobocal() -> None:
+    from mal_id.arm import mal_arm_dict
+
+    for mal_id, arm_obj in mal_arm_dict().items():
+        if arm_obj.syobocal_tid is not None:
+            click.echo(f"{mal_id} => {arm_obj.syobocal_url}")
 
 
 @main.group()

@@ -16,6 +16,7 @@ This lists entries that are approved, with the most recently approved entries at
 - [ ] roles to give people more permissions
   - [ ] let users refresh data for old entries
   - [x] connect IDs to anilist (using local `URLCache`)
+  - [ ] integrate <https://github.com/kawaiioverflow/arm>
   - [ ] connect IDs to tmdb (manually, users can submit requests)
 - [ ] API for deleted/denied/unapproved ids/names
 - [ ] let user upload their MAL XML export, parse and save data from it to localStorage

@@ -10,6 +10,9 @@ assert mal_id_cache_dir.exists()
 linear_history_file = data_dir / "linear_history.json"
 metadatacache_dir = data_dir / "metadata"
 
+arm_dir = data_dir / 'arm'
+assert arm_dir.exists()
+
 anilist_cache = data_dir / "anilist_cache"
 
 sqlite_db_path = data_dir / "data.sqlite"
