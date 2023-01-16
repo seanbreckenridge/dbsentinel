@@ -15,7 +15,7 @@ This lists entries that are approved, with the most recently approved entries at
 - [ ] frontend to view approved/denied/deleted/unapproved entries
 - [ ] roles to give people more permissions
   - [ ] let users refresh data for old entries
-  - [ ] connect IDs to anilist (using local `URLCache`)
+  - [x] connect IDs to anilist (using local `URLCache`)
   - [ ] connect IDs to tmdb (manually, users can submit requests)
 - [ ] API for deleted/denied/unapproved ids/names
 - [ ] let user upload their MAL XML export, parse and save data from it to localStorage

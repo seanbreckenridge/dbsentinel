@@ -5,6 +5,7 @@ import shutil
 import atexit
 from pathlib import Path
 from urllib.parse import urlparse
+from functools import cache
 
 import backoff
 import httpx
@@ -42,7 +43,9 @@ def setup_db() -> pickledb.PickleDB:
     return pdb
 
 
-db = setup_db()
+@cache
+def image_db() -> pickledb.PickleDB:
+    return setup_db()
 
 
 def _prefix_url(path: str) -> str:
@@ -65,6 +68,7 @@ def _get_image_bytes(url: str) -> bytes | None:
 
 
 def proxy_image(url: str) -> str | None:
+    db = image_db()
     if db.exists(url):
         resp = db.get(url)
         if resp == 404:

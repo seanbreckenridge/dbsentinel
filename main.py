@@ -145,6 +145,25 @@ def estimate_page(entry_type: str, mal_id: int) -> None:
     )
 
 
+@main.command(short_help="update anilist ids")
+def anilist_update() -> None:
+    """
+    update anilist ids
+    """
+    from mal_id.anilist_cache import AnilistCache
+    from mal_id.ids import approved_ids
+
+    ac = AnilistCache()
+
+    approved = approved_ids()
+
+    for mal_id in approved.anime:
+        ac.get("https://myanimelist.net/anime/{}".format(mal_id))
+
+    for mal_id in approved.manga:
+        ac.get("https://myanimelist.net/manga/{}".format(mal_id))
+
+
 @main.group()
 def server() -> None:
     """app/server related commands"""
@@ -157,12 +176,6 @@ def initialize_db(refresh_images: bool) -> None:
     from app.db import init_db
     from app.db_entry_update import update_database
     from asyncio import run
-
-    # check if MAL api is down
-    from mal_id.metadata_cache import check_mal as heartbeat
-
-    if not heartbeat():
-        sys.exit(1)
 
     init_db()
     run(update_database(refresh_images=refresh_images))

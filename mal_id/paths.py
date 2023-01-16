@@ -10,6 +10,8 @@ assert mal_id_cache_dir.exists()
 linear_history_file = data_dir / "linear_history.json"
 metadatacache_dir = data_dir / "metadata"
 
+anilist_cache = data_dir / "anilist_cache"
+
 sqlite_db_path = data_dir / "data.sqlite"
 sqlite_db_uri = "sqlite:///{}".format(sqlite_db_path.absolute())
 
