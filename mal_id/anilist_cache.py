@@ -2,7 +2,7 @@ import logging
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Dict, Any
 from functools import cache
 
 import requests
@@ -24,23 +24,54 @@ class AnilistCache(URLCache):
         uurl = url.strip("/")
         return super().preprocess_url(uurl)
 
-    def fetch_anilist_id(self, mal_id: int, media_type: str) -> Optional[int]:
-        query = (
-            """query($id: Int, $type: MediaType){Media(idMal: $id, type: $type){id}}"""
-        )
+    def fetch_anilist_data(
+        self, mal_id: int, media_type: str
+    ) -> Optional[Dict[str, Any]]:
+        query = """query($id: Int, $type: MediaType){Media(idMal: $id, type: $type){
+            id
+            idMal
+            title {
+                romaji
+                english
+                native
+            }
+            externalLinks {
+                id
+                site
+                url
+            }
+            episodes
+            startDate {
+                year
+                month
+                day
+            }
+            endDate {
+                year
+                month
+                day
+            }
+            seasonYear
+            season
+            format
+            isAdult
+            countryOfOrigin
+            isLicensed
+            source
+        }}"""
         mtype = media_type.upper()
         assert mtype in ("ANIME", "MANGA")
         variables = {"id": mal_id, "type": mtype}
         time.sleep(1)
-        logger.info(f"Requesting Anilist ID for {mal_id}")
+        logger.info(f"Requesting Anilist ID for {mtype} {mal_id}")
         response = requests.post(
             GRAPHQL_URL, json={"query": query, "variables": variables}
         )
         if response.status_code > 400 and response.status_code < 500:
             logger.warning(f"Anilist returned {response.status_code}, not found")
             return None
-        data = response.json()
-        return int(data["data"]["Media"]["id"])
+        data: Dict[str, Any] = response.json()
+        return data
 
     @staticmethod
     def is_404(summary: Summary | None) -> bool:
@@ -56,11 +87,10 @@ class AnilistCache(URLCache):
         else:
             uurl = url
         del url
-        logger.info(f"requesting {uurl}")
         mal_id = int(uurl.split("/")[-1])
         media_type = uurl.split("/")[-2]
-        anilist_id = self.fetch_anilist_id(mal_id, media_type)
-        if anilist_id is None:
+        anilist_data = self.fetch_anilist_data(mal_id, media_type)
+        if anilist_data is None:
             logger.info(f"Anilist ID for {media_type} {mal_id} not found")
             return Summary(
                 url=uurl,
@@ -69,7 +99,7 @@ class AnilistCache(URLCache):
                 timestamp=datetime.now(),
             )
         return Summary(
-            url=uurl, data={}, metadata={"id": anilist_id}, timestamp=datetime.now()
+            url=uurl, data={}, metadata=anilist_data, timestamp=datetime.now()
         )
 
     def refresh_data(self, url: str) -> Summary:
