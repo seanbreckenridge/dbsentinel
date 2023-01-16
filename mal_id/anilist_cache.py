@@ -17,7 +17,7 @@ GRAPHQL_URL = "https://graphql.anilist.co"
 class AnilistCache(URLCache):
     def __init__(self, cache_dir: Path = cpath, loglevel: int = logging.INFO) -> None:
         super().__init__(
-            cache_dir=cache_dir, loglevel=loglevel, options={"expiry_duration": "12w"}
+            cache_dir=cache_dir, loglevel=loglevel, options={"expiry_duration": "25w"}
         )
 
     def preprocess_url(self, url: str) -> str:
