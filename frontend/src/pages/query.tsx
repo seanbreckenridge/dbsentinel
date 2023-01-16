@@ -20,6 +20,7 @@ const Query: NextPage = () => {
   const [entryType, setEntryType] = useState("anime");
   const [sfw, setSfw] = useState(true);
   const [nsfw, setNsfw] = useState(false);
+  const [blurNSFW, setBlurNSFW] = useState(true);
   const [approvedStatus, setApprovedStatus] = useState("all");
   const [page, setPage] = useState(0);
   const [limit, setLimit] = useState(100);
@@ -261,6 +262,18 @@ const Query: NextPage = () => {
                   }}
                 />
               </label>
+              <label htmlFor="blurNSFW" className="m-1">
+                Blur NSFW
+                <input
+                  className="ml-2 rounded-md border-2 border-gray-300 p-2"
+                  type="checkbox"
+                  checked={blurNSFW}
+                  onChange={(e) => {
+                    setBlurNSFW(e.target.checked);
+                    usePageRef.current = true;
+                  }}
+                />
+              </label>
             </div>
           </form>
         </section>
@@ -308,7 +321,7 @@ const Query: NextPage = () => {
                     {query.data.results.map((entry) => {
                       const img = entry.json_data?.main_picture?.medium;
                       const imgStyle = {
-                        filter: entry.nsfw ? "blur(5px)" : "none",
+                        filter: (blurNSFW && entry.nsfw === true) ? "blur(5px)" : "none",
                       };
                       return (
                         <tr key={entry.id}>
