@@ -4,6 +4,10 @@ from pydantic import BaseSettings
 class Settings(BaseSettings):
     SQL_ECHO: bool = True
     BEARER_SECRET: str
+    S3_ACCESS_KEY: str
+    S3_SECRET_KEY: str
+    S3_BUCKET: str
+    S3_URL_PREFIX: str
 
     class Config:
         case_sensitive = True

@@ -19,3 +19,5 @@ if not unapproved_dir.exists():
 
 unapproved_anime_path = unapproved_dir / "anime.json"
 unapproved_manga_path = unapproved_dir / "manga.json"
+
+image_data = data_dir / "image_info.json"

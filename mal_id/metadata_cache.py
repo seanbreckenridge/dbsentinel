@@ -20,16 +20,6 @@ from mal_id.paths import metadatacache_dir
 from mal_id.log import logger
 
 
-def _get_img(data: dict) -> str | None:
-    if img := data.get("medium"):
-        assert isinstance(img, str)
-        return img
-    if img := data.get("large"):
-        assert isinstance(img, str)
-        return img
-    return None
-
-
 MAL_API_LOCK = Lock()
 
 

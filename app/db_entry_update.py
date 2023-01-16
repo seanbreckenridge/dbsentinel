@@ -16,6 +16,7 @@ from mal_id.paths import metadatacache_dir
 from mal_id.log import logger
 
 from app.db import Status, AnimeMetadata, MangaMetadata, data_engine
+from app.image_proxy import proxy_image
 
 
 def api_url_to_parts(url: str) -> tuple[str, int]:
@@ -48,6 +49,23 @@ def is_nsfw(jdata: Dict[str, Any]) -> bool:
         return bool("Hentai" in (g["name"] for g in jdata["genres"]))
 
 
+def _get_img_url(data: dict) -> str | None:
+    if img := data.get("medium"):
+        assert isinstance(img, str)
+        return img
+    if img := data.get("large"):
+        assert isinstance(img, str)
+        return img
+    return None
+
+
+def summary_proxy_image(summary: Summary) -> str | None:
+    if pictures := summary.metadata.get("main_picture"):
+        if img := _get_img_url(pictures):
+            return proxy_image(img)
+    return None
+
+
 def add_or_update(
     *,
     summary: Summary,
@@ -74,6 +92,8 @@ def add_or_update(
 
     # try to figure out if this is sfw/nsfw
     nsfw = is_nsfw(jdata)
+
+    summary_proxy_image(summary)
 
     # figure out if entry is the in db
     # if force rerequesting, dont have access to in_db/statuses

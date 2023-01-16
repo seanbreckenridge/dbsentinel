@@ -15,6 +15,9 @@ GitPython = "*"
 uvicorn = {extras = ["standard"], version = "*"}
 more-itertools = "*"
 ipdb = "*"
+pickledb = "*"
+boto3 = "*"
+httpx = "*"
 
 [dev-packages]
 
