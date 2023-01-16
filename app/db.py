@@ -17,29 +17,25 @@ class Status(str, enum.Enum):
     DENIED = "denied"
 
 
-class ApprovedData(SQLModel, table=False):
+class ApprovedBase(SQLModel, table=False):
     # approved status of the entry
+    id: int = Field(primary_key=True)
+    title: str
+    nsfw: bool
+    json_data: Dict[str, Any] = Field(default={}, sa_column=Column(JSON))
     approved_status: Status = Field(default=Status.UNAPPROVED)
     approved_at: Optional[datetime] = Field(default=None)
     updated_at: Optional[datetime] = Field(default_factory=datetime.utcnow)
-
-
-class AnimeMetadata(ApprovedData, table=True):
-    id: int = Field(primary_key=True)
-    title: str
     start_date: Optional[date]
     end_date: Optional[date]
-    nsfw: bool
-    json_data: Dict[str, Any] = Field(default={}, sa_column=Column(JSON))
 
 
-class MangaMetadata(ApprovedData, table=True):
-    id: int = Field(primary_key=True)
-    title: str
-    start_date: Optional[date]
-    end_date: Optional[date]
-    nsfw: bool
-    json_data: Dict[str, Any] = Field(default={}, sa_column=Column(JSON))
+class AnimeMetadata(ApprovedBase, table=True):
+    pass
+
+
+class MangaMetadata(ApprovedBase, table=True):
+    pass
 
 
 class EntryType(str, enum.Enum):

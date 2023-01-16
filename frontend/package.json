@@ -24,6 +24,7 @@
     "next-auth": "^4.18.7",
     "react": "18.2.0",
     "react-dom": "18.2.0",
+    "react-paginate": "^8.1.4",
     "react-toastify": "^9.1.1",
     "superjson": "1.9.1",
     "zod": "^3.20.2"

@@ -19,9 +19,11 @@ def create_app() -> FastAPI:
 
     from .tasks import trouter as tasks_router
     from .summary import router as summary_router
+    from .query import router as query_router
 
     current_app.include_router(tasks_router, prefix="/tasks")
     current_app.include_router(summary_router, prefix="/summary")
+    current_app.include_router(query_router, prefix="/query")
 
     @current_app.middleware("http")
     async def _authenticate(request: Request, call_next: Callable) -> Response:
