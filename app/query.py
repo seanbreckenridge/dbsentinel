@@ -44,7 +44,7 @@ class QueryIn(BaseModel):
         regex="^(id|title|start_date|end_date|approved_status|approved_at|updated_at)$",
     )
     sort: Optional[str] = Field(default="desc", regex="^(asc|desc)$")
-    limit: int = Field(default=100, le=100)
+    limit: int = Field(default=100, le=1000)
     offset: int = Field(default=0)
 
 

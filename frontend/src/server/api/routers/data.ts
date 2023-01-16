@@ -28,6 +28,7 @@ const QueryInputValidator = z.object({
     .enum(["approved", "denied", "unapproved", "deleted"])
     .optional(),
   offset: z.number().default(0),
+  limit: z.number(),
 });
 
 export type QueryInput = z.infer<typeof QueryInputValidator>;

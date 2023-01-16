@@ -20,6 +20,7 @@ const Query: NextPage = () => {
   const [nsfw, setNsfw] = useState(false);
   const [approvedStatus, setApprovedStatus] = useState("approved");
   const [page, setPage] = useState(0);
+  const [limit, setLimit] = useState(100);
   const pageCount = useRef(1);
 
   const resetPagination = () => {
@@ -47,20 +48,21 @@ const Query: NextPage = () => {
         approvedStatus === "deleted"
           ? approvedStatus
           : undefined,
-      offset: page * 100,
+      offset: page * limit,
+      limit: limit,
     },
     {
       onSuccess: (data: QueryOutput) => {
-        pageCount.current = Math.ceil(data.total_count / 100);
+        pageCount.current = Math.ceil(data.total_count / limit);
       },
     }
   );
 
   useEffect(() => {
     if (query.data) {
-      pageCount.current = Math.ceil(query.data.total_count / 100);
+      pageCount.current = Math.ceil(query.data.total_count / limit);
     }
-  }, [query.data, query.data?.total_count]);
+  }, [limit, query.data, query.data?.total_count]);
 
   return (
     <>
@@ -182,6 +184,25 @@ const Query: NextPage = () => {
                 <option value="denied">Denied</option>
                 <option value="unapproved">Unapproved</option>
                 <option value="deleted">Deleted</option>
+              </select>
+            </label>
+            <label htmlFor="limit" className="m-1">
+               Per Page
+              <select
+                className="ml-2 rounded-md border-2 border-gray-300 p-2"
+                value={limit}
+                onChange={(e) => {
+                  setLimit(parseInt(e.target.value));
+                  resetPagination();
+                }}
+              >
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="250">250</option>
+                <option value="500">500</option>
+                <option value="1000">1000</option>
               </select>
             </label>
           </form>
