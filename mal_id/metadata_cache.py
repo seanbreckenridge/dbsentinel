@@ -105,7 +105,7 @@ class MetadataCache(URLCache):
         self.mal_session = mal_api_session()
         # expires once a year, if user doesnt request a refresh in some other way
         super().__init__(
-            cache_dir=cache_dir, loglevel=loglevel, options={"expiry_duration": "54w"}
+            cache_dir=cache_dir, loglevel=loglevel, options={"expiry_duration": "52w"}
         )
 
     def request_data(self, url: str, preprocess_url: bool = True) -> Summary:
