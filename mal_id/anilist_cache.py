@@ -30,6 +30,8 @@ class AnilistCache(URLCache):
         query = """query($id: Int, $type: MediaType){Media(idMal: $id, type: $type){
             id
             idMal
+            type
+            status
             title {
                 romaji
                 english
@@ -41,6 +43,9 @@ class AnilistCache(URLCache):
                 url
             }
             episodes
+            duration
+            volumes
+            chapters
             startDate {
                 year
                 month
@@ -50,6 +55,17 @@ class AnilistCache(URLCache):
                 year
                 month
                 day
+            }
+            genres
+            tags {
+                id
+                name
+                description
+                category
+                rank
+                isGeneralSpoiler
+                isMediaSpoiler
+                isAdult
             }
             seasonYear
             season
