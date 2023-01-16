@@ -90,7 +90,7 @@ def add_or_update(
         summary = request_metadata(url_id, entry_type, force_rerequest=True)
         img = summary_proxy_image(summary)
         if img is not None:
-            logger.info(f"db: successfully refreshed image {img}")
+            logger.info(f"db: {entry_type} {url_id} successfully refreshed image {img}")
 
     use_model = AnimeMetadata if entry_type == "anime" else MangaMetadata
 

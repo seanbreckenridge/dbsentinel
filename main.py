@@ -187,8 +187,13 @@ def server() -> None:
 
 
 @server.command(short_help="initialize database")
-@click.option("--refresh-images", is_flag=True, default=False, help="refresh images")
-def initialize_db(refresh_images: bool) -> None:
+@click.option(
+    "--refresh-images",
+    is_flag=True,
+    default=False,
+    help="refresh images which couldnt be cached",
+)
+def initialize_db(refresh_images: bool, force_update_all: bool) -> None:
     """initialize database"""
     from app.db import init_db
     from app.db_entry_update import update_database
