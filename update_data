@@ -107,6 +107,8 @@ iter() {
 	if authd_curl -s localhost:5200/ping >/dev/null; then
 		evry 10m -dbsentinel-full-db-update && authd_curl -s localhost:5200/tasks/full_database_update
 	fi
+	# TODO: do a force update every 3 months?
+	# TODO: refresh images every 3 months?
 	set -e
 	set +x
 }

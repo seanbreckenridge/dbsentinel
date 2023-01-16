@@ -1,7 +1,6 @@
 import { type NextPage } from "next";
 import Head from "next/head";
 import Link from "next/link";
-import { signIn, signOut, useSession } from "next-auth/react";
 import { type Summary } from "../server/api/routers/data";
 
 import { api } from "../utils/api";
@@ -15,7 +14,7 @@ const Home: NextPage = () => {
         <title>DBsentinel</title>
         <meta
           name="description"
-          content="query deleted/denied MAL info, connections to other databases"
+          content="search deleted/denied MAL info, connections to other databases"
         />
         <link rel="icon" href="/favicon.ico" />
       </Head>
@@ -47,11 +46,11 @@ const Home: NextPage = () => {
                           >
                             <div
                               className="mr-6"
-                              title={`Query ${item.status} ${key} data`}
+                              title={`Search ${item.status} ${key} data`}
                             >
                               <Link
                                 className="text-blue-500 transition-colors duration-200 hover:text-blue-700"
-                                href={`/query/?media_type=${key}&status=${item.status}`}
+                                href={`/search/?media_type=${key}&status=${item.status}`}
                               >
                                 {item.status}
                               </Link>
@@ -65,7 +64,7 @@ const Home: NextPage = () => {
                 </div>
                 <caption className="text-xs text-gray-500">
                   <div className="text-center">
-                    Click on a status to query data
+                    Click on a status to search data
                   </div>
                 </caption>
               </div>

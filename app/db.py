@@ -17,6 +17,21 @@ class Status(str, enum.Enum):
     DENIED = "denied"
 
 
+class EntryType(str, enum.Enum):
+    ANIME = "anime"
+    MANGA = "manga"
+
+    @classmethod
+    def from_str(cls, label: str) -> "EntryType":
+        ll = label.lower()
+        if ll == "anime":
+            return cls.ANIME
+        elif ll == "manga":
+            return cls.MANGA
+        else:
+            raise ValueError(f"Invalid label: {label}")
+
+
 class ApprovedBase(SQLModel, table=False):
     # approved status of the entry
     id: int = Field(primary_key=True)
@@ -38,9 +53,11 @@ class MangaMetadata(ApprovedBase, table=True):
     pass
 
 
-class EntryType(str, enum.Enum):
-    ANIME = "anime"
-    MANGA = "manga"
+class ProxiedImage(SQLModel, table=True):
+    mal_id: int = Field(primary_key=True)
+    mal_entry_type: EntryType = Field(primary_key=True)
+    mal_url: str = Field(index=True)
+    proxied_url: str = Field(index=True)
 
 
 connect_args = {"check_same_thread": False}

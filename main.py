@@ -185,14 +185,34 @@ def server() -> None:
     default=False,
     help="refresh images which couldnt be cached",
 )
-def initialize_db(refresh_images: bool) -> None:
+@click.option(
+    "--force-update-db",
+    is_flag=True,
+    default=False,
+    help="force update database even when entry data already exists",
+)
+@click.option(
+    "--skip-proxy-images",
+    is_flag=True,
+    default=False,
+    help="skip proxying images to S3",
+)
+def initialize_db(
+    refresh_images: bool, force_update_db: bool, skip_proxy_images: bool
+) -> None:
     """initialize database"""
     from app.db import init_db
     from app.db_entry_update import update_database
     from asyncio import run
 
     init_db()
-    run(update_database(refresh_images=refresh_images))
+    run(
+        update_database(
+            refresh_images=refresh_images,
+            force_update_db=force_update_db,
+            skip_proxy_images=skip_proxy_images,
+        )
+    )
 
 
 @server.command()

@@ -10,10 +10,15 @@ from pydantic import BaseModel, Field
 
 from app.db import (
     get_db,
+    ApprovedBase,
     AnimeMetadata,
+    ProxiedImage,
+    EntryType,
     MangaMetadata,
     Status,
 )
+
+from app.db_entry_update import _get_img_url
 
 router = APIRouter()
 
@@ -30,6 +35,7 @@ class QueryModelOut(BaseModel):
     id: int
     title: str
     nsfw: Optional[bool]
+    image_url: Optional[str]
     json_data: Dict[str, Any]
     approved_status: Status
 
@@ -53,7 +59,7 @@ class QueryIn(BaseModel):
         regex="^(id|title|start_date|end_date|approved_status|approved_at|updated_at)$",
     )
     sort: Optional[str] = Field(default="desc", regex="^(asc|desc)$")
-    limit: int = Field(default=100, le=1000)
+    limit: int = Field(default=100, le=250)
     offset: int = Field(default=0)
 
 
@@ -69,12 +75,45 @@ def _serialize_datetime(dd: datetime | None) -> Optional[int]:
     return int(dd.timestamp())
 
 
+APPROVED_KEYS = {
+    "episodes",
+    "chapters",
+    "volumes",
+    "media_type",
+    "alternative_titles",
+}
+
+
+# dont just mirror all data for approved entries, just link to the page
+def _filter_keys_for_status(d: Dict[str, Any], status: Status) -> Dict[str, Any]:
+    if status == Status.APPROVED:
+        return {k: d[k] for k in d if k in APPROVED_KEYS}
+    else:
+        return d
+
+
+def _pick_image(metadata: ApprovedBase, proxied: ProxiedImage | None) -> Optional[str]:
+    if proxied is None:
+        return _get_img_url(metadata.json_data.get("main_picture", {}))
+    if metadata.approved_status == Status.APPROVED:
+        return proxied.mal_url
+    else:
+        return proxied.proxied_url
+
+
 @router.post("/")
 async def get_metadata_counts(
     info: QueryIn, sess: Session = Depends(get_db)
 ) -> QueryOut:
     model = AnimeMetadata if info.entry_type == "anime" else MangaMetadata
-    query = select(model)
+    entry_type = EntryType.from_str(info.entry_type)
+
+    # left join on proxied image
+    query = select(model, ProxiedImage).join(
+        ProxiedImage,
+        (model.id == ProxiedImage.mal_id) & (ProxiedImage.mal_entry_type == entry_type),
+        isouter=True,
+    )
 
     if info.title:
         query = query.where(model.title.like(f"%{info.title}%"))  # type: ignore
@@ -123,16 +162,17 @@ async def get_metadata_counts(
                 id=row.id,  # type: ignore
                 title=row.title,
                 nsfw=row.nsfw,
+                image_url=_pick_image(row, image),
                 json_data={
                     "start_date": _serialize_date(row.start_date),
                     "end_date": _serialize_date(row.end_date),
                     "updated_at": _serialize_datetime(row.updated_at),
                     "approved_at": _serialize_datetime(row.approved_at),
-                    **row.json_data,
+                    **_filter_keys_for_status(row.json_data, row.approved_status),
                 },
                 approved_status=row.approved_status,
             )
-            for row in rows
+            for row, image in rows
         ],
         total_count=count,
         entry_type=info.entry_type,

@@ -10,6 +10,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faChevronRight,
   faChevronLeft,
+  faTimes,
 } from "@fortawesome/free-solid-svg-icons";
 
 import { api } from "../utils/api";
@@ -225,8 +226,6 @@ const Query: NextPage = () => {
                   <option value="50">50</option>
                   <option value="100">100</option>
                   <option value="250">250</option>
-                  <option value="500">500</option>
-                  <option value="1000">1000</option>
                 </select>
               </label>
             </div>
@@ -319,31 +318,47 @@ const Query: NextPage = () => {
                   </thead>
                   <tbody>
                     {query.data.results.map((entry) => {
+                      // TODO: add:
+                      // - link to mal if it still exists
+                      // - link to anilist if that exists
+                      // - alternative titles
+                      // - episodes
+                      // - chapters
+                      // - media_type
+                      //
+                      // if something is denied/deleted, then add a button to show all saved data
+                      //
                       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                      const img = (entry.json_data?.main_picture?.medium || "") as string;
+                      const img = entry.image_url ?? undefined
                       return (
                         <tr key={entry.id}>
                           <td className="mx-auto w-1/12 border px-4 py-2">
-                            <a
-                              title="View Image"
-                              href={img ? img : "javascript:void(0)"}
-                              target="_blank"
-                              rel="noreferrer"
-                            >
-                              <Image
-                                className="mx-auto my-auto"
-                                style={{
-                                  filter:
-                                    blurNSFW && entry.nsfw === true
-                                      ? "blur(5px)"
-                                      : "none",
-                                }}
-                                src={img}
-                                alt="..."
-                                width={100}
-                                height={100}
-                              />
-                            </a>
+                            {img ? (
+                              <a
+                                title="View Image"
+                                href={img ? img : "javascript:void(0)"}
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                <Image
+                                  className="mx-auto my-auto"
+                                  style={{
+                                    filter:
+                                      blurNSFW && entry.nsfw === true
+                                        ? "blur(5px)"
+                                        : "none",
+                                  }}
+                                  src={img}
+                                  alt="..."
+                                  width={100}
+                                  height={100}
+                                />
+                              </a>
+                            ) : (
+                              <div className="mx-auto my-auto h-4 w-4 ">
+                                <FontAwesomeIcon icon={faTimes} />
+                              </div>
+                            )}
                           </td>
                           <td className="w-1/12 border px-4 py-2">
                             {entry.id}

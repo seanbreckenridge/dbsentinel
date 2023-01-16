@@ -15,7 +15,7 @@ export default function Navbar() {
           <Link href="/">Home</Link>
         </li>
         <li className="mr-4 text-xl font-bold text-slate-100">
-          <Link href="/query">Query</Link>
+          <Link href="/search">Search</Link>
         </li>
         <li className="mr-auto text-xl font-bold text-slate-100">
           <Link href="/about">About</Link>

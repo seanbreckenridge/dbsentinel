@@ -1,4 +1,4 @@
-from typing import Optional, Set, Dict, Any
+from typing import Optional, Set, Dict, Any, Tuple
 from datetime import datetime
 from asyncio import sleep
 
@@ -15,7 +15,14 @@ from mal_id.ids import approved_ids, unapproved_ids
 from mal_id.paths import metadatacache_dir
 from mal_id.log import logger
 
-from app.db import Status, AnimeMetadata, MangaMetadata, data_engine
+from app.db import (
+    Status,
+    AnimeMetadata,
+    MangaMetadata,
+    data_engine,
+    ProxiedImage,
+    EntryType,
+)
 from app.image_proxy import proxy_image
 
 
@@ -60,10 +67,16 @@ def _get_img_url(data: dict) -> str | None:
     return None
 
 
-def summary_proxy_image(summary: Summary) -> str | None:
+def summary_main_image(summary: Summary) -> str | None:
     if pictures := summary.metadata.get("main_picture"):
         if img := _get_img_url(pictures):
-            return proxy_image(img)
+            return img
+    return None
+
+
+def summary_proxy_image(summary: Summary) -> str | None:
+    if main_image := summary_main_image(summary):
+        return proxy_image(main_image)
     return None
 
 
@@ -75,9 +88,12 @@ def add_or_update(
     in_db: Optional[Set[int]] = None,
     added_dt: Optional[datetime] = None,
     force_update: bool = False,
+    mal_id_to_image: Optional[Dict[Tuple[EntryType, int], str]] = None,
     refresh_images: bool = False,
+    skip_images: bool = False,
 ) -> None:
     entry_type, url_id = api_url_to_parts(summary.url)
+    entry_enum = EntryType.from_str(entry_type)
     assert entry_type in ("anime", "manga")
 
     jdata = dict(summary.metadata)
@@ -85,13 +101,60 @@ def add_or_update(
         logger.debug(f"skipping http error in {entry_type} {url_id}: {jdata['error']}")
         return
 
-    img = summary_proxy_image(summary)
-    # may be that the summary is so old a new image has been added instead
-    if img is None and refresh_images:
-        summary = request_metadata(url_id, entry_type, force_rerequest=True)
+    if skip_images is False:
         img = summary_proxy_image(summary)
-        if img is not None:
-            logger.info(f"db: {entry_type} {url_id} successfully refreshed image {img}")
+        # may be that the summary is so old a new image has been added instead
+        if img is None and refresh_images is True:
+            summary = request_metadata(url_id, entry_type, force_rerequest=True)
+            img = summary_proxy_image(summary)
+            if img is not None:
+                logger.info(
+                    f"db: {entry_type} {url_id} successfully refreshed image {img}"
+                )
+
+        # if force refreshing an entry, select the single image row from the db
+        if mal_id_to_image is None:
+            logger.debug(f"db: {entry_type} {url_id} fetching image row from db")
+            with Session(data_engine) as sess:
+                mal_id_to_image = {
+                    (i.mal_entry_type, i.mal_id): i.proxied_url
+                    for i in sess.exec(
+                        select(ProxiedImage)
+                        .where(ProxiedImage.mal_id == url_id)
+                        .where(ProxiedImage.mal_entry_type == entry_enum)
+                    ).all()
+                }
+
+        # if we have the local dict db and we have a proxied image
+        if mal_id_to_image is not None and img is not None:
+            mal_image_url = summary_main_image(summary)
+
+            image_key = (entry_enum, url_id)
+
+            if mal_image_url is not None:
+                # if this isnt already in the database
+                if image_key not in mal_id_to_image:
+                    with Session(data_engine) as sess:
+                        sess.add(
+                            ProxiedImage(
+                                mal_entry_type=entry_enum,
+                                mal_id=url_id,
+                                mal_url=mal_image_url,
+                                proxied_url=img,
+                            )
+                        )
+                        sess.commit()
+                else:
+                    # if we have the image in the database and it is different
+                    if mal_id_to_image[image_key] != img:
+                        with Session(data_engine) as sess:
+                            sess.exec(
+                                update(ProxiedImage)  # type: ignore
+                                .where(ProxiedImage.mal_entry_type == entry_enum)
+                                .where(ProxiedImage.mal_id == url_id)
+                                .values(mal_url=mal_image_url, proxied_url=img)
+                            )
+                            sess.commit()
 
     use_model = AnimeMetadata if entry_type == "anime" else MangaMetadata
 
@@ -124,7 +187,10 @@ def add_or_update(
             )
             or old_status is None
         ):
-            logger.info(f"updating data for {entry_type} {aid} (status changed)")
+            if force_update:
+                logger.debug(f"db: {entry_type} {aid} force updating")
+            else:
+                logger.info(f"updating data for {entry_type} {aid} (status changed)")
             kwargs = {}
             if current_approved_status is not None:
                 kwargs["approved_status"] = current_approved_status
@@ -137,13 +203,13 @@ def add_or_update(
                     start_date=start_date,
                     end_date=end_date,
                     json_data=jdata,
-                    updated_at=datetime.utcnow(),
+                    updated_at=summary.timestamp,
                     nsfw=nsfw,
                     **kwargs,
                 )
             )
             with Session(data_engine) as sess:
-                sess.execute(stmt)
+                sess.exec(stmt)  # type: ignore[call-overload]
                 sess.commit()
     else:
         if current_approved_status is None:
@@ -162,7 +228,7 @@ def add_or_update(
                     title=title,
                     start_date=start_date,
                     end_date=end_date,
-                    updated_at=datetime.utcnow(),
+                    updated_at=summary.timestamp,
                     json_data=jdata,
                     nsfw=nsfw,
                 )
@@ -189,7 +255,19 @@ async def status_map() -> Dict[str, Any]:
     return in_db
 
 
-async def update_database(refresh_images: bool = False) -> None:
+def malid_to_image() -> Dict[Tuple[EntryType, int], str]:
+    with Session(data_engine) as sess:
+        return {
+            (i.mal_entry_type, i.mal_id): i.proxied_url
+            for i in sess.exec(select(ProxiedImage)).all()
+        }
+
+
+async def update_database(
+    refresh_images: bool = False,
+    force_update_db: bool = False,
+    skip_proxy_images: bool = False,
+) -> None:
     #  make sure MAL API is up
 
     from mal_id.metadata_cache import check_mal
@@ -202,6 +280,8 @@ async def update_database(refresh_images: bool = False) -> None:
 
     known: Set[str] = set()
     in_db = await status_map()
+
+    mal_id_image_have = malid_to_image()
 
     approved = approved_ids()
     logger.info("db: reading from linear history...")
@@ -236,6 +316,9 @@ async def update_database(refresh_images: bool = False) -> None:
             in_db=in_db[hval.e_type],
             added_dt=hval.dt,
             refresh_images=refresh_images,
+            force_update=force_update_db,
+            skip_images=skip_proxy_images,
+            mal_id_to_image=mal_id_image_have,
         )
         known.add(hval.key)
 
@@ -250,6 +333,9 @@ async def update_database(refresh_images: bool = False) -> None:
             current_approved_status=Status.UNAPPROVED,
             in_db=in_db["anime"],
             refresh_images=refresh_images,
+            force_update=force_update_db,
+            skip_images=skip_proxy_images,
+            mal_id_to_image=mal_id_image_have,
         )
         known.add(f"anime_{aid}")
 
@@ -263,6 +349,9 @@ async def update_database(refresh_images: bool = False) -> None:
             current_approved_status=Status.UNAPPROVED,
             in_db=in_db["manga"],
             refresh_images=refresh_images,
+            force_update=force_update_db,
+            skip_images=skip_proxy_images,
+            mal_id_to_image=mal_id_image_have,
         )
         known.add(f"manga_{mid}")
 
@@ -283,6 +372,9 @@ async def update_database(refresh_images: bool = False) -> None:
                 summary=request_metadata(entry_id, entry_type),
                 current_approved_status=Status.DENIED,
                 refresh_images=refresh_images,
+                force_update=force_update_db,
+                skip_images=skip_proxy_images,
+                mal_id_to_image=mal_id_image_have,
             )
             known.add(key)
 
@@ -292,7 +384,7 @@ async def update_database(refresh_images: bool = False) -> None:
 async def refresh_entry(*, entry_id: int, entry_type: str) -> None:
     summary = request_metadata(entry_id, entry_type, force_rerequest=True)
     await sleep(0)
-    logger.info(f"db: refreshed data {summary.metadata}")
+    logger.info(f"db: refreshed data for {entry_type} {entry_id}")
     add_or_update(
         summary=summary,
         force_update=True,
