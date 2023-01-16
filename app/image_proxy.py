@@ -50,11 +50,16 @@ def _prefix_url(path: str) -> str:
 
 
 @backoff.on_exception(backoff.expo, httpx.HTTPError, max_tries=3)
-def _get_image(url: str) -> bytes | None:
+def _get_image_bytes(url: str) -> bytes | None:
     with httpx.Client() as client:
         resp = client.get(url)
         if resp.status_code == 404:
+            logger.warning(f"image_proxy: got 404 for {url}")
             return None
+        elif resp.status_code == 429:
+            logger.warning(f"image_proxy: got 429 for {url}")
+            time.sleep(15)
+            return _get_image_bytes(url)
         resp.raise_for_status()
         return resp.content
 
@@ -73,26 +78,17 @@ def proxy_image(url: str) -> str | None:
         assert ext in {"jpeg", "jpg"}
 
         # download image to memory
-        with httpx.Client() as url_client:
-            image_response = url_client.get(url)
-            if image_response.status_code == 429:
-                logger.warning(f"image_proxy: got 429 for {url}")
-                time.sleep(15)
-                return proxy_image(url)
-            elif image_response.status_code == 404:
-                logger.warning(f"image_proxy: got 404 for {url}")
-                db.set(url, 404)
-                return None
-            if image_response.status_code != 200:
-                raise Exception("could not download image")
-            buf = io.BytesIO(image_response.content)
+        image_bytes = _get_image_bytes(url)
+        if image_bytes is None:
+            db.set(url, 404)
+            return None
 
         # slugify path
         key = path.replace("/", "_").lstrip("_")
 
         # upload to aws s3
         client.upload_fileobj(
-            buf,
+            io.BytesIO(image_bytes),
             Bucket=settings.S3_BUCKET,
             Key=key,
             ExtraArgs={"ContentType": "image/jpg"},
