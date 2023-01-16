@@ -10,8 +10,8 @@ export default function Navbar() {
 
   return (
     <nav className="mx-auto flex w-full flex-wrap items-center bg-teal-500 py-2 px-3">
-      <ul className="container mx-auto flex flex-grow-1 w-full items-center p-4">
-        <li className="text-xl mr-auto font-bold text-slate-100">
+      <ul className="flex-grow-1 container mx-auto flex w-full items-center p-4">
+        <li className="mr-auto text-xl font-bold text-slate-100">
           <Link href="/">Home</Link>
         </li>
         {/* settings icon */}
@@ -29,7 +29,7 @@ export default function Navbar() {
           </li>
         )}
         {/* login button with border on the right */}
-        <li className="border-3 flex items-center flex-grow-0 rounded-md bg-slate-100 p-2 px-3 text-black transition-colors">
+        <li className="border-3 flex flex-grow-0 items-center rounded-md bg-slate-100 p-2 px-3 text-black transition-colors">
           {sessionData ? (
             <button onClick={() => void signOut()}>Sign out</button>
           ) : (

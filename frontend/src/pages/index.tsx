@@ -12,7 +12,10 @@ const Home: NextPage = () => {
     <>
       <Head>
         <title>DBsentinel</title>
-        <meta name="description" content="query deleted/denied MAL info, connections to other databases" />
+        <meta
+          name="description"
+          content="query deleted/denied MAL info, connections to other databases"
+        />
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main>

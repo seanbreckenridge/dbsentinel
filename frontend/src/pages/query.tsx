@@ -187,7 +187,7 @@ const Query: NextPage = () => {
               </select>
             </label>
             <label htmlFor="limit" className="m-1">
-               Per Page
+              Per Page
               <select
                 className="ml-2 rounded-md border-2 border-gray-300 p-2"
                 value={limit}
