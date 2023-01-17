@@ -6,6 +6,7 @@ cd "${THIS_DIR}" || exit $?
 # upload to _animelist.xml and then move to prevent broken files while uploading
 SOURCE="$HPIDATA/malexport/purplepinapples/animelist.xml"
 if [[ -f "$SOURCE" ]]; then
+  cp -v "$SOURCE" "$THIS_DIR/data/animelist.xml"
   echo "Uploading $SOURCE"
   rsync -avz -e ssh "$SOURCE" vultr:~/code/dbsentinel/data/_animelist.xml &&
     ssh vultr 'mv -v ~/code/dbsentinel/data/_animelist.xml ~/code/dbsentinel/data/animelist.xml'
