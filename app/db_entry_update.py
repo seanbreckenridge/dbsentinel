@@ -174,9 +174,20 @@ def add_or_update(
         entry_in_db = aid in in_db
     else:
         with Session(data_engine) as sess:
-            assert hasattr(use_model, "id")
             entry_req = sess.exec(select(use_model).where(use_model.id == aid)).first()
             entry_in_db = entry_req is not None
+
+            # if we have the entry in the db, get the current status
+            # 'denied' entries need this to function so were not writing all the time
+            if old_status is None and entry_req is not None:
+                old_status = entry_req.approved_status
+
+    # if we have a current status, use it
+    if old_status is None:
+        with Session(data_engine) as sess:
+            entry_req = sess.exec(select(use_model).where(use_model.id == aid)).first()
+            if entry_req is not None:
+                old_status = entry_req.approved_status
 
     if entry_in_db:
         # update the entry if the status has changed or if this didnt exist in the db
@@ -365,8 +376,11 @@ async def update_database(
             await sleep(0)
         key = f"{entry_type}_{entry_id}"
         if key not in known:
+            old_status = in_db[f"{entry_type}_status"].get(entry_id)
             add_or_update(
                 summary=request_metadata(entry_id, entry_type),
+                in_db=in_db[entry_type],
+                old_status=old_status,
                 current_approved_status=Status.DENIED,
                 refresh_images=refresh_images,
                 force_update=force_update_db,
