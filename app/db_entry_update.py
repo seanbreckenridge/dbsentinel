@@ -390,6 +390,8 @@ async def update_database(
     logger.info("db: checking for deleted entries...")
     # check if any other items exist that arent in the db already
     # those were denied or deleted (long time ago)
+    #
+    # TODO: make this async friendly so that HTTP server doesnt hang while its searching
     all_keys = [p.absolute() for p in metadatacache_dir.rglob("*/key")]
     all_urls = set()
     for p in all_keys:
