@@ -378,12 +378,11 @@ async def update_database(
         status_changed_at = None
         if current_id_status == Status.APPROVED:
             entry_created_at = parse_datetime_from_dict(smmry.metadata, "created_at")
-            entry_approved_at = hval.dt
             # this was the date mal-id-cache was created, so if its before that, use
             # the MAL API created_at field. otherwise, use when it appeared in our
             # cache, since otherwise the created_at is when the entry was submitted
             # by a user to MAL, not when it was approved
-            if entry_approved_at.date() < date(2019, 7, 21):
+            if entry_created_at is not None and entry_created_at.date() < date(2019, 7, 21):
                 status_changed_at = entry_created_at
             else:
                 # use the value from git history
