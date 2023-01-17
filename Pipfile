@@ -26,4 +26,4 @@ python_version = "3.10"
 
 [scripts]
 dev = 'uvicorn app.main:app --workers 4 --port 5200 --reload --reload-exclude data'
-prod = 'uvicorn app.main:app --workers 4 --port 5200'
+prod = 'uvicorn app.main:app --port 5200'

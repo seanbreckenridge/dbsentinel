@@ -3,6 +3,8 @@
 THIS_DIR="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
 cd "${THIS_DIR}" || exit $?
 
+set -o pipefail
+
 source ./.env
 
 havecmd() {
@@ -17,9 +19,8 @@ havecmd() {
 
 set -e
 havecmd pipenv
-havecmd jq
-havecmd sponge 'Typically available in the moreutils package'
 havecmd evry "Install with 'cargo install evry'"
+havecmd wait-for-internet "Install with 'cargo install wait-for-internet'"
 
 readonly REPO='https://github.com/seanbreckenridge/mal-id-cache'
 readonly REPO_TARGET='./data/mal-id-cache'
@@ -80,8 +81,7 @@ iter() {
 	(cd "$REPO_TARGET" && git pull)
 	if git_hash_changed; then
 		pipenv run python3 main.py mal linear-history >'./data/data.jsonl' || exit $?
-		jq -s <./data/data.jsonl | sponge ./data/linear_history.json || exit $?
-		rm -f ./data/data.jsonl
+		pipenv run python3 main.py mal merge-linear-history
 	fi
 	set -x
 	set +e

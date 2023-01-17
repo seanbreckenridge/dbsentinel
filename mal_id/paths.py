@@ -7,6 +7,7 @@ if not data_dir.exists():
 mal_id_cache_dir = data_dir / "mal-id-cache"
 assert mal_id_cache_dir.exists()
 
+linear_history_unmerged = data_dir / "data.jsonl"
 linear_history_file = data_dir / "linear_history.json"
 metadatacache_dir = data_dir / "metadata"
 

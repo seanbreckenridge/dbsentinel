@@ -14,7 +14,7 @@ from mal_id.ids import (
     _estimate_page,
 )
 from mal_id.index_requests import request_pages, currently_requesting, queue
-from mal_id.paths import sqlite_db_path
+from mal_id.paths import sqlite_db_path, linear_history_unmerged, linear_history_file
 
 
 @click.group()
@@ -36,6 +36,21 @@ def linear_history() -> None:
     """Create a big json file with dates based on the git timestamps for when entries were added to cache"""
     for d in track_diffs():
         print(orjson.dumps(d).decode("utf-8"))
+
+
+@mal.command(short_help="merge json objects into list")
+def merge_linear_history() -> None:
+    merged = []
+    with linear_history_unmerged.open("r") as f:
+        for line in f:
+            data = orjson.loads(line)
+            merged.append(data)
+
+    serialized = orjson.dumps(merged)
+    with linear_history_file.open("wb") as w:
+        w.write(serialized)
+
+    linear_history_unmerged.unlink()
 
 
 @mal.command(short_help="make sure MAL is not down")
