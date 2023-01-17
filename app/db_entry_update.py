@@ -103,10 +103,13 @@ async def add_or_update(
 
     if skip_images is False:
         img = await summary_proxy_image(summary)
+        await sleep(0)
         # may be that the summary is so old a new image has been added instead
         if img is None and refresh_images is True:
             summary = request_metadata(url_id, entry_type, force_rerequest=True)
+            await sleep(0)
             img = await summary_proxy_image(summary)
+            await sleep(0)
             if img is not None:
                 logger.info(
                     f"db: {entry_type} {url_id} successfully refreshed image {img}"
@@ -124,9 +127,11 @@ async def add_or_update(
                         .where(ProxiedImage.mal_entry_type == entry_enum)
                     ).all()
                 }
+            await sleep(0)
 
         # if we have the local dict db and we have a proxied image
         if mal_id_to_image is not None and img is not None:
+
             mal_image_url = summary_main_image(summary)
 
             image_key = (entry_enum, url_id)
@@ -144,6 +149,7 @@ async def add_or_update(
                             )
                         )
                         sess.commit()
+                    await sleep(0)
                 else:
                     # if we have the image in the database and it is different
                     if mal_id_to_image[image_key] != img:
@@ -155,6 +161,7 @@ async def add_or_update(
                                 .values(mal_url=mal_image_url, proxied_url=img)
                             )
                             sess.commit()
+                        await sleep(0)
 
     use_model = AnimeMetadata if entry_type == "anime" else MangaMetadata
 
@@ -173,9 +180,11 @@ async def add_or_update(
     if in_db is not None:
         entry_in_db = aid in in_db
     else:
+
         with Session(data_engine) as sess:
             entry_req = sess.exec(select(use_model).where(use_model.id == aid)).first()
             entry_in_db = entry_req is not None
+            await sleep(0)
 
             # if we have the entry in the db, get the current status
             # 'denied' entries need this to function so were not writing all the time
@@ -188,6 +197,7 @@ async def add_or_update(
             entry_req = sess.exec(select(use_model).where(use_model.id == aid)).first()
             if entry_req is not None:
                 old_status = entry_req.approved_status
+        await sleep(0)
 
     if entry_in_db:
         # update the entry if the status has changed or if this didnt exist in the db
@@ -202,7 +212,7 @@ async def add_or_update(
                 logger.debug(f"db: {entry_type} {aid} force updating")
             else:
                 logger.info(f"updating data for {entry_type} {aid} (status changed)")
-            kwargs = {}
+            kwargs: Dict[str, Any] = {}
             if current_approved_status is not None:
                 kwargs["approved_status"] = current_approved_status
             if status_changed_at is not None:
@@ -224,6 +234,7 @@ async def add_or_update(
             with Session(data_engine) as sess:
                 sess.exec(stmt)  # type: ignore[call-overload]
                 sess.commit()
+                await sleep(0)
     else:
         if current_approved_status is None:
             logger.warning(
@@ -252,6 +263,7 @@ async def add_or_update(
                 )
             )
             sess.commit()
+            await sleep(0)
 
 
 async def status_map() -> Dict[str, Any]:
@@ -264,6 +276,7 @@ async def status_map() -> Dict[str, Any]:
                 sess.query(MangaMetadata.id, MangaMetadata.approved_status)
             ),
         }
+    await sleep(0)
     in_db["anime"] = set(i for i, _ in in_db["anime_tup"])
     in_db["manga"] = set(i for i, _ in in_db["manga_tup"])
 
@@ -303,12 +316,11 @@ async def update_database(
 
     approved = approved_ids()
     logger.info("db: reading from linear history...")
-    for i, hdict in enumerate(read_linear_history()):
+    for hdict in read_linear_history():
         hval = Entry.from_dict(hdict)
 
         # be nice to other tasks
-        if i % 10 == 0:
-            await sleep(0)
+        await sleep(0)
         approved_use: Set[int] = getattr(approved, hval.e_type)
 
         # if its in the linear history, it was approved at one point
@@ -342,9 +354,8 @@ async def update_database(
 
     unapproved = unapproved_ids()
     logger.info("db: updating from unapproved anime history...")
-    for i, aid in enumerate(unapproved.anime):
-        if i % 10 == 0:
-            await sleep(0)
+    for aid in unapproved.anime:
+        await sleep(0)
         smmry = request_metadata(aid, "anime")
         await add_or_update(
             summary=smmry,
@@ -360,9 +371,8 @@ async def update_database(
         known.add(f"anime_{aid}")
 
     logger.info("db: updating from unapproved manga history...")
-    for i, mid in enumerate(unapproved.manga):
-        if i % 10 == 0:
-            await sleep(0)
+    for mid in unapproved.manga:
+        await sleep(0)
         smmry = request_metadata(mid, "manga")
         await add_or_update(
             summary=smmry,
@@ -381,10 +391,12 @@ async def update_database(
     # check if any other items exist that arent in the db already
     # those were denied or deleted (long time ago)
     all_keys = [p.absolute() for p in metadatacache_dir.rglob("*/key")]
-    all_urls = set(p.read_text() for p in all_keys)
-    for i, (entry_type, entry_id) in enumerate(map(api_url_to_parts, all_urls)):
-        if i % 10 == 0:
-            await sleep(0)
+    all_urls = set()
+    for p in all_keys:
+        all_urls.add(p.read_text().strip())
+        await sleep(0)
+    for entry_type, entry_id in map(api_url_to_parts, all_urls):
+        await sleep(0)
         key = f"{entry_type}_{entry_id}"
         if key not in known:
             old_status = in_db[f"{entry_type}_status"].get(entry_id)
