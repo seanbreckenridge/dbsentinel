@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+THIS_DIR="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
+cd "${THIS_DIR}" || exit $?
+
+# upload to _animelist.xml and then move to prevent broken files while uploading
+SOURCE="$HPIDATA/malexport/purplepinapples/animelist.xml"
+if [[ -f "$SOURCE" ]]; then
+  echo "Uploading $SOURCE"
+  rsync -avz -e ssh "$SOURCE" vultr:~/code/dbsentinel/data/_animelist.xml &&
+    ssh vultr 'mv -v ~/code/dbsentinel/data/_animelist.xml ~/code/dbsentinel/data/animelist.xml'
+else
+  echo "File not found: $SOURCE"
+fi

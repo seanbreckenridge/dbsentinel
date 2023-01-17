@@ -8,6 +8,8 @@ from sqlmodel import Session
 from sqlmodel.sql.expression import select
 from pydantic import BaseModel, Field
 
+from mal_id.log import logger
+from mal_id.common import to_utc
 from app.db import (
     get_db,
     ApprovedBase,
@@ -39,6 +41,10 @@ class QueryModelOut(BaseModel):
     alternate_titles: Dict[str, Any]
     json_data: Dict[str, Any]
     approved_status: Status
+    metadata_upadated_at: str
+    status_updated_at: str
+    start_date: str | None
+    end_date: str | None
 
 
 class QueryOut(BaseModel):
@@ -57,7 +63,7 @@ class QueryIn(BaseModel):
     approved_status: StatusIn = Field(default=StatusIn.ALL)
     order_by: Optional[str] = Field(
         default="id",
-        regex="^(id|title|start_date|end_date|approved_status|status_changed_at|updated_at)$",
+        regex="^(id|title|start_date|end_date|status_updated_at|metadata_upadated_at)$",
     )
     sort: Optional[str] = Field(default="desc", regex="^(asc|desc)$")
     limit: int = Field(default=100, le=250)
@@ -70,10 +76,11 @@ def _serialize_date(dd: date | None) -> Optional[str]:
     return dd.isoformat()
 
 
-def _serialize_datetime(dd: datetime | None) -> Optional[int]:
-    if dd is None:
-        return None
-    return int(dd.timestamp())
+# https://github.com/colinhacks/zod#datetime-validation
+# parse with z.string().datetime({ offset: true })
+def to_zod_javascript_datetime(dd: datetime) -> str:
+    utc_dt = to_utc(dd, tz_aware=True)
+    return utc_dt.isoformat()
 
 
 APPROVED_KEYS = {
@@ -106,6 +113,7 @@ def _pick_image(metadata: ApprovedBase, proxied: ProxiedImage | None) -> Optiona
 async def get_metadata_counts(
     info: QueryIn, sess: Session = Depends(get_db)
 ) -> QueryOut:
+    logger.info(f"query: {info}")
     model = AnimeMetadata if info.entry_type == "anime" else MangaMetadata
     entry_type = EntryType.from_str(info.entry_type)
 
@@ -141,10 +149,15 @@ async def get_metadata_counts(
         query = query.where(model.approved_status == info.approved_status)
 
     # order/sort
-    order_attr = getattr(model, info.order_by)  # type: ignore
-    query = query.order_by(
-        order_attr.asc() if info.sort == "asc" else order_attr.desc()
-    )
+    order_attr = {
+        "id": model.id,
+        "title": model.title,
+        "start_date": model.start_date,
+        "end_date": model.end_date,
+        "status_updated_at": model.status_changed_at,
+        "metadata_upadated_at": model.updated_at,
+    }[info.order_by or "id"]
+    query = query.order_by(order_attr.desc() if info.sort == "desc" else order_attr.asc())  # type: ignore
 
     count = sess.exec(select(func.count()).select_from(query.subquery())).first()  # type: ignore
     assert isinstance(count, int)
@@ -165,13 +178,11 @@ async def get_metadata_counts(
                 nsfw=row.nsfw,
                 image_url=_pick_image(row, image),
                 alternate_titles=row.json_data.get("alternative_titles", {}),
-                json_data={
-                    "start_date": _serialize_date(row.start_date),
-                    "end_date": _serialize_date(row.end_date),
-                    "updated_at": _serialize_datetime(row.updated_at),
-                    "status_changed_at": _serialize_datetime(row.status_changed_at),
-                    **_filter_keys_for_status(row.json_data, row.approved_status),
-                },
+                metadata_upadated_at=to_zod_javascript_datetime(row.updated_at),
+                status_updated_at=to_zod_javascript_datetime(row.status_changed_at),
+                start_date=_serialize_date(row.start_date),
+                end_date=_serialize_date(row.end_date),
+                json_data=_filter_keys_for_status(row.json_data, row.approved_status),
                 approved_status=row.approved_status,
             )
             for row, image in rows

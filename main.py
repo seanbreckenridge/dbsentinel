@@ -11,10 +11,16 @@ from mal_id.ids import (
     approved_ids,
     unapproved_ids,
     estimate_all_users_max,
+    estimate_deleted_request_pages,
     _estimate_page,
 )
 from mal_id.index_requests import request_pages, currently_requesting, queue
-from mal_id.paths import sqlite_db_path, linear_history_unmerged, linear_history_file
+from mal_id.paths import (
+    sqlite_db_path,
+    linear_history_unmerged,
+    linear_history_file,
+    my_animelist_xml,
+)
 
 
 @click.group()
@@ -116,6 +122,7 @@ def estimate_user_recent(
     )
     assert len(check_usernames) > 0
     check_pages = estimate_all_users_max(check_usernames, list_type)
+
     if print_url and check_pages > 0:
         click.echo(f"type={list_type}&pages={check_pages}")
     else:
@@ -123,10 +130,22 @@ def estimate_user_recent(
             f"should check {check_pages} {list_type} pages".format(check_pages),
             err=True,
         )
+
+    if my_animelist_xml.exists() and list_type == "anime":
+        deleted_pages = estimate_deleted_request_pages(my_animelist_xml)
+        click.echo(
+            f"deleted: should check {deleted_pages} anime pages".format(deleted_pages),
+            err=True,
+        )
+
+        if deleted_pages > 0 and deleted_pages > check_pages:
+            check_pages = deleted_pages
+
+    if check_pages == 0:
+        click.echo("no new entries found, skipping request", err=True)
+        return
+
     if request:
-        if check_pages == 0:
-            click.echo("no new entries found, skipping request")
-            return
         if timid:
             cur = currently_requesting()
             if cur is not None:

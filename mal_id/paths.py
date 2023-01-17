@@ -27,3 +27,5 @@ unapproved_anime_path = unapproved_dir / "anime.json"
 unapproved_manga_path = unapproved_dir / "manga.json"
 
 image_data = data_dir / "image_info.json"
+
+my_animelist_xml = data_dir / "animelist.xml"

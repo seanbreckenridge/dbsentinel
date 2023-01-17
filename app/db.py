@@ -39,8 +39,10 @@ class ApprovedBase(SQLModel, table=False):
     nsfw: Optional[bool]
     json_data: Dict[str, Any] = Field(default={}, sa_column=Column(JSON))
     approved_status: Status = Field(default=Status.UNAPPROVED)
+    # when the entry was approved/denied/deleted etc.
     status_changed_at: datetime
-    updated_at: Optional[datetime] = Field(default_factory=datetime.utcnow)
+    # when metadata for this was updated
+    updated_at: datetime
     start_date: Optional[date]
     end_date: Optional[date]
 

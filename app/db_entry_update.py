@@ -1,5 +1,5 @@
-from typing import Optional, Set, Dict, Any, Tuple
-from datetime import datetime
+from typing import Optional, Set, Dict, Any, Tuple, List
+from datetime import datetime, date
 from asyncio import sleep
 
 from aiopath import AsyncPath  # type: ignore[import]
@@ -15,6 +15,7 @@ from mal_id.linear_history import read_linear_history, Entry
 from mal_id.ids import approved_ids, unapproved_ids
 from mal_id.paths import metadatacache_dir
 from mal_id.log import logger
+from mal_id.common import to_utc
 
 from app.db import (
     Status,
@@ -250,6 +251,7 @@ async def add_or_update(
         logger.info(f"adding {entry_type} {aid} to db")
         # add the entry
         with Session(data_engine) as sess:
+            assert summary.timestamp is not None
             sess.add(
                 use_model(
                     approved_status=current_approved_status,
@@ -295,6 +297,36 @@ def malid_to_image() -> Dict[Tuple[EntryType, int], str]:
         }
 
 
+def parse_datetime_from_dict(data: dict, key: str) -> Optional[datetime]:
+    if key in data:
+        try:
+            return to_utc(datetime.fromisoformat(data[key]))
+        except ValueError:
+            return None
+    return None
+
+
+def unapproved_summary_datetime(summary: Summary) -> datetime:
+    if dd := parse_datetime_from_dict(summary.metadata, "created_at"):
+        return dd
+    assert summary.timestamp is not None
+    return summary.timestamp
+
+
+def deleted_last_datetime(
+    summary: Summary, dates: Optional[List[datetime]] = None
+) -> datetime:
+    if dates is None:
+        dates = []
+    if cd := parse_datetime_from_dict(summary.metadata, "created_at"):
+        dates.append(cd)
+    if dd := parse_datetime_from_dict(summary.metadata, "updated_at"):
+        dates.append(dd)
+    assert summary.timestamp is not None
+    dates.append(summary.timestamp)
+    return max(map(to_utc, dates))
+
+
 async def update_database(
     refresh_images: bool = False,
     force_update_db: bool = False,
@@ -338,14 +370,39 @@ async def update_database(
             )
             was_approved = True
 
+        smmry = request_metadata(
+            hval.entry_id, hval.e_type, force_rerequest=was_approved
+        )
+
+        # figure out when this was approved/deleted
+        status_changed_at = None
+        if current_id_status == Status.APPROVED:
+            entry_created_at = parse_datetime_from_dict(smmry.metadata, "created_at")
+            entry_approved_at = hval.dt
+            # this was the date mal-id-cache was created, so if its before that, use
+            # the MAL API created_at field. otherwise, use when it appeared in our
+            # cache, since otherwise the created_at is when the entry was submitted
+            # by a user to MAL, not when it was approved
+            if entry_approved_at.date() < date(2019, 7, 21):
+                status_changed_at = entry_created_at
+            else:
+                # use the value from git history
+                status_changed_at = hval.dt
+        elif current_id_status == Status.DELETED:
+            status_changed_at = deleted_last_datetime(smmry, dates=[hval.dt])
+
+        if status_changed_at is None:
+            logger.warning(
+                f"status_changed_at None for {hval.e_type} {hval.entry_id}, using metadata timestamp"
+            )
+            status_changed_at = smmry.timestamp
+
         await add_or_update(
-            summary=request_metadata(
-                hval.entry_id, hval.e_type, force_rerequest=was_approved
-            ),
+            summary=smmry,
             current_approved_status=current_id_status,
             old_status=old_status,
             in_db=in_db[hval.e_type],
-            status_changed_at=hval.dt,
+            status_changed_at=status_changed_at,
             refresh_images=refresh_images,
             force_update=force_update_db,
             skip_images=skip_proxy_images,
@@ -362,7 +419,7 @@ async def update_database(
             summary=smmry,
             old_status=in_db["anime_status"].get(aid),
             current_approved_status=Status.UNAPPROVED,
-            status_changed_at=smmry.timestamp,
+            status_changed_at=unapproved_summary_datetime(smmry),
             in_db=in_db["anime"],
             refresh_images=refresh_images,
             force_update=force_update_db,
@@ -380,7 +437,7 @@ async def update_database(
             old_status=in_db["manga_status"].get(mid),
             current_approved_status=Status.UNAPPROVED,
             in_db=in_db["manga"],
-            status_changed_at=smmry.timestamp,
+            status_changed_at=unapproved_summary_datetime(smmry),
             refresh_images=refresh_images,
             force_update=force_update_db,
             skip_images=skip_proxy_images,
@@ -404,7 +461,7 @@ async def update_database(
                 summary=smmry,
                 in_db=in_db[entry_type],
                 old_status=old_status,
-                status_changed_at=smmry.timestamp,
+                status_changed_at=deleted_last_datetime(smmry),
                 current_approved_status=Status.DENIED,
                 refresh_images=refresh_images,
                 force_update=force_update_db,
@@ -420,6 +477,10 @@ async def refresh_entry(*, entry_id: int, entry_type: str) -> None:
     summary = request_metadata(entry_id, entry_type, force_rerequest=True)
     await sleep(0)
     logger.info(f"db: refreshed data for {entry_type} {entry_id}")
+    # just update the basic metadata
+    # Note:
+    # this doesnt updated current_approved_status or status_changed_at
+    # that should be done by the full update
     await add_or_update(
         summary=summary,
         force_update=True,

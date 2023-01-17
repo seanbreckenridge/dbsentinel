@@ -13,6 +13,7 @@ from malexport.exporter.mal_list import BASE_URL
 from mal_id.paths import mal_id_cache_dir, unapproved_anime_path, unapproved_manga_path
 from mal_id.log import logger
 from mal_id.common import backoff_handler
+from mal_id.parse_xml import parse_user_ids
 
 
 class Approved(NamedTuple):
@@ -205,3 +206,21 @@ def estimate_all_users_max(
 ) -> int:
     max_pages = [estimate_using_user_recent(check_type, u) for u in user_names]
     return max(max_pages)
+
+
+def estimate_deleted_request_pages(animelist_xml: Path) -> int:
+    assert animelist_xml.exists()
+
+    try:
+        my_user_ids = parse_user_ids(animelist_xml)
+    except Exception as e:
+        logger.exception(str(e), exc_info=e)
+        return 0
+
+    anime_ids = approved_ids().anime
+    deleted_ids: Set[int] = my_user_ids - anime_ids
+
+    if len(deleted_ids) == 0:
+        return 0
+
+    return _estimate_page(min(deleted_ids), sorted(anime_ids, reverse=True))
