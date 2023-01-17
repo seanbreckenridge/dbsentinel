@@ -172,7 +172,7 @@ def add_or_update(
     entry_in_db = False
     if in_db is not None:
         entry_in_db = aid in in_db
-    elif force_update:
+    else:
         with Session(data_engine) as sess:
             assert hasattr(use_model, "id")
             entry_req = sess.exec(select(use_model).where(use_model.id == aid)).first()
@@ -365,9 +365,6 @@ async def update_database(
             await sleep(0)
         key = f"{entry_type}_{entry_id}"
         if key not in known:
-            # already inserted into the db
-            if entry_id in in_db[entry_type]:
-                continue
             add_or_update(
                 summary=request_metadata(entry_id, entry_type),
                 current_approved_status=Status.DENIED,

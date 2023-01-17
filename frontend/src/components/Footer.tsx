@@ -5,7 +5,7 @@ export default function Footer() {
       <p>
         {`${new Date().getFullYear()} © dbsentinel `}
         <a
-          className="text-blue-400 hover:text-blue-300"
+          className="text-blue-600 hover:text-blue-700"
           href="https://github.com/seanbreckenridge/dbsentinel"
         >
           source code

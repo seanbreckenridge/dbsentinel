@@ -5,6 +5,7 @@ import { useRouter } from "next/router";
 import { useState, useRef, useEffect } from "react";
 import ReactPaginate from "react-paginate";
 import { type QueryOutput } from "../server/api/routers/data";
+import { DebounceInput } from "react-debounce-input";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -14,6 +15,16 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 import { api } from "../utils/api";
+
+const ALLOWED_JSON_KEYS = ["num_episodes", "volumes", "chapters", "media_type"];
+
+const unslugify = (slug: string) => {
+  return slug
+    .split("_")
+    .join(" ");
+};
+
+// TODO: Add ability to sort
 
 const Query: NextPage = () => {
   // form values
@@ -166,11 +177,12 @@ const Query: NextPage = () => {
           >
             <label htmlFor="title" className="m-1">
               Title
-              <input
+              <DebounceInput
                 className="ml-2 rounded-md border-2 border-gray-300 p-2"
-                type="text"
-                placeholder="Title"
+                aria-label="Search"
+                placeholder="Search..."
                 value={title}
+                debounceTimeout={500}
                 onChange={(e) => {
                   setTitle(e.target.value);
                   usePageRef.current = true;
@@ -304,35 +316,25 @@ const Query: NextPage = () => {
               <div className="text-red-500">
                 Error: {JSON.stringify(query.error.message)}
               </div>
-            ) : query.data ? (
+            ) : query.data && query.data.total_count > 0 ? (
               <div className="container mx-auto flex w-full flex-col items-center justify-center">
                 <table className="table-fixed">
                   <thead>
                     <tr className="border-2 border-black bg-gray-100">
-                      <th className="px-4 py-2">Image</th>
-                      <th className="px-4 py-2">ID</th>
-                      <th className="px-4 py-2">SFW</th>
-                      <th className="px-4 py-2">Title</th>
-                      <th className="px-4 py-2">Status</th>
+                      <th className="px-4 py-2"></th>
+                      <th className="px-4 py-2">Meta</th>
+                      <th className="px-4 py-2">Data</th>
                     </tr>
                   </thead>
                   <tbody>
                     {query.data.results.map((entry) => {
                       // TODO: add:
-                      // - link to mal if it still exists
                       // - link to anilist if that exists
-                      // - alternative titles
-                      // - episodes
-                      // - chapters
-                      // - media_type
-                      //
-                      // if something is denied/deleted, then add a button to show all saved data
-                      //
                       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                      const img = entry.image_url ?? undefined
+                      const img = entry.image_url ?? undefined;
                       return (
                         <tr key={entry.id}>
-                          <td className="mx-auto w-1/12 border px-4 py-2">
+                          <td className="w-1/12 border">
                             {img ? (
                               <a
                                 title="View Image"
@@ -361,22 +363,77 @@ const Query: NextPage = () => {
                             )}
                           </td>
                           <td className="w-1/12 border px-4 py-2">
-                            {entry.id}
-                          </td>
-                          <td className="w-1/12 border px-4 py-2">
-                            <div>
-                              {entry.nsfw === null || entry.nsfw === undefined
-                                ? "Unknown"
-                                : entry.nsfw
-                                ? "NSFW"
-                                : "SFW"}
+                            <div className="flex w-full flex-col items-center justify-center">
+                              <div>
+                                {"ID: "}
+                                {entry.approved_status != "denied" &&
+                                entry.approved_status != "deleted" ? (
+                                  <a
+                                    className="text-blue-600"
+                                    title="View on MAL"
+                                    href={`https://myanimelist.net/anime/${entry.id}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                  >
+                                    {entry.id}
+                                  </a>
+                                ) : (
+                                  <div>{entry.id}</div>
+                                )}
+                              </div>
+                              <div className="my-1 text-xs">
+                                {entry.nsfw === null || entry.nsfw === undefined
+                                  ? "Unknown"
+                                  : entry.nsfw
+                                  ? "NSFW"
+                                  : "SFW"}
+                              </div>
+                              <div className="text-xs">
+                                {entry.approved_status}
+                              </div>
                             </div>
                           </td>
                           <td className="w-4/12 border px-4 py-2">
-                            {entry.title}
-                          </td>
-                          <td className="w-1/12 border px-4 py-2">
-                            {entry.approved_status}
+                            <div className="flex w-full flex-col items-center justify-center">
+                              <div>{entry.title}</div>
+                              <hr className="my-2 w-10/12" />
+                              <ul className="flex w-full flex-row items-center justify-center">
+                                {/* eslint-disable-next-line @typescript-eslint/no-unsafe-argument */}
+                                {Object.keys(entry.json_data)
+                                  .filter((key: string) =>
+                                    ALLOWED_JSON_KEYS.includes(key)
+                                  )
+                                  .map((key: string) => {
+                                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                                    const value = entry.json_data[
+                                      key
+                                    ] as string;
+                                    const keyName =
+                                      key == "num_episodes" ? "episodes" : key;
+                                    return (
+                                      <li
+                                        key={key}
+                                        className="mx-3 flex flex-row items-center justify-center"
+                                      >
+                                        <div className="mr-1 text-xs">
+                                          {unslugify(keyName)}
+                                          {":"}
+                                        </div>
+                                        <div className="text-xs">
+                                          {value.toString()}
+                                        </div>
+                                      </li>
+                                    );
+                                  })}
+                                <li className="mx-3 flex flex-row items-center justify-center" title="Show All Info">
+                                  <a className="text-blue-600 text-xs cursor" role="button" onClick={() => {
+                                    alert(JSON.stringify(entry, null, 2));
+                                    }}>
+                                    more info
+                                  </a>
+                                </li>
+                              </ul>
+                            </div>
                           </td>
                         </tr>
                       );
@@ -384,6 +441,8 @@ const Query: NextPage = () => {
                   </tbody>
                 </table>
               </div>
+            ) : query.data && query.data.total_count === 0 ? (
+              <div className="text-red-500">No Results</div>
             ) : (
               <div className="text-gray-500">Loading...</div>
             )}

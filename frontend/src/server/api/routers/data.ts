@@ -45,6 +45,7 @@ const QueryOutputValidator = z.object({
       id: z.number(),
       title: z.string(),
       nsfw: z.boolean().nullish(),
+      alternate_titles: z.any(),
       image_url: z.string().nullish(),
       json_data: z.any(),
       approved_status: z.enum(["approved", "denied", "unapproved", "deleted"]),

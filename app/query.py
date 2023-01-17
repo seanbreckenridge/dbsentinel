@@ -36,6 +36,7 @@ class QueryModelOut(BaseModel):
     title: str
     nsfw: Optional[bool]
     image_url: Optional[str]
+    alternate_titles: Dict[str, Any]
     json_data: Dict[str, Any]
     approved_status: Status
 
@@ -76,7 +77,7 @@ def _serialize_datetime(dd: datetime | None) -> Optional[int]:
 
 
 APPROVED_KEYS = {
-    "episodes",
+    "num_episodes",
     "chapters",
     "volumes",
     "media_type",
@@ -163,6 +164,7 @@ async def get_metadata_counts(
                 title=row.title,
                 nsfw=row.nsfw,
                 image_url=_pick_image(row, image),
+                alternate_titles=row.json_data.get("alternative_titles", {}),
                 json_data={
                     "start_date": _serialize_date(row.start_date),
                     "end_date": _serialize_date(row.end_date),

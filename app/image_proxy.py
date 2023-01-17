@@ -3,6 +3,7 @@ import json
 import time
 import shutil
 import atexit
+from typing import cast
 from pathlib import Path
 from urllib.parse import urlparse
 from functools import cache
@@ -40,7 +41,7 @@ def setup_db() -> pickledb.PickleDB:
     Path(backup).write_text(json.dumps(pdb.db))
 
     if not AUTO_DUMP:
-        atexit.register(pdb.dump)
+        atexit.register(lambda: cast(object, pdb.dump()))
 
     logger.info(
         f"image_proxy: loaded {len(pdb.db)} entries from {image_data} {AUTO_DUMP=} "
