@@ -93,14 +93,17 @@ def check_mal() -> bool:
     try:
         logger.info("checking if MAL API is up...")
         resp = mal_api_session().session.get("https://api.myanimelist.net/v2/anime/1")
+        if resp.status_code == 401:
+            refresh_token()
+            return check_mal()
         resp.raise_for_status()
         data = resp.json()
         assert data["id"] == 1
         assert data["title"] == "Cowboy Bebop"
         logger.info("MAL API is up")
         return True
-    except requests.exceptions.RequestException:
-        logger.warning("MAL API is down!")
+    except requests.exceptions.RequestException as e:
+        logger.warning("MAL API is down!", exc_info=e)
         return False
 
 

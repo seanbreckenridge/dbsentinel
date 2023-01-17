@@ -16,7 +16,7 @@ havecmd() {
 }
 
 set -e
-havecmd python3
+havecmd pipenv
 havecmd jq
 havecmd sponge 'Typically available in the moreutils package'
 havecmd evry "Install with 'cargo install evry'"
@@ -76,24 +76,24 @@ iter() {
 	[[ -e "$REPO_TARGET" ]] || git clone "$REPO" "$REPO_TARGET"
 	(cd "$REPO_TARGET" && git pull)
 	if git_hash_changed; then
-		python3 main.py mal linear-history >'./data/data.jsonl' || exit $?
+		pipenv run python3 main.py mal linear-history >'./data/data.jsonl' || exit $?
 		jq -s <./data/data.jsonl | sponge ./data/linear_history.json || exit $?
 		rm -f ./data/data.jsonl
 	fi
 	set -x
 	set +e
-	if ! python3 main.py mal check-mal; then
+	if ! pipenv run python3 main.py mal check-mal; then
 		echo 'mal is down, skipping updates...'
 		return 1
 	fi
 	if [[ -z "$SKIP_UPDATE_METADATA" ]]; then
 		if wait-for-internet --text 'checking for internet....' --timeout 1; then
-			python3 main.py mal update-metadata || return $?
+			pipenv run python3 main.py mal update-metadata || return $?
 		fi
 	fi
 	if curl -s localhost:4001 >/dev/null; then
 		evry 10 minutes -update_dbsentinal_user && {
-			python3 main.py mal estimate-user-recent ./usernames.txt --request --timid || return $?
+			pipenv run python3 main.py mal estimate-user-recent ./usernames.txt --request --timid || return $?
 		}
 	elif [[ -n "$VULTR_UPDATE" ]]; then
 		# manual update sshing as a stopgap
@@ -118,7 +118,7 @@ main() {
 	# if loop, then run this once a minute
 	if [[ "$1" == '-l' ]]; then
 		while true; do
-			sleep 4m
+			sleep 10m
 			iter
 		done
 	fi
