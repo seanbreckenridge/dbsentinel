@@ -1,8 +1,6 @@
-This is a work in progress
-
 A counterpart to <https://sean.fish/mal_unapproved/>. That lists entries that have yet to be approved, denied entries and deleted entries
 
-This lists entries that are approved, with the most recently approved entries at the top
+Frontend: <https://github.com/seanbreckenridge/dbsentinel-next>
 
 # WORK IN PROGRESS
 
@@ -13,6 +11,7 @@ This lists entries that are approved, with the most recently approved entries at
 - [x] proxy images from MAL incase they get deleted
 - [x] add command to refresh summary for entries with missing images
 - [x] frontend to view approved/denied/deleted/unapproved entries
+- [ ] let page be ordered by when items were approved
 - [ ] compare against my list to find deleted entries, request that many pages
 - [ ] roles to give people more permissions
   - [ ] let users refresh data for old entries
