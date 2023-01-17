@@ -11,6 +11,7 @@ Frontend: <https://github.com/seanbreckenridge/dbsentinel-next>
 - [x] proxy images from MAL incase they get deleted
 - [x] add command to refresh summary for entries with missing images
 - [x] frontend to view approved/denied/deleted/unapproved entries
+- [ ] add info on search page letting you know what each approved status means
 - [ ] let page be ordered by when items were approved/deleted/denied (guess by metadata if not available)
 - [ ] compare against my list to find deleted entries, request that many pages
 - [ ] roles to give people more permissions

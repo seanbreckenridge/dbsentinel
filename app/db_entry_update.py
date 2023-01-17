@@ -74,19 +74,19 @@ def summary_main_image(summary: Summary) -> str | None:
     return None
 
 
-def summary_proxy_image(summary: Summary) -> str | None:
+async def summary_proxy_image(summary: Summary) -> str | None:
     if main_image := summary_main_image(summary):
-        return proxy_image(main_image)
+        return await proxy_image(main_image)
     return None
 
 
-def add_or_update(
+async def add_or_update(
     *,
     summary: Summary,
     current_approved_status: Status | None = None,
     old_status: Optional[Status] = None,
     in_db: Optional[Set[int]] = None,
-    added_dt: Optional[datetime] = None,
+    status_changed_at: Optional[datetime] = None,
     force_update: bool = False,
     mal_id_to_image: Optional[Dict[Tuple[EntryType, int], str]] = None,
     refresh_images: bool = False,
@@ -102,11 +102,11 @@ def add_or_update(
         return
 
     if skip_images is False:
-        img = summary_proxy_image(summary)
+        img = await summary_proxy_image(summary)
         # may be that the summary is so old a new image has been added instead
         if img is None and refresh_images is True:
             summary = request_metadata(url_id, entry_type, force_rerequest=True)
-            img = summary_proxy_image(summary)
+            img = await summary_proxy_image(summary)
             if img is not None:
                 logger.info(
                     f"db: {entry_type} {url_id} successfully refreshed image {img}"
@@ -205,6 +205,8 @@ def add_or_update(
             kwargs = {}
             if current_approved_status is not None:
                 kwargs["approved_status"] = current_approved_status
+            if status_changed_at is not None:
+                kwargs["status_changed_at"] = status_changed_at
             # update the status to deleted
             stmt = (
                 update(use_model)
@@ -228,13 +230,18 @@ def add_or_update(
                 f"trying to add {entry_type} {aid} with status as None! skipping..."
             )
             return
+        if status_changed_at is None:
+            logger.warning(
+                f"trying to add {entry_type} {aid} with status_changed_at as None! skipping..."
+            )
+            return
         logger.info(f"adding {entry_type} {aid} to db")
         # add the entry
         with Session(data_engine) as sess:
             sess.add(
                 use_model(
                     approved_status=current_approved_status,
-                    approved_at=added_dt,
+                    status_changed_at=status_changed_at,
                     id=aid,
                     title=title,
                     start_date=start_date,
@@ -318,14 +325,14 @@ async def update_database(
             )
             was_approved = True
 
-        add_or_update(
+        await add_or_update(
             summary=request_metadata(
                 hval.entry_id, hval.e_type, force_rerequest=was_approved
             ),
             current_approved_status=current_id_status,
             old_status=old_status,
             in_db=in_db[hval.e_type],
-            added_dt=hval.dt,
+            status_changed_at=hval.dt,
             refresh_images=refresh_images,
             force_update=force_update_db,
             skip_images=skip_proxy_images,
@@ -338,10 +345,12 @@ async def update_database(
     for i, aid in enumerate(unapproved.anime):
         if i % 10 == 0:
             await sleep(0)
-        add_or_update(
-            summary=request_metadata(aid, "anime"),
+        smmry = request_metadata(aid, "anime")
+        await add_or_update(
+            summary=smmry,
             old_status=in_db["anime_status"].get(aid),
             current_approved_status=Status.UNAPPROVED,
+            status_changed_at=smmry.timestamp,
             in_db=in_db["anime"],
             refresh_images=refresh_images,
             force_update=force_update_db,
@@ -354,11 +363,13 @@ async def update_database(
     for i, mid in enumerate(unapproved.manga):
         if i % 10 == 0:
             await sleep(0)
-        add_or_update(
-            summary=request_metadata(mid, "manga"),
+        smmry = request_metadata(mid, "manga")
+        await add_or_update(
+            summary=smmry,
             old_status=in_db["manga_status"].get(mid),
             current_approved_status=Status.UNAPPROVED,
             in_db=in_db["manga"],
+            status_changed_at=smmry.timestamp,
             refresh_images=refresh_images,
             force_update=force_update_db,
             skip_images=skip_proxy_images,
@@ -377,10 +388,12 @@ async def update_database(
         key = f"{entry_type}_{entry_id}"
         if key not in known:
             old_status = in_db[f"{entry_type}_status"].get(entry_id)
-            add_or_update(
-                summary=request_metadata(entry_id, entry_type),
+            smmry = request_metadata(entry_id, entry_type)
+            await add_or_update(
+                summary=smmry,
                 in_db=in_db[entry_type],
                 old_status=old_status,
+                status_changed_at=smmry.timestamp,
                 current_approved_status=Status.DENIED,
                 refresh_images=refresh_images,
                 force_update=force_update_db,
@@ -396,7 +409,7 @@ async def refresh_entry(*, entry_id: int, entry_type: str) -> None:
     summary = request_metadata(entry_id, entry_type, force_rerequest=True)
     await sleep(0)
     logger.info(f"db: refreshed data for {entry_type} {entry_id}")
-    add_or_update(
+    await add_or_update(
         summary=summary,
         force_update=True,
     )

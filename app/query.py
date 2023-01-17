@@ -57,7 +57,7 @@ class QueryIn(BaseModel):
     approved_status: StatusIn = Field(default=StatusIn.ALL)
     order_by: Optional[str] = Field(
         default="id",
-        regex="^(id|title|start_date|end_date|approved_status|approved_at|updated_at)$",
+        regex="^(id|title|start_date|end_date|approved_status|status_changed_at|updated_at)$",
     )
     sort: Optional[str] = Field(default="desc", regex="^(asc|desc)$")
     limit: int = Field(default=100, le=250)
@@ -169,7 +169,7 @@ async def get_metadata_counts(
                     "start_date": _serialize_date(row.start_date),
                     "end_date": _serialize_date(row.end_date),
                     "updated_at": _serialize_datetime(row.updated_at),
-                    "approved_at": _serialize_datetime(row.approved_at),
+                    "status_changed_at": _serialize_datetime(row.status_changed_at),
                     **_filter_keys_for_status(row.json_data, row.approved_status),
                 },
                 approved_status=row.approved_status,

@@ -59,21 +59,21 @@ def _prefix_url(path: str) -> str:
 
 
 @backoff.on_exception(backoff.expo, httpx.HTTPError, max_tries=3)
-def _get_image_bytes(url: str) -> bytes | None:
-    with httpx.Client() as client:
-        resp = client.get(url)
+async def _get_image_bytes(url: str) -> bytes | None:
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(url)
         if resp.status_code == 404:
             logger.warning(f"image_proxy: got 404 for {url}")
             return None
         elif resp.status_code == 429:
             logger.warning(f"image_proxy: got 429 for {url}")
             time.sleep(15)
-            return _get_image_bytes(url)
+            return await _get_image_bytes(url)
         resp.raise_for_status()
         return resp.content
 
 
-def proxy_image(url: str) -> str | None:
+async def proxy_image(url: str) -> str | None:
     db = image_db()
     if db.exists(url):
         resp = db.get(url)
@@ -88,7 +88,7 @@ def proxy_image(url: str) -> str | None:
         assert ext in {"jpeg", "jpg"}
 
         # download image to memory
-        image_bytes = _get_image_bytes(url)
+        image_bytes = await _get_image_bytes(url)
         if image_bytes is None:
             db.set(url, 404)
             return None
