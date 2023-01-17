@@ -18,6 +18,7 @@ ipdb = "*"
 pickledb = "*"
 boto3 = "*"
 httpx = "*"
+aiopath = "*"
 
 [dev-packages]
 

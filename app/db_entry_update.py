@@ -2,6 +2,7 @@ from typing import Optional, Set, Dict, Any, Tuple
 from datetime import datetime
 from asyncio import sleep
 
+from aiopath import AsyncPath  # type: ignore[import]
 from urllib.parse import urlparse
 from malexport.parse.common import parse_date_safe
 from sqlalchemy import update
@@ -390,13 +391,9 @@ async def update_database(
     logger.info("db: checking for deleted entries...")
     # check if any other items exist that arent in the db already
     # those were denied or deleted (long time ago)
-    #
-    # TODO: make this async friendly so that HTTP server doesnt hang while its searching
-    all_keys = [p.absolute() for p in metadatacache_dir.rglob("*/key")]
     all_urls = set()
-    for p in all_keys:
-        all_urls.add(p.read_text().strip())
-        await sleep(0)
+    async for keyfile in AsyncPath(metadatacache_dir).rglob("*/key"):
+        all_urls.add((await keyfile.read_text()).strip())
     for entry_type, entry_id in map(api_url_to_parts, all_urls):
         await sleep(0)
         key = f"{entry_type}_{entry_id}"
