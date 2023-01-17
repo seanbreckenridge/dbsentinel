@@ -1,6 +1,6 @@
 import enum
 from typing import List, Optional, Dict, Any, Union
-from datetime import datetime, date
+from datetime import date
 
 from sqlalchemy import func
 from fastapi import Depends, APIRouter
@@ -9,7 +9,6 @@ from sqlmodel.sql.expression import select
 from pydantic import BaseModel, Field
 
 from mal_id.log import logger
-from mal_id.common import to_utc
 from app.db import (
     get_db,
     ApprovedBase,
@@ -41,8 +40,8 @@ class QueryModelOut(BaseModel):
     alternate_titles: Dict[str, Any]
     json_data: Dict[str, Any]
     approved_status: Status
-    metadata_upadated_at: str
-    status_updated_at: str
+    metadata_updated_at: int
+    status_updated_at: int
     start_date: str | None
     end_date: str | None
 
@@ -74,13 +73,6 @@ def _serialize_date(dd: date | None) -> Optional[str]:
     if dd is None:
         return None
     return dd.isoformat()
-
-
-# https://github.com/colinhacks/zod#datetime-validation
-# parse with z.string().datetime({ offset: true })
-def to_zod_javascript_datetime(dd: datetime) -> str:
-    utc_dt = to_utc(dd, tz_aware=True)
-    return utc_dt.isoformat()
 
 
 APPROVED_KEYS = {
@@ -178,8 +170,8 @@ async def get_metadata_counts(
                 nsfw=row.nsfw,
                 image_url=_pick_image(row, image),
                 alternate_titles=row.json_data.get("alternative_titles", {}),
-                metadata_upadated_at=to_zod_javascript_datetime(row.updated_at),
-                status_updated_at=to_zod_javascript_datetime(row.status_changed_at),
+                metadata_updated_at=row.updated_at.timestamp(),
+                status_updated_at=row.status_changed_at.timestamp(),
                 start_date=_serialize_date(row.start_date),
                 end_date=_serialize_date(row.end_date),
                 json_data=_filter_keys_for_status(row.json_data, row.approved_status),
