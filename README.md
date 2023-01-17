@@ -16,6 +16,7 @@ This is a work in progress, but the basics are up at <https://dbsentinel.sean.fi
 - [x] add info on search page letting you know what each approved status means
 - [x] let page be ordered by when items were approved/deleted/denied (guess by metadata if not available)
 - [x] compare against my list to find deleted entries, request that many pages
+- [ ] add useful links/sorts from the main page
 - [ ] API for deleted/denied/unapproved ids/names
 - [ ] upload full API dump periodically to a public URL (w ids/names)
 - [ ] roles to give people more permissions
