@@ -9,16 +9,17 @@ import click
 from mal_id.metadata_cache import request_metadata
 from mal_id.linear_history import track_diffs, read_linear_history
 from mal_id.ids import (
-    approved_ids,
     unapproved_ids,
     estimate_all_users_max,
     _estimate_page,
+    approved_ids
 )
 from mal_id.index_requests import request_pages, currently_requesting, queue
 from mal_id.paths import (
-    sqlite_db_path,
     linear_history_unmerged,
     linear_history_file,
+    my_animelist_xml,
+    sqlite_db_path
 )
 
 
@@ -97,6 +98,32 @@ def pages() -> None:
     click.echo("queue: {}".format(queue()))
 
 
+def _request_pages(
+    check_pages: int,
+    list_type: str,
+    request: bool,
+    timid: bool,
+) -> None:
+    if check_pages == 0:
+        click.echo("no new entries found, skipping request", err=True)
+        return
+
+    click.echo(
+        f"should check {check_pages} {list_type} pages",
+        err=True,
+    )
+
+    if request:
+        if timid:
+            cur = currently_requesting()
+            if cur is not None:
+                click.echo(
+                    f"timid: currently requesting {cur}, skipping request", err=True
+                )
+                return
+        request_pages(list_type, check_pages)
+
+
 @mal.command(short_help="use user lists to find out if new entries have been approved")
 @click.option("--list-type", type=click.Choice(["anime", "manga"]), default="anime")
 @click.option("--request", is_flag=True, help="request new entries")
@@ -125,32 +152,19 @@ def estimate_user_recent(
     if print_url and check_pages > 0:
         click.echo(f"type={list_type}&pages={check_pages}")
     else:
-        click.echo(
-            f"should check {check_pages} {list_type} pages".format(check_pages),
-            err=True,
-        )
+        _request_pages(check_pages, list_type, request, timid)
 
-    # if my_animelist_xml.exists() and list_type == "anime":
-    #     deleted_pages = estimate_deleted_request_pages(my_animelist_xml)
-    #     click.echo(
-    #         f"deleted: should check {deleted_pages} anime pages".format(deleted_pages),
-    #         err=True,
-    #     )
 
-    #     if deleted_pages > 0 and deleted_pages > check_pages:
-    #         check_pages = deleted_pages
+@mal.command(short_help="use animelist xml to find deleted entries")
+@click.option("--request", is_flag=True, help="request new entries")
+@click.option(
+    "--timid", is_flag=True, help="only request new entries if not already requesting"
+)
+def estimate_deleted_animelist_xml(request: bool, timid: bool) -> None:
+    from mal_id.ids import estimate_deleted_entry
 
-    if check_pages == 0:
-        click.echo("no new entries found, skipping request", err=True)
-        return
-
-    if request:
-        if timid:
-            cur = currently_requesting()
-            if cur is not None:
-                click.echo(f"timid: currently requesting {cur}, skipping request")
-                return
-        request_pages(list_type, check_pages)
+    check_pages = estimate_deleted_entry(my_animelist_xml)
+    _request_pages(check_pages, "anime", request, timid)
 
 
 @mal.command(short_help="estimate which page to check for an ID")

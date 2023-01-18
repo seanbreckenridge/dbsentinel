@@ -95,8 +95,11 @@ iter() {
 		fi
 	fi
 	if curl -s localhost:4001 >/dev/null; then
-		evry 10 minutes -update_dbsentinal_user && {
+		evry 10 minutes -dbsentinel-user-estimate && {
 			pipenv run python3 main.py mal estimate-user-recent ./usernames.txt --request --timid || return $?
+		}
+		evry 1 hour -dbsentinel-delete-estimate && {
+			pipenv run python3 main.py mal estimate-deleted-animelist-xml ./usernames.txt --request --timid || return $?
 		}
 	elif [[ -n "$VULTR_UPDATE" ]]; then
 		# manual update sshing as a stopgap

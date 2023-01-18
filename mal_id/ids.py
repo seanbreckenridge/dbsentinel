@@ -208,7 +208,9 @@ def estimate_all_users_max(
     return max(max_pages)
 
 
-def estimate_deleted_request_pages(animelist_xml: Path) -> int:
+def estimate_deleted_entry(animelist_xml: Path) -> int:
+    from mal_id.metadata_cache import mal_api_session
+
     assert animelist_xml.exists()
 
     try:
@@ -218,12 +220,21 @@ def estimate_deleted_request_pages(animelist_xml: Path) -> int:
         return 0
 
     anime_ids = approved_ids().anime
-    deleted_ids: Set[int] = my_user_ids - anime_ids
-
-    # TODO: this doesnt work because it cant differentiate between deleted and just approved
-    # need to add a check here to run API requests to MAL to see if the entry is deleted or not
+    deleted_ids: Set[int] = anime_ids - my_user_ids
 
     if len(deleted_ids) == 0:
         return 0
 
-    return _estimate_page(min(deleted_ids), sorted(anime_ids, reverse=True))
+    sess = mal_api_session()
+    sorted_ids = sorted(anime_ids, reverse=True)
+
+    for mid in sorted(deleted_ids):
+        resp = sess.session.get(f"https://api.myanimelist.net/v2/anime/{mid}")
+        time.sleep(1)
+        if resp.status_code == 401:
+            sess.refresh_token()
+            return estimate_deleted_entry(animelist_xml)
+        elif resp.status_code == 404:
+            return _estimate_page(mid, sorted_ids)
+
+    return 0
