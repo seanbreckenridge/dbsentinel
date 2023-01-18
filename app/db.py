@@ -40,6 +40,8 @@ class ApprovedBase(SQLModel, table=False):
     json_data: Dict[str, Any] = Field(default={}, sa_column=Column(JSON))
     approved_status: Status = Field(default=Status.UNAPPROVED)
     media_type: Optional[str] = Field(default=None)
+    member_count: Optional[int] = Field(default=None)
+    average_episode_duration: Optional[int] = Field(default=None)
     # when the entry was approved/denied/deleted etc.
     status_changed_at: datetime
     # when metadata for this was updated

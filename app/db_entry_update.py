@@ -173,6 +173,8 @@ async def add_or_update(
     media_type = jdata.pop("media_type", None)
     start_date = parse_date_safe(jdata.pop("start_date", None))
     end_date = parse_date_safe(jdata.pop("end_date", None))
+    member_count = jdata.pop("num_list_users", None)
+    average_episode_duration = jdata.pop("average_episode_duration", None)
 
     # try to figure out if this is sfw/nsfw
     nsfw = is_nsfw(jdata)
@@ -231,6 +233,8 @@ async def add_or_update(
                     json_data=jdata,
                     media_type=media_type,
                     updated_at=summary.timestamp,
+                    member_count=member_count,
+                    average_episode_duration=average_episode_duration,
                     nsfw=nsfw,
                     **kwargs,
                 )
@@ -265,6 +269,8 @@ async def add_or_update(
                     media_type=media_type,
                     updated_at=summary.timestamp,
                     json_data=jdata,
+                    member_count=member_count,
+                    average_episode_duration=average_episode_duration,
                     nsfw=nsfw,
                 )
             )

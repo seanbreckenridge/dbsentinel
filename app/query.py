@@ -41,6 +41,8 @@ class QueryModelOut(BaseModel):
     json_data: Dict[str, Any]
     media_type: Optional[str]
     approved_status: Status
+    member_count: Optional[int]
+    average_episode_duration: Optional[int]
     metadata_updated_at: float
     status_updated_at: float
     start_date: str | None
@@ -64,7 +66,7 @@ class QueryIn(BaseModel):
     approved_status: StatusIn = Field(default=StatusIn.ALL)
     order_by: Optional[str] = Field(
         default="id",
-        regex="^(id|title|start_date|end_date|status_updated_at|metadata_upadated_at)$",
+        regex="^(id|title|start_date|end_date|status_updated_at|metadata_upadated_at|member_count|average_episode_duration)$",
     )
     sort: Optional[str] = Field(default="desc", regex="^(asc|desc)$")
     limit: int = Field(default=100, le=250)
@@ -81,8 +83,6 @@ APPROVED_KEYS = {
     "num_episodes",
     "chapters",
     "volumes",
-    "media_type",
-    "alternative_titles",
 }
 
 
@@ -153,6 +153,8 @@ async def get_metadata_counts(
         "end_date": model.end_date,
         "status_updated_at": model.status_changed_at,
         "metadata_upadated_at": model.updated_at,
+        "member_count": model.member_count,
+        "average_episode_duration": model.average_episode_duration,
     }[info.order_by or "id"]
     query = query.order_by(order_attr.desc() if info.sort == "desc" else order_attr.asc())  # type: ignore
 
@@ -179,9 +181,10 @@ async def get_metadata_counts(
                 metadata_updated_at=row.updated_at.timestamp(),
                 status_updated_at=row.status_changed_at.timestamp(),
                 start_date=_serialize_date(row.start_date),
-
                 end_date=_serialize_date(row.end_date),
                 json_data=_filter_keys_for_status(row.json_data, row.approved_status),
+                member_count=row.member_count,
+                average_episode_duration=row.average_episode_duration,
                 approved_status=row.approved_status,
             )
             for row, image in rows

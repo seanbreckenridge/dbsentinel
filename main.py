@@ -267,7 +267,7 @@ def initialize_db(
     )
 
 
-@server.command()
+@server.command(short_help="generate media types for frontend")
 @click.option(
     "--output-type",
     type=click.Choice(["json", "typescript"]),
