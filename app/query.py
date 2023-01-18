@@ -39,9 +39,10 @@ class QueryModelOut(BaseModel):
     image_url: Optional[str]
     alternate_titles: Dict[str, Any]
     json_data: Dict[str, Any]
+    media_type: Optional[str]
     approved_status: Status
-    metadata_updated_at: int
-    status_updated_at: int
+    metadata_updated_at: float
+    status_updated_at: float
     start_date: str | None
     end_date: str | None
 
@@ -57,6 +58,7 @@ class QueryIn(BaseModel):
     entry_type: str = Field(default="anime", regex="^(anime|manga)$")
     start_date: Optional[date]
     end_date: Optional[date]
+    media_type: Optional[str]
     nsfw: Optional[bool]
     json_data: Optional[Dict[str, Union[str, int, bool]]]
     approved_status: StatusIn = Field(default=StatusIn.ALL)
@@ -137,6 +139,9 @@ async def get_metadata_counts(
             else:
                 query = query.where(model.json_data.get(key, None) == value)
 
+    if info.media_type is not None:
+        query = query.where(model.media_type == info.media_type)
+
     if info.approved_status != StatusIn.ALL:
         query = query.where(model.approved_status == info.approved_status)
 
@@ -169,10 +174,12 @@ async def get_metadata_counts(
                 title=row.title,
                 nsfw=row.nsfw,
                 image_url=_pick_image(row, image),
+                media_type=row.media_type,
                 alternate_titles=row.json_data.get("alternative_titles", {}),
                 metadata_updated_at=row.updated_at.timestamp(),
                 status_updated_at=row.status_changed_at.timestamp(),
                 start_date=_serialize_date(row.start_date),
+
                 end_date=_serialize_date(row.end_date),
                 json_data=_filter_keys_for_status(row.json_data, row.approved_status),
                 approved_status=row.approved_status,

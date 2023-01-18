@@ -30,7 +30,7 @@ readonly ARM_REPO_URL='https://github.com/kawaiioverflow/arm'
 ARM_REPO='./data/arm'
 
 # if running local, sync from remote server
-[[ -n "$ON_OS" ]] && wait-for-internet --text 'syncing from server...' && ./sync_data
+[[ -n "$ON_OS" ]] && wait-for-internet --text 'syncing from server...' && ./scripts/sync_from_remote
 
 git_hash_changed() {
 	local ret git_hash

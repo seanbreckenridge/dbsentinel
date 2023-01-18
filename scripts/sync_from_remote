@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+ROOT_DIR="$(realpath "$(dirname "${BASH_SOURCE[0]}")"/..)"
+cd "${ROOT_DIR}" || exit $?
+
+exec rsync "$@" --exclude=data.sqlite -Pavh -e ssh vultr:~/code/dbsentinel/data/ data

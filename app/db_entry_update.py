@@ -170,6 +170,7 @@ async def add_or_update(
     # pop data from the json that get stored in the db
     aid = int(jdata.pop("id"))
     title = jdata.pop("title")
+    media_type = jdata.pop("media_type", None)
     start_date = parse_date_safe(jdata.pop("start_date", None))
     end_date = parse_date_safe(jdata.pop("end_date", None))
 
@@ -228,6 +229,7 @@ async def add_or_update(
                     start_date=start_date,
                     end_date=end_date,
                     json_data=jdata,
+                    media_type=media_type,
                     updated_at=summary.timestamp,
                     nsfw=nsfw,
                     **kwargs,
@@ -260,6 +262,7 @@ async def add_or_update(
                     title=title,
                     start_date=start_date,
                     end_date=end_date,
+                    media_type=media_type,
                     updated_at=summary.timestamp,
                     json_data=jdata,
                     nsfw=nsfw,
