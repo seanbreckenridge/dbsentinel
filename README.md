@@ -18,7 +18,7 @@ This is a work in progress, but the basics are up at <https://dbsentinel.sean.fi
 - [x] compare against my list to find deleted entries, request that many pages
 - [x] sort by media type
 - [x] add useful links/sorts from the main page
-- [ ] add member count to order by
+- [x] allow user to order by member count
 - [ ] API for deleted/denied/unapproved ids/names
 - [ ] upload full API dump periodically to a public URL (w ids/names)
 - [ ] roles to give people more permissions
