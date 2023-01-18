@@ -12,14 +12,14 @@ from mal_id.ids import (
     unapproved_ids,
     estimate_all_users_max,
     _estimate_page,
-    approved_ids
+    approved_ids,
 )
 from mal_id.index_requests import request_pages, currently_requesting, queue
 from mal_id.paths import (
     linear_history_unmerged,
     linear_history_file,
     my_animelist_xml,
-    sqlite_db_path
+    sqlite_db_path,
 )
 
 
@@ -99,6 +99,7 @@ def pages() -> None:
 
 
 def _request_pages(
+    *,
     check_pages: int,
     list_type: str,
     request: bool,
@@ -152,7 +153,9 @@ def estimate_user_recent(
     if print_url and check_pages > 0:
         click.echo(f"type={list_type}&pages={check_pages}")
     else:
-        _request_pages(check_pages, list_type, request, timid)
+        _request_pages(
+            check_pages=check_pages, list_type=list_type, request=request, timid=timid
+        )
 
 
 @mal.command(short_help="use animelist xml to find deleted entries")
@@ -164,7 +167,9 @@ def estimate_deleted_animelist_xml(request: bool, timid: bool) -> None:
     from mal_id.ids import estimate_deleted_entry
 
     check_pages = estimate_deleted_entry(my_animelist_xml)
-    _request_pages(check_pages, "anime", request, timid)
+    _request_pages(
+        check_pages=check_pages, list_type="anime", request=request, timid=timid
+    )
 
 
 @mal.command(short_help="estimate which page to check for an ID")

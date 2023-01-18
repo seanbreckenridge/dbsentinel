@@ -99,7 +99,7 @@ iter() {
 			pipenv run python3 main.py mal estimate-user-recent ./usernames.txt --request --timid || return $?
 		}
 		evry 1 hour -dbsentinel-delete-estimate && {
-			pipenv run python3 main.py mal estimate-deleted-animelist-xml ./usernames.txt --request --timid || return $?
+			pipenv run python3 main.py mal estimate-deleted-animelist-xml --request --timid || return $?
 		}
 	elif [[ -n "$VULTR_UPDATE" ]]; then
 		# manual update sshing as a stopgap
