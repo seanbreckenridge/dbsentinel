@@ -19,6 +19,7 @@ pickledb = "*"
 boto3 = "*"
 httpx = "*"
 aiopath = "*"
+alembic = "*"
 
 [dev-packages]
 
@@ -28,3 +29,15 @@ python_version = "3.10"
 [scripts]
 dev = 'uvicorn app.main:app --workers 4 --port 5200 --reload --reload-exclude data'
 prod = 'uvicorn app.main:app --port 5200'
+alembic = 'alembic'
+# create new migration
+alembic_create_migration = 'alembic revision --autogenerate'
+# update database from migrations
+alembic_migrate = 'alembic upgrade head'
+
+# e.g. run:
+# pipenv run alembic_create_migration -m "add new table"
+# pipenv run alembic_migrate
+#
+# in prod:
+# pipenv run alembic_migrate && pipenv run prod

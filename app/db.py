@@ -63,6 +63,12 @@ class ProxiedImage(SQLModel, table=True):
     proxied_url: str = Field(index=True)
 
 
+class AnilistId(SQLModel, table=True):
+    mal_id: int = Field(primary_key=True)
+    entry_type: EntryType = Field(primary_key=True)
+    anilist_id: int = Field()
+
+
 connect_args = {"check_same_thread": False}
 data_engine = create_engine(
     sqlite_db_uri, echo=settings.SQL_ECHO, connect_args=connect_args
