@@ -12,7 +12,6 @@ from mal_id.ids import (
     approved_ids,
     unapproved_ids,
     estimate_all_users_max,
-    estimate_deleted_request_pages,
     _estimate_page,
 )
 from mal_id.index_requests import request_pages, currently_requesting, queue
@@ -20,7 +19,6 @@ from mal_id.paths import (
     sqlite_db_path,
     linear_history_unmerged,
     linear_history_file,
-    my_animelist_xml,
 )
 
 
@@ -132,15 +130,15 @@ def estimate_user_recent(
             err=True,
         )
 
-    if my_animelist_xml.exists() and list_type == "anime":
-        deleted_pages = estimate_deleted_request_pages(my_animelist_xml)
-        click.echo(
-            f"deleted: should check {deleted_pages} anime pages".format(deleted_pages),
-            err=True,
-        )
+    # if my_animelist_xml.exists() and list_type == "anime":
+    #     deleted_pages = estimate_deleted_request_pages(my_animelist_xml)
+    #     click.echo(
+    #         f"deleted: should check {deleted_pages} anime pages".format(deleted_pages),
+    #         err=True,
+    #     )
 
-        if deleted_pages > 0 and deleted_pages > check_pages:
-            check_pages = deleted_pages
+    #     if deleted_pages > 0 and deleted_pages > check_pages:
+    #         check_pages = deleted_pages
 
     if check_pages == 0:
         click.echo("no new entries found, skipping request", err=True)

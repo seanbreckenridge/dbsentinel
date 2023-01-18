@@ -220,6 +220,9 @@ def estimate_deleted_request_pages(animelist_xml: Path) -> int:
     anime_ids = approved_ids().anime
     deleted_ids: Set[int] = my_user_ids - anime_ids
 
+    # TODO: this doesnt work because it cant differentiate between deleted and just approved
+    # need to add a check here to run API requests to MAL to see if the entry is deleted or not
+
     if len(deleted_ids) == 0:
         return 0
 
