@@ -119,12 +119,6 @@ async def get_metadata_counts(
     if info.title:
         query = query.where(model.title.like(f"%{info.title}%"))  # type: ignore
 
-    # if info.start_date is not None:
-    #     query = query.where(model.start_date >= info.start_date)  # type: ignore
-
-    # if info.end_date is not None:
-    #     query = query.where(model.end_date <= info.end_date)  # type: ignore
-
     if info.nsfw is not None:
         query = query.where(model.nsfw == info.nsfw)
 
