@@ -21,6 +21,7 @@ This is a work in progress, but the basics are up at <https://dbsentinel.sean.fi
 - [x] allow user to order by member count
 - [ ] log more info if unprocessable error in backend for query
 - [x] search page: update mobile styling to show images
+- [ ] search: allow user show info for an ID in particular
 - [ ] API for deleted/denied/unapproved ids/names
 - [ ] upload full API dump periodically to a public URL (w ids/names)
 - [ ] roles to give people more permissions
