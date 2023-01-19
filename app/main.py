@@ -43,6 +43,7 @@ def create_app() -> FastAPI:
         exc_str = f"{exc}".replace("\n", " ").replace("   ", " ")
         logger.error(f"{request}: {exc_str}")
         content = {"status_code": 422, "message": exc_str}
+        logger.warning(f"request body: {request.body}")
         logger.error(exc, exc_info=True)
         return JSONResponse(
             content=content, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY
