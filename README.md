@@ -22,6 +22,8 @@ This is a work in progress, but the basics are up at <https://dbsentinel.sean.fi
 - [x] log more info if unprocessable error in backend for query
 - [x] search page: update mobile styling to show images
 - [ ] API for deleted/denied/unapproved ids/names
+- [ ] parse reasons for denials/deletions from thread/allow users to input
+- [ ] fix deletion date by reading git history date (currently I think its using approved date)
 - [ ] upload full API dump periodically to a public URL (w ids/names)
 - [ ] roles to give people more permissions
   - [ ] let users refresh data for old entries
