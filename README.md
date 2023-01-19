@@ -19,6 +19,8 @@ This is a work in progress, but the basics are up at <https://dbsentinel.sean.fi
 - [x] sort by media type
 - [x] add useful links/sorts from the main page
 - [x] allow user to order by member count
+- [ ] log more info if unprocessable error in backend for query
+- [ ] search page: update mobile styling to show images
 - [ ] API for deleted/denied/unapproved ids/names
 - [ ] upload full API dump periodically to a public URL (w ids/names)
 - [ ] roles to give people more permissions
