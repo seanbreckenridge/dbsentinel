@@ -58,8 +58,6 @@ class QueryOut(BaseModel):
 class QueryIn(BaseModel):
     title: Optional[str] = Field(min_length=1)
     entry_type: str = Field(default="anime", regex="^(anime|manga)$")
-    start_date: Optional[date]
-    end_date: Optional[date]
     media_type: Optional[str]
     nsfw: Optional[bool]
     json_data: Optional[Dict[str, Union[str, int, bool]]]
@@ -121,11 +119,11 @@ async def get_metadata_counts(
     if info.title:
         query = query.where(model.title.like(f"%{info.title}%"))  # type: ignore
 
-    if info.start_date is not None:
-        query = query.where(model.start_date >= info.start_date)  # type: ignore
+    # if info.start_date is not None:
+    #     query = query.where(model.start_date >= info.start_date)  # type: ignore
 
-    if info.end_date is not None:
-        query = query.where(model.end_date <= info.end_date)  # type: ignore
+    # if info.end_date is not None:
+    #     query = query.where(model.end_date <= info.end_date)  # type: ignore
 
     if info.nsfw is not None:
         query = query.where(model.nsfw == info.nsfw)

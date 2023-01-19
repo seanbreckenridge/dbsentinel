@@ -1,5 +1,9 @@
 from typing import Callable
-from fastapi import FastAPI, Response, Request
+from fastapi import FastAPI, Response, Request, status
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+
+from mal_id.log import logger
 
 
 def create_app() -> FastAPI:
@@ -30,6 +34,19 @@ def create_app() -> FastAPI:
         if request.headers.get("Authorization") != settings.BEARER_SECRET:
             return Response(status_code=401, content="Unauthorized")
         return await call_next(request)  # type: ignore
+
+    # https://github.com/tiangolo/fastapi/issues/3361#issuecomment-1002120988
+    @current_app.exception_handler(RequestValidationError)
+    async def _validation_exception_handler(
+        request: Request, exc: RequestValidationError
+    ) -> Response:
+        exc_str = f"{exc}".replace("\n", " ").replace("   ", " ")
+        logger.error(f"{request}: {exc_str}")
+        content = {"status_code": 422, "message": exc_str}
+        logger.error(exc, exc_info=True)
+        return JSONResponse(
+            content=content, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY
+        )
 
     return current_app
 
