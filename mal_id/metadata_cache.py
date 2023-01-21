@@ -192,7 +192,7 @@ def metadata_cache() -> MetadataCache:
 
 
 def request_metadata(
-    id_: str | int,
+    id_: int,
     entry_type: str,
     /,
     *,

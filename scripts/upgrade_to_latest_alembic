@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# if I happen to delete the sqlite database and want to reset
+# alembic to the latest revision, this does that
+
+newest_hash="$(pipenv run alembic history 2>/dev/null | awk 'NR == 1 {print $3}')"
+[[ -z "$newest_hash" ]] && {
+  echo "No migrations found"
+  exit 0
+}
+pipenv run alembic stamp "$newest_hash"

@@ -1,6 +1,7 @@
-from typing import Optional, Set, Dict, Any, Tuple, List
+from typing import Optional, Set, Dict, Any, Tuple, List, Mapping
 from datetime import datetime, date
 from asyncio import sleep
+from collections import defaultdict
 
 from aiopath import AsyncPath  # type: ignore[import]
 from urllib.parse import urlparse
@@ -358,30 +359,38 @@ async def update_database(
 
     approved = approved_ids()
     logger.info("db: reading from linear history...")
-    for hdict in read_linear_history():
-        hval = Entry.from_dict(hdict)
+
+    # create a map from ID -> List[Entry]
+    history_map: Mapping[Tuple[int, str], List[Entry]] = defaultdict(list)
+    for ent in map(Entry.from_dict, read_linear_history()):
+        await sleep(0)
+        history_map[(ent.entry_id, ent.e_type)].append(ent)
+
+    for (r_id, r_type), r_appearances in history_map.items():
+        # sort by timestamp
+        r_appearances.sort(key=lambda x: x.dt)
 
         # be nice to other tasks
         await sleep(0)
-        approved_use: Set[int] = getattr(approved, hval.e_type)
+        approved_use: Set[int] = getattr(approved, r_type)
 
         # if its in the linear history, it was approved at one point
         # but it may not be anymore
-        current_id_status = (
-            Status.APPROVED if hval.entry_id in approved_use else Status.DELETED
-        )
+        current_id_status = Status.APPROVED if r_id in approved_use else Status.DELETED
 
-        old_status = in_db[f"{hval.e_type}_status"].get(hval.entry_id)
+        old_status = in_db[f"{r_type}_status"].get(r_id)
         was_approved = False
         if current_id_status == Status.APPROVED and old_status == Status.UNAPPROVED:
             logger.info(
-                f"updating {hval.e_type} {hval.entry_id} to approved (was unapproved), rerequesting data"
+                f"updating {r_type} {r_id} to approved (was unapproved), rerequesting data"
             )
             was_approved = True
 
-        smmry = request_metadata(
-            hval.entry_id, hval.e_type, force_rerequest=was_approved
-        )
+        smmry = request_metadata(r_id, r_type, force_rerequest=was_approved)
+
+        if "error" in smmry.metadata:
+            logger.debug(f"skipping http error in {r_type} {r_id}")
+            continue
 
         # figure out when this was approved/deleted
         status_changed_at = None
@@ -391,32 +400,37 @@ async def update_database(
             # the MAL API created_at field. otherwise, use when it appeared in our
             # cache, since otherwise the created_at is when the entry was submitted
             # by a user to MAL, not when it was approved
-            if entry_created_at is not None and entry_created_at.date() < date(2022, 3, 15):
+            if entry_created_at is not None and entry_created_at.date() < date(
+                2022, 3, 15
+            ):
                 status_changed_at = entry_created_at
             else:
-                # use the value from git history
-                status_changed_at = hval.dt
+                # use the first value from git history
+                status_changed_at = r_appearances[0].dt
         elif current_id_status == Status.DELETED:
-            status_changed_at = deleted_last_datetime(smmry, dates=[hval.dt])
-
-        if status_changed_at is None:
-            logger.warning(
-                f"status_changed_at None for {hval.e_type} {hval.entry_id}, using metadata timestamp"
+            status_changed_at = deleted_last_datetime(
+                smmry, dates=[r.dt for r in r_appearances]
             )
-            status_changed_at = smmry.timestamp
+
+        assert (
+            status_changed_at is not None
+        ), f"no status changed at for {r_id} {r_type}"
 
         await add_or_update(
             summary=smmry,
             current_approved_status=current_id_status,
             old_status=old_status,
-            in_db=in_db[hval.e_type],
+            in_db=in_db[r_type],
             status_changed_at=status_changed_at,
             refresh_images=refresh_images,
             force_update=force_update_db,
             skip_images=skip_proxy_images,
             mal_id_to_image=mal_id_image_have,
         )
-        known.add(hval.key)
+        known.add(r_appearances[0].key)
+
+    # clear some memory, raw JSON linear history file is about ~40mb
+    del history_map
 
     unapproved = unapproved_ids()
     logger.info("db: updating from unapproved anime history...")

@@ -1,7 +1,7 @@
 import io
 from pathlib import Path
 from datetime import datetime, timezone
-from typing import NamedTuple, Iterator, Any, cast
+from typing import NamedTuple, Iterator, Any
 from dataclasses import dataclass
 
 import orjson
@@ -13,11 +13,10 @@ from mal_id.paths import mal_id_cache_dir, linear_history_file
 from mal_id.common import to_utc
 
 
-@dataclass
+@dataclass(frozen=True)
 class Entry:
     entry_id: int
     e_type: str
-    is_nsfw: bool
     dt: datetime
     action: bool = True  # true - added, false - removed
 
@@ -26,7 +25,6 @@ class Entry:
         return cls(
             entry_id=d["entry_id"],
             e_type=d["e_type"],
-            is_nsfw=d["is_nsfw"],
             dt=datetime.fromisoformat(d["dt"]).replace(tzinfo=timezone.utc),
             action=d["action"],
         )
@@ -56,7 +54,8 @@ def _get_blob(tree: Tree, keys: list[str]) -> JsonData | None:
             buf = io.BytesIO(blob.data_stream.read()).read().decode("utf-8")
             if buf.strip() == "":
                 continue
-            data = cast(JsonData, orjson.loads(buf))
+            data = orjson.loads(buf)
+            assert isinstance(data, dict)
             return data
         except KeyError:
             continue
@@ -88,41 +87,40 @@ def track_diffs() -> Iterator[Entry]:
     for sn in iter_snapshots(mal_id_cache_dir):
         assert sn.entry_type in {"anime", "manga"}
         state = anime if sn.entry_type == "anime" else manga
-        sfw = set(sn.data["sfw"])
-        nsfw = set(sn.data["nsfw"])
+        ids_at_this_commit = set(sn.data["sfw"] + sn.data["nsfw"])
 
-        for is_nsfw in [True, False]:
-            source = nsfw if is_nsfw else sfw
+        # check if any that are in this commit arent already 'approved' at this time
+        # aren't already in state
+        for mal_id in ids_at_this_commit:
+            # already approved
+            if mal_id in state:
+                continue
+            else:
+                # this was just approved, add it to state and yield an event
+                state.add(mal_id)
+                yield Entry(
+                    entry_id=mal_id, e_type=sn.entry_type, dt=sn.dt, action=True
+                )
 
-            # check if any items in the new 'source'
-            # aren't already in state
-            for mal_id in source:
-                if mal_id in state:
-                    continue
-                else:
-                    state.add(mal_id)
-                    yield Entry(
-                        entry_id=mal_id,
-                        e_type=sn.entry_type,
-                        is_nsfw=is_nsfw,
-                        dt=sn.dt,
-                    )
-
-        # for some reason this doesnt work?
-        # makes lots of entries appear 20+ times
-        # check if any items in the current state aren't
-        # in the source (new items)
-        # for mal_id in list(state):
-        #    if mal_id not in sfw and mal_id not in nsfw:
-        #        yield Entry(
-        #            entry_id=mal_id,
-        #            e_type=sn.entry_type,
-        #            is_nsfw=None,
-        #            dt=sn.dt,
-        #            action=False,
-        #        )
-        #        state.remove(mal_id)
-        #        assert mal_id not in state
+        # check if any of the items in state...
+        #
+        # hmmm -- this seems to add a bunch of duplicates?
+        # but it does work fine for what we want to do, so I think its fine
+        #
+        # could also 'shrink' the output, by only retaining the first
+        # and last time an ID appears in history, since thats all we want
+        # from the git state
+        for mal_id in list(state):
+            # are not in this commit...
+            if mal_id not in ids_at_this_commit:
+                yield Entry(
+                    entry_id=mal_id,
+                    e_type=sn.entry_type,
+                    dt=sn.dt,
+                    action=False,
+                )
+                state.remove(mal_id)
+                assert mal_id not in state
 
 
 def read_linear_history() -> list[Any]:
