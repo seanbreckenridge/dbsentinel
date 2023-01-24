@@ -3,11 +3,10 @@ import json
 import logging
 from pathlib import Path
 
-import orjson
 import click
 
 from mal_id.metadata_cache import request_metadata
-from mal_id.linear_history import track_diffs, read_linear_history
+from mal_id.linear_history import track_diffs, iter_linear_history
 from mal_id.ids import (
     unapproved_ids,
     estimate_all_users_max,
@@ -17,7 +16,7 @@ from mal_id.ids import (
 from mal_id.index_requests import request_pages, currently_requesting, queue
 from mal_id.paths import (
     linear_history_unmerged,
-    linear_history_file,
+    linear_history_cleaned,
     my_animelist_xml,
     sqlite_db_path,
 )
@@ -41,22 +40,45 @@ def mal() -> None:
 def linear_history() -> None:
     """Create a big json file with dates based on the git timestamps for when entries were added to cache"""
     for d in track_diffs():
-        print(orjson.dumps(d).decode("utf-8"))
+        print(json.dumps(d.to_dict()))
 
 
-@mal.command(short_help="merge json objects into list")
-def merge_linear_history() -> None:
-    merged = []
+@mal.command(short_help="remove duplicate JSON data in linear history")
+def clean_linear_history() -> None:
+    from collections import defaultdict
+    from typing import List, Mapping, Tuple
+
+    import orjson
+
+    from mal_id.linear_history import Entry
+
+    merged: List[Entry] = []
+    # create a map from ID -> List[Entry]
+    history_map: Mapping[Tuple[int, str], List[Entry]] = defaultdict(list)
+
+    # read and group entries by ID/type
     with linear_history_unmerged.open("r") as f:
         for line in f:
-            data = orjson.loads(line)
-            merged.append(data)
+            ent = Entry.from_dict(orjson.loads(line))
+            history_map[(ent.entry_id, ent.e_type)].append(ent)
 
-    serialized = orjson.dumps(merged)
-    with linear_history_file.open("wb") as w:
-        w.write(serialized)
+    for entries in history_map.values():
+        # sort by date
+        entries.sort(key=lambda e: e.dt)
+        # only keep the first and last values from list
+        # if it has more than 2 items
+        if len(entries) > 2 and any(e.action is False for e in entries):
+            merged.append(entries[0])
+            merged.append([e for e in entries if e.action is False][-1])
 
-    linear_history_unmerged.unlink()
+    # sort by date
+    merged.sort(key=lambda e: e.dt)
+
+    # byte newline
+    with linear_history_cleaned.open("wb") as w:
+        for entry in merged:
+            w.write(orjson.dumps(entry.to_dict()))
+            w.write(b"\n")
 
 
 @mal.command(short_help="make sure MAL is not down")
@@ -78,8 +100,8 @@ def update_metadata(request_failed: bool) -> None:
     if not heartbeat():
         sys.exit(1)
 
-    for hs in read_linear_history():
-        request_metadata(hs["entry_id"], hs["e_type"], rerequest_failed=request_failed)
+    for hs in iter_linear_history():
+        request_metadata(hs.entry_id, hs.e_type, rerequest_failed=request_failed)
 
     unapproved = unapproved_ids()
     for aid in unapproved.anime:

@@ -1,5 +1,7 @@
+import tracemalloc
 from typing import Callable
-from fastapi import FastAPI, Response, Request, status
+
+from fastapi import FastAPI, Response, Request, status, Query
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 
@@ -20,6 +22,17 @@ def create_app() -> FastAPI:
     @current_app.get("/ping")
     async def _ping() -> str:
         return "pong"
+
+    @current_app.get("/memory/start")
+    async def _memory_start() -> str:
+        tracemalloc.start()
+        return "started"
+
+    @current_app.get("/memory")
+    async def _memory(count: int = Query(default=25)) -> list[str]:
+        snapshot = tracemalloc.take_snapshot()
+        top_stats = snapshot.statistics("lineno")
+        return list(map(str, top_stats[:count]))
 
     from .tasks import trouter as tasks_router
     from .summary import router as summary_router

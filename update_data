@@ -81,7 +81,7 @@ iter() {
 	(cd "$REPO_TARGET" && git pull)
 	if git_hash_changed; then
 		pipenv run python3 main.py mal linear-history >'./data/data.jsonl' || exit $?
-		pipenv run python3 main.py mal merge-linear-history
+		pipenv run python3 main.py mal clean-linear-history || exit $?
 	fi
 	set -x
 	set +e

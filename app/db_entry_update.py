@@ -12,7 +12,7 @@ from sqlmodel.sql.expression import select
 from url_cache.core import Summary
 
 from mal_id.metadata_cache import request_metadata
-from mal_id.linear_history import read_linear_history, Entry
+from mal_id.linear_history import iter_linear_history, Entry
 from mal_id.ids import approved_ids, unapproved_ids
 from mal_id.paths import metadatacache_dir
 from mal_id.log import logger
@@ -362,7 +362,7 @@ async def update_database(
 
     # create a map from ID -> List[Entry]
     history_map: Mapping[Tuple[int, str], List[Entry]] = defaultdict(list)
-    for ent in map(Entry.from_dict, read_linear_history()):
+    for ent in iter_linear_history():
         await sleep(0)
         history_map[(ent.entry_id, ent.e_type)].append(ent)
 
@@ -409,7 +409,7 @@ async def update_database(
                 status_changed_at = r_appearances[0].dt
         elif current_id_status == Status.DELETED:
             status_changed_at = deleted_last_datetime(
-                smmry, dates=[r.dt for r in r_appearances]
+                smmry, dates=[r.dt for r in r_appearances if r.action is False]
             )
 
         assert (

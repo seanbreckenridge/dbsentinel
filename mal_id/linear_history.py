@@ -8,7 +8,7 @@ from git.objects import Tree
 from git.objects.commit import Commit
 from git.repo.base import Repo
 
-from mal_id.paths import mal_id_cache_dir, linear_history_file
+from mal_id.paths import mal_id_cache_dir, linear_history_cleaned
 from mal_id.common import to_utc
 
 
@@ -23,9 +23,17 @@ class Entry(NamedTuple):
         return cls(
             entry_id=d["entry_id"],
             e_type=d["e_type"],
-            dt=datetime.fromisoformat(d["dt"]).replace(tzinfo=timezone.utc),
+            dt=datetime.fromtimestamp(d["dt"], tz=timezone.utc),
             action=d["action"],
         )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "entry_id": self.entry_id,
+            "e_type": self.e_type,
+            "dt": self.dt.timestamp(),
+            "action": self.action,
+        }
 
     @property
     def key(self) -> str:
@@ -105,9 +113,9 @@ def track_diffs() -> Iterator[Entry]:
         # hmmm -- this seems to add a bunch of duplicates?
         # but it does work fine for what we want to do, so I think its fine
         #
-        # could also 'shrink' the output, by only retaining the first
-        # and last time an ID appears in history, since thats all we want
-        # from the git state
+        # this is shrinked in main.py mal clean-linear-history by
+        # only retaining the first and last time an approved/deleted pair appears in history,
+        # since thats all we want from the git state
         for mal_id in list(state):
             # are not in this commit...
             if mal_id not in ids_at_this_commit:
@@ -121,8 +129,7 @@ def track_diffs() -> Iterator[Entry]:
                 assert mal_id not in state
 
 
-def read_linear_history() -> list[Any]:
-    with open(linear_history_file) as f:
-        data = orjson.loads(f.read())
-    assert isinstance(data, list)
-    return data
+def iter_linear_history() -> Iterator[Entry]:
+    with open(linear_history_cleaned, "rb") as f:
+        for line in f:
+            yield Entry.from_dict(orjson.loads(line))
