@@ -2,7 +2,6 @@ import io
 from pathlib import Path
 from datetime import datetime, timezone
 from typing import NamedTuple, Iterator, Any
-from dataclasses import dataclass
 
 import orjson
 from git.objects import Tree
@@ -13,12 +12,11 @@ from mal_id.paths import mal_id_cache_dir, linear_history_file
 from mal_id.common import to_utc
 
 
-@dataclass(frozen=True)
-class Entry:
+class Entry(NamedTuple):
     entry_id: int
     e_type: str
     dt: datetime
-    action: bool = True  # true - added, false - removed
+    action: bool  # true - added, false - removed
 
     @classmethod
     def from_dict(cls, d: dict) -> "Entry":
