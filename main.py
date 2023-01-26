@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 
 import click
+from more_itertools import last, first
 
 from mal_id.metadata_cache import request_metadata
 from mal_id.linear_history import track_diffs, iter_linear_history
@@ -68,13 +69,12 @@ def clean_linear_history() -> None:
         # only keep the first and last values from list
         # if it has more than 2 items
         if len(entries) > 2 and any(e.action is False for e in entries):
-            merged.append(entries[0])
-            merged.append([e for e in entries if e.action is False][-1])
+            merged.append(first(entries))
+            merged.append(last(filter(lambda e: e.action is False, entries)))
 
     # sort by date
     merged.sort(key=lambda e: e.dt)
 
-    # byte newline
     with linear_history_cleaned.open("wb") as w:
         for entry in merged:
             w.write(orjson.dumps(entry.to_dict()))
