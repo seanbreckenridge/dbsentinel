@@ -217,7 +217,9 @@ async def add_or_update(
             if force_update:
                 logger.debug(f"db: {entry_type} {aid} force updating")
             else:
-                logger.info(f"updating data for {entry_type} {aid} (status changed)")
+                logger.info(
+                    f"updating data for {entry_type} {aid} (status changed from {old_status} to {current_approved_status})"
+                )
             kwargs: Dict[str, Any] = {}
             if current_approved_status is not None:
                 kwargs["approved_status"] = current_approved_status
@@ -372,7 +374,8 @@ async def update_database(
 
         # be nice to other tasks
         await sleep(0)
-        approved_use: Set[int] = getattr(approved, r_type)
+        assert r_type in ("anime", "manga")
+        approved_use: Set[int] = approved.anime if r_type == "anime" else approved.manga
 
         # if its in the linear history, it was approved at one point
         # but it may not be anymore
@@ -427,10 +430,8 @@ async def update_database(
             skip_images=skip_proxy_images,
             mal_id_to_image=mal_id_image_have,
         )
-        known.add(r_appearances[0].key)
-
-    # clear some memory, raw JSON linear history file is about ~40mb
-    del history_map
+        ekey = r_appearances[0].key
+        known.add(ekey)
 
     unapproved = unapproved_ids()
     logger.info("db: updating from unapproved anime history...")
@@ -476,21 +477,22 @@ async def update_database(
     for entry_type, entry_id in map(api_url_to_parts, all_urls):
         await sleep(0)
         key = f"{entry_type}_{entry_id}"
-        if key not in known:
-            old_status = in_db[f"{entry_type}_status"].get(entry_id)
-            smmry = request_metadata(entry_id, entry_type)
-            await add_or_update(
-                summary=smmry,
-                in_db=in_db[entry_type],
-                old_status=old_status,
-                status_changed_at=deleted_last_datetime(smmry),
-                current_approved_status=Status.DENIED,
-                refresh_images=refresh_images,
-                force_update=force_update_db,
-                skip_images=skip_proxy_images,
-                mal_id_to_image=mal_id_image_have,
-            )
-            known.add(key)
+        if key in known:
+            continue
+        old_status = in_db[f"{entry_type}_status"].get(entry_id)
+        smmry = request_metadata(entry_id, entry_type)
+        await add_or_update(
+            summary=smmry,
+            in_db=in_db[entry_type],
+            old_status=old_status,
+            status_changed_at=deleted_last_datetime(smmry),
+            current_approved_status=Status.DENIED,
+            refresh_images=refresh_images,
+            force_update=force_update_db,
+            skip_images=skip_proxy_images,
+            mal_id_to_image=mal_id_image_have,
+        )
+        known.add(key)
 
     logger.info("db: done with full update")
 

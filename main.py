@@ -71,6 +71,9 @@ def clean_linear_history() -> None:
         if len(entries) > 2 and any(e.action is False for e in entries):
             merged.append(first(entries))
             merged.append(last(filter(lambda e: e.action is False, entries)))
+        else:
+            # otherwise just keep what we have
+            merged.extend(entries)
 
     # sort by date
     merged.sort(key=lambda e: e.dt)

@@ -37,6 +37,8 @@ class Entry(NamedTuple):
 
     @property
     def key(self) -> str:
+        assert isinstance(self.entry_id, int)
+        assert self.e_type in {"anime", "manga"}
         return f"{self.e_type}_{self.entry_id}"
 
 
