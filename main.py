@@ -4,7 +4,6 @@ import logging
 from pathlib import Path
 
 import click
-from more_itertools import last, first
 
 from mal_id.metadata_cache import request_metadata
 from mal_id.linear_history import track_diffs, iter_linear_history
@@ -66,14 +65,16 @@ def clean_linear_history() -> None:
     for entries in history_map.values():
         # sort by date
         entries.sort(key=lambda e: e.dt)
-        # only keep the first and last values from list
-        # if it has more than 2 items
-        if len(entries) > 2 and any(e.action is False for e in entries):
-            merged.append(first(entries))
-            merged.append(last(filter(lambda e: e.action is False, entries)))
-        else:
-            # otherwise just keep what we have
-            merged.extend(entries)
+
+        for e in entries:
+            if e.action is True:
+                merged.append(e)
+                break
+
+        for e in reversed(entries):
+            if e.action is False:
+                merged.append(e)
+                break
 
     # sort by date
     merged.sort(key=lambda e: e.dt)
