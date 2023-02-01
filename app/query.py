@@ -50,23 +50,36 @@ class QueryModelOut(BaseModel):
 
 
 class QueryOut(BaseModel):
-    entry_type: str = Field(regex="^(anime|manga)$")
+    entry_type: EntryType
     total_count: int
     results: List[QueryModelOut]
 
 
+class QueryInOrderBy(str, enum.Enum):
+    ID = "id"
+    TITLE = "title"
+    START_DATE = "start_date"
+    END_DATE = "end_date"
+    STATUS_UPDATED_AT = "status_updated_at"
+    METADATA_UPDATED_AT = "metadata_updated_at"
+    MEMBER_COUNT = "member_count"
+    AVERAGE_EPISODE_DURATION = "average_episode_duration"
+
+
+class QueryInSort(str, enum.Enum):
+    ASC = "asc"
+    DESC = "desc"
+
+
 class QueryIn(BaseModel):
     title: Optional[str] = Field(min_length=1)
-    entry_type: str = Field(default="anime", regex="^(anime|manga)$")
+    entry_type: EntryType = Field(default=EntryType.ANIME)
     media_type: Optional[str]
     nsfw: Optional[bool]
     json_data: Optional[Dict[str, Union[str, int, bool]]]
     approved_status: StatusIn = Field(default=StatusIn.ALL)
-    order_by: Optional[str] = Field(
-        default="id",
-        regex="^(id|title|start_date|end_date|status_updated_at|metadata_upadated_at|member_count|average_episode_duration)$",
-    )
-    sort: Optional[str] = Field(default="desc", regex="^(asc|desc)$")
+    order_by: QueryInOrderBy = Field(default=QueryInOrderBy.ID)
+    sort: QueryInSort = Field(default=QueryInSort.DESC)
     limit: int = Field(default=100, le=250)
     offset: int = Field(default=0)
 
