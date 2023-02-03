@@ -119,7 +119,7 @@ async def get_metadata_counts(
     info: QueryIn, sess: Session = Depends(get_db)
 ) -> QueryOut:
     logger.info(f"query: {info}")
-    model = AnimeMetadata if info.entry_type == "anime" else MangaMetadata
+    model = AnimeMetadata if info.entry_type == EntryType.ANIME else MangaMetadata
     entry_type = EntryType.from_str(info.entry_type)
 
     # left join on proxied image
@@ -157,10 +157,10 @@ async def get_metadata_counts(
         "start_date": model.start_date,
         "end_date": model.end_date,
         "status_updated_at": model.status_changed_at,
-        "metadata_upadated_at": model.updated_at,
+        "metadata_updated_at": model.updated_at,
         "member_count": model.member_count,
         "average_episode_duration": model.average_episode_duration,
-    }[info.order_by or "id"]
+    }.get(info.order_by, model.id)
     query = query.order_by(order_attr.desc() if info.sort == "desc" else order_attr.asc())  # type: ignore
 
     count = sess.exec(select(func.count()).select_from(query.subquery())).first()  # type: ignore
