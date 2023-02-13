@@ -4,7 +4,7 @@
 
 newest_hash="$(pipenv run alembic history 2>/dev/null | awk 'NR == 1 {print $3}')"
 [[ -z "$newest_hash" ]] && {
-  echo "No migrations found"
-  exit 0
+	echo "No migrations found"
+	exit 0
 }
 exec pipenv run alembic stamp "$newest_hash"

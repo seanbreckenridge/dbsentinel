@@ -134,7 +134,6 @@ async def add_or_update(
 
         # if we have the local dict db and we have a proxied image
         if mal_id_to_image is not None and img is not None:
-
             mal_image_url = summary_main_image(summary)
 
             image_key = (entry_enum, url_id)
@@ -186,7 +185,6 @@ async def add_or_update(
     if in_db is not None:
         entry_in_db = aid in in_db
     else:
-
         with Session(data_engine) as sess:
             entry_req = sess.exec(select(use_model).where(use_model.id == aid)).first()
             entry_in_db = entry_req is not None

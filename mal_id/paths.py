@@ -11,7 +11,7 @@ linear_history_unmerged = data_dir / "data.jsonl"
 linear_history_cleaned = data_dir / "data_cleaned.jsonl"
 metadatacache_dir = data_dir / "metadata"
 
-arm_dir = data_dir / 'arm'
+arm_dir = data_dir / "arm"
 assert arm_dir.exists()
 
 anilist_cache = data_dir / "anilist_cache"
