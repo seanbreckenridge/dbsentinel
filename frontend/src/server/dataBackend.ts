@@ -12,6 +12,7 @@ export default function requestBackendEnv<T>({
   body?: unknown;
   headers?: unknown;
 }) {
+  console.log(env.DATA_BACKEND_URL)
   return requestBackend<T>({
     url,
     method,

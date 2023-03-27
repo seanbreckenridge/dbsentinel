@@ -6,6 +6,7 @@ cd "${THIS_DIR}" || exit $?
 set -eux
 
 readonly NPM_CMD_PATH="${NPM_CMD_PATH:-npm}"
+declare -rx DBSENTINEL_BASE_PATH='/dbsentinel'
 
 node --version
 
