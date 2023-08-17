@@ -3,7 +3,7 @@ from typing import List, Optional, Dict, Any, Union
 from datetime import date
 
 from sqlalchemy import func
-from fastapi import Depends, APIRouter
+from fastapi import Depends, APIRouter, HTTPException
 from sqlmodel import Session
 from sqlmodel.sql.expression import select
 from pydantic import BaseModel, Field
@@ -194,4 +194,60 @@ async def media_query(info: QueryIn, sess: Session = Depends(get_db)) -> QueryOu
         ],
         total_count=count,
         entry_type=info.entry_type,
+    )
+
+
+class ByIdQueryIn(BaseModel):
+    id: int
+    entry_type: EntryType
+
+
+class ByIdRawOut(BaseModel):
+    id: int
+    proxied_image: str
+    json_data: dict
+
+
+@router.post("/id/")
+async def media_query_by_id(
+    info: ByIdQueryIn, sess: Session = Depends(get_db)
+) -> ByIdRawOut:
+    model = AnimeMetadata if info.entry_type == EntryType.ANIME else MangaMetadata
+    entry_type = EntryType.from_str(info.entry_type)
+
+    # left join on proxied image
+    query = select(model, ProxiedImage).join(
+        ProxiedImage,
+        (model.id == ProxiedImage.mal_id) & (ProxiedImage.mal_entry_type == entry_type),
+        isouter=True,
+    )
+
+    query = query.where(model.id == info.id)
+    query = query.limit(1)
+    res = list(sess.exec(query).all())
+
+    if len(res) == 0:
+        raise HTTPException(status_code=404, detail="Entry not found")
+
+    row, image = res[0]
+
+    json_data = row.json_data
+    json_data["title"] = row.title
+    json_data["nsfw"] = row.nsfw
+    json_data["approved_status"] = row.approved_status
+    json_data["media_type"] = row.media_type
+    json_data["member_count"] = row.member_count
+    json_data["status_updated_at"] = row.status_changed_at.timestamp()
+    json_data["metadata_updated_at"] = row.updated_at.timestamp()
+    json_data["start_date"] = _serialize_date(row.start_date)
+    json_data["end_date"] = _serialize_date(row.end_date)
+
+    if info.entry_type == EntryType.ANIME:
+        json_data["average_episode_duration"] = row.average_episode_duration
+
+    return ByIdRawOut(
+        id=row.id,
+        title=row.title,
+        proxied_image=image.proxied_url if image else None,
+        json_data=row.json_data,
     )

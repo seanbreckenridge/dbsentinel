@@ -13,7 +13,8 @@ config :frontend,
 
 config :tesla,
   adapter: Tesla.Adapter.Hackney,
-  recv_timeout: 30_000
+  recv_timeout: 30_000,
+  engine: Jason
 
 # Configures the endpoint
 config :frontend, FrontendWeb.Endpoint,

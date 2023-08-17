@@ -19,7 +19,7 @@ defmodule Frontend.Application do
       # Start the Endpoint (http/https)
       FrontendWeb.Endpoint,
       # statistics/when data was last processed
-      {Frontend.DataServerState, name: Frontend.DataServerState},
+      {Frontend.DataServerState, name: Frontend.DataServerState}
       # Start a worker by calling: Frontend.Worker.start_link(arg)
       # {Frontend.Worker, arg}
     ]

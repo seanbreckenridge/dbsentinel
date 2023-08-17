@@ -1,5 +1,4 @@
 import tracemalloc
-from typing import Callable
 
 from fastapi import FastAPI, Response, Request, status, Query
 from fastapi.responses import JSONResponse
@@ -9,8 +8,6 @@ from mal_id.log import logger
 
 
 def create_app() -> FastAPI:
-    from app.settings import settings
-
     current_app = FastAPI(title="dbsentinel")
 
     @current_app.on_event("startup")

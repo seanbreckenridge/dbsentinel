@@ -15,7 +15,7 @@ defmodule Frontend.DataServerState do
     state = %{
       statistics: %{},
       called_update_metadata: nil,
-      called_full_db_update: nil,
+      called_full_db_update: nil
     }
 
     # update state 1 second after start
@@ -26,7 +26,13 @@ defmodule Frontend.DataServerState do
   end
 
   def handle_call(:get_statistics, _from, state) do
-    {:reply, state.statistics, state}
+    cond do
+      state.statistics == %{} ->
+        {:reply, {:error, "No statistics available"}, state}
+
+      true ->
+        {:reply, {:ok, state.statistics}, state}
+    end
   end
 
   # call self to request statistics once an hour
@@ -38,7 +44,11 @@ defmodule Frontend.DataServerState do
       {:ok, statistics} ->
         Logger.info("Updated statistics")
         # convert keys to atoms
-        statistics = Enum.map(statistics, fn {k, v} -> {String.to_atom(k), v |> Enum.map(&map_keys_to_atoms/1)} end)
+        statistics =
+          Enum.map(statistics, fn {k, v} ->
+            {String.to_atom(k), v |> Enum.map(&map_keys_to_atoms/1)}
+          end)
+
         {:noreply, Map.put(state, :statistics, statistics)}
 
       {:error, err} ->
@@ -77,15 +87,21 @@ defmodule Frontend.DataServerState do
   defp parse_evry_files(state) when is_map(state) do
     state = Map.put(state, :called_update_metadata, parse_evry_file!("update-metadata"))
     state = Map.put(state, :called_full_db_update, parse_evry_file!("dbsentinel-full-db-update"))
-    Logger.info("evry: #{inspect(Map.take(state, [:called_update_metadata, :called_full_db_update]))}")
+
+    Logger.info(
+      "evry: #{inspect(Map.take(state, [:called_update_metadata, :called_full_db_update]))}"
+    )
+
     state
   end
 
   defp parse_evry_file!(name) do
     {_, value} = parse_evry_file(name)
+
     if value == nil do
       raise "Could not parse #{name}"
     end
+
     value
   end
 
