@@ -14,7 +14,9 @@ defmodule FrontendWeb.Router do
     plug(:accepts, ["json"])
   end
 
-  scope "/", FrontendWeb do
+  @base_url Application.compile_env!(:frontend, :base_url)
+
+  scope @base_url, FrontendWeb do
     pipe_through(:browser)
 
     get("/", PageController, :home)

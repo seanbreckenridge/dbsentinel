@@ -18,12 +18,12 @@ Incomplete setup instructions:
   - [ ] moderators/trusted users
     - [ ] parse reasons for denials/deletions from thread/allow users to input
     - [ ] add frontend button to refresh data for entries
-  - [ ] dashboard that shows stats etc.
-  - [ ] frontend to view approved/deleted/denied/unapproved entries
+  - [x] dashboard that shows stats etc.
+  - [x] frontend to view approved/deleted/denied/unapproved entries
   - [ ] add info on search page letting you know what each approved status means
-  - [ ] let page be ordered by when items were approved/deleted/denied (guess by metadata if not available)
+  - [x] let page be ordered by when items were approved/deleted/denied (guess by metadata if not available)
   - [ ] sort by media type, member count
-  - [ ] dark mode
+  - [x] dark mode
   - [ ] connect IDs to tmdb (manually, users can submit requests)
 - [ ] API for deleted/denied/unapproved ids/name
 - [ ] upload full API dump periodically to a public URL (w ids/names)

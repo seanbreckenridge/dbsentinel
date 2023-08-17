@@ -34,7 +34,7 @@
         id="status"
         name="approved_status"
         class="ml-2 rounded-md border-2 border-gray-300 p-2 dark:bg-gray-800 dark:text-white"
->
+      >
         <option value="all">All</option>
         <option value="approved">Approved</option>
         <option value="unapproved">Unapproved</option>
@@ -140,7 +140,7 @@
             id="date_info"
             type="button"
             class="ml-2 p-1 rounded-md border-2 border-gray-300"
-            >
+          >
             ?
           </button>
         </th>
@@ -153,11 +153,7 @@
           <td class="w-1/12 border border-gray-900 dark:border-gray-100">
             <%= if res["image_url"] do %>
               <a title="View Image" target="_blank" href={res["image_url"]} rel="noreferrer">
-              <img
-                src={res["image_url"]}
-                alt={res["title"]}
-                class="max-h-44 max-w-44"
-                />
+                <img src={res["image_url"]} alt={res["title"]} class="max-h-44 max-w-44" />
               </a>
             <% else %>
               <div class="w-full h-full flex items-center justify-center">
@@ -168,12 +164,15 @@
           <td class="w-2/12 border p-2 text-gray-900 dark:text-gray-300 dark:border-gray-100">
             <div class="flex w-full flex-col items-center justify-center">
               <div>
-                ID: 
+                ID:
                 <%= if res["approved_status"] == "approved" or res["approved_status"] == "unapproved" do %>
-                  <a class="text-blue-500 dark:text-blue-400" href={res["url"]}
-                     target="_blank"
-                     rel="noreferrer"
-                   %>
+                  <a
+                    class="text-blue-500 dark:text-blue-400"
+                    href={res["url"]}
+                    target="_blank"
+                    rel="noreferrer"
+                    %
+                  >
                     <%= res["id"] %>
                   </a>
                 <% else %>
@@ -184,12 +183,12 @@
                 <%= if is_nil(res["nsfw"]) do %>
                   Unknown
                 <% else %>
-                    <%= if res["nsfw"] do %>
-                      NSFW
-                <% else %>
-                  SFW
+                  <%= if res["nsfw"] do %>
+                    NSFW
+                  <% else %>
+                    SFW
+                  <% end %>
                 <% end %>
-              <% end %>
               </div>
               <div class="text-xs">
                 <%= res["approved_status"] %>
@@ -223,7 +222,7 @@
                   class="text-blue-500 dark:text-blue-400"
                   href={res["entry_url"]}
                   target="_blank"
-                  >
+                >
                   more info
                 </a>
               </li>
@@ -235,88 +234,88 @@
   </table>
 </section>
 <script>
-       let animeMediaTypes = [
-           "all",
-           "movie",
-           "music",
-           "ona",
-           "ova",
-           "special",
-           "tv",
-           "unknown",
-       ];
-       let mangaMediaTypes = [
-           "all",
-           "doujinshi",
-           "light_novel",
-           "manga",
-           "manhua",
-           "manhwa",
-           "novel",
-           "one_shot",
-       ];
+  let animeMediaTypes = [
+      "all",
+      "movie",
+      "music",
+      "ona",
+      "ova",
+      "special",
+      "tv",
+      "unknown",
+  ];
+  let mangaMediaTypes = [
+      "all",
+      "doujinshi",
+      "light_novel",
+      "manga",
+      "manhua",
+      "manhwa",
+      "novel",
+      "one_shot",
+  ];
 
-       document.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener("DOMContentLoaded", () => {
 
-           // when  anime/manga is selected in the entry type, update the media type options
-           function updateMediaTypes() {
-               const entryType = document.getElementById("entry_type")
-               const mediaType = document.getElementById("media_type")
-               const mediaTypes = entryType.value === "anime" ? animeMediaTypes : mangaMediaTypes;
-               mediaType.innerHTML = "";
-               for (const media of mediaTypes) {
-                   const option = document.createElement("option");
-                   option.value = media;
-                   option.innerText = media;
-                   mediaType.appendChild(option);
-               }
-           }
+      // when  anime/manga is selected in the entry type, update the media type options
+      function updateMediaTypes() {
+          const entryType = document.getElementById("entry_type")
+          const mediaType = document.getElementById("media_type")
+          const mediaTypes = entryType.value === "anime" ? animeMediaTypes : mangaMediaTypes;
+          mediaType.innerHTML = "";
+          for (const media of mediaTypes) {
+              const option = document.createElement("option");
+              option.value = media;
+              option.innerText = media;
+              mediaType.appendChild(option);
+          }
+      }
 
-           // parse the url params from values and set the input values
-           function parseParamsFromURL() {
-             new URL(window.location.href).searchParams.forEach((value, key) => {
-                 const input = document.getElementById(key);
-                 if (input) {
-                   if (input.type === "checkbox") {
-                     if (value == "on") {
-                       input.checked = true;
-                     } else if (value == "off") {
-                       input.checked = false;
-                     } else {
-                       input.checked = true;
-                     }
-                     if (key == "nsfw" || key == "sfw") {
-                       ratingCheckboxes(key)
-                     }
-                   } else {
-                       input.value = value;
-                   }
-                 }
-               });
-           }
+      // parse the url params from values and set the input values
+      function parseParamsFromURL() {
+        new URL(window.location.href).searchParams.forEach((value, key) => {
+            const input = document.getElementById(key);
+            if (input) {
+              if (input.type === "checkbox") {
+                if (value == "on") {
+                  input.checked = true;
+                } else if (value == "off") {
+                  input.checked = false;
+                } else {
+                  input.checked = true;
+                }
+                if (key == "nsfw" || key == "sfw") {
+                  ratingCheckboxes(key)
+                }
+              } else {
+                  input.value = value;
+              }
+            }
+          });
+      }
 
-           // if the sfw checkbox is checked, uncheck the nsfw checkbox and vice versa
-           function ratingCheckboxes(clicked) {
-               sfw = document.getElementById("sfw")
-               nsfw = document.getElementById("nsfw")
+      // if the sfw checkbox is checked, uncheck the nsfw checkbox and vice versa
+      function ratingCheckboxes(clicked) {
+          sfw = document.getElementById("sfw")
+          nsfw = document.getElementById("nsfw")
 
-               if (clicked === 'nsfw' && sfw.checked) {
-                   sfw.checked = false
-               } else if (clicked === 'sfw' && nsfw.checked) {
-                   nsfw.checked = false
-               }
-           }
+          if (clicked === 'nsfw' && sfw.checked) {
+              sfw.checked = false
+          } else if (clicked === 'sfw' && nsfw.checked) {
+              nsfw.checked = false
+          }
+      }
 
-         function dateInfo() {
-           alert("These deleted/denied are estimates based on when data was added/last cached, and not necessarily when the entry was deleted/denied.");
-         }
-           
-           // add event listeners
-           updateMediaTypes()
-           parseParamsFromURL()
-           document.getElementById("entry_type").addEventListener("change", updateMediaTypes);
-           document.getElementById("sfw").addEventListener("change", () => ratingCheckboxes('sfw'));
-         document.getElementById("nsfw").addEventListener("change", () => ratingCheckboxes('nsfw'));
-         document.getElementById("date_info").addEventListener("click", dateInfo);
-       })
+    function dateInfo() {
+      alert("These deleted/denied are estimates based on when data was added/last cached, and not necessarily when the entry was deleted/denied.");
+    }
+
+      // add event listeners
+      updateMediaTypes()
+      parseParamsFromURL()
+      document.getElementById("entry_type").addEventListener("change", updateMediaTypes);
+      document.getElementById("sfw").addEventListener("change", () => ratingCheckboxes('sfw'));
+    document.getElementById("nsfw").addEventListener("change", () => ratingCheckboxes('nsfw'));
+    document.getElementById("date_info").addEventListener("click", dateInfo);
+  })
 </script>

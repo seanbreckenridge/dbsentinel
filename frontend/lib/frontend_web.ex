@@ -21,7 +21,7 @@ defmodule FrontendWeb do
 
   def router do
     quote do
-      use Phoenix.Router, helpers: false
+      use Phoenix.Router, helpers: true
 
       # Import common connection and controller functions to use in pipelines
       import Plug.Conn
@@ -73,6 +73,9 @@ defmodule FrontendWeb do
       # Import convenience functions from controllers
       import Phoenix.Controller,
         only: [get_csrf_token: 0, view_module: 1, view_template: 1]
+
+      # so that I can access Router in the eex files
+      alias FrontendWeb.Router.Helpers, as: Routes
 
       # Include general helpers for rendering HTML
       unquote(html_helpers())

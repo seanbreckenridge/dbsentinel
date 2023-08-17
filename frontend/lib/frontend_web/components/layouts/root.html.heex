@@ -7,8 +7,27 @@
     <.live_title suffix=" · Dbsentinel">
       <%= assigns[:page_title] || "Dbsentinel" %>
     </.live_title>
-    <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"} />
-    <script defer phx-track-static type="text/javascript" src={~p"/assets/app.js"}>
+    <link
+      phx-track-static
+      rel="stylesheet"
+      href={
+        Routes.static_path(
+          @conn,
+          Application.get_env(:frontend, :static_url, "/") <> "/assets/app.css"
+        )
+      }
+    />
+    <script
+      defer
+      phx-track-static
+      type="text/javascript"
+      src={
+        Routes.static_path(
+          @conn,
+          Application.get_env(:frontend, :static_url, "/") <> "/assets/app.js"
+        )
+      }
+    >
     </script>
   </head>
   <body class="bg-white antialiased dark:bg-gray-900 w-full">

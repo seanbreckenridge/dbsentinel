@@ -9,7 +9,9 @@ import Config
 
 config :frontend,
   ecto_repos: [Frontend.Repo],
-  data_server_url: "http://localhost:5200"
+  data_server_url: "http://localhost:5200",
+  base_url: "/dbsentinel",
+  static_url: "/dbsentinel/static"
 
 config :tesla,
   adapter: Tesla.Adapter.Hackney,

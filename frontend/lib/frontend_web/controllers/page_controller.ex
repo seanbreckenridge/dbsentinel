@@ -47,7 +47,7 @@ defmodule Frontend.DataServer do
 
   @allowed_json_keys ["num_episodes", "volumes", "chapters"] |> MapSet.new()
 
-  @base_url Application.compile_env(:frontend, :base_url, "/")
+  @base_url Application.compile_env(:frontend, :base_url, "")
 
   def parse_search_result_item(item, entry_type) do
     item
@@ -70,9 +70,10 @@ defmodule Frontend.DataServer do
           " min"
       end
     )
+    # link to the entry pageon the frontend
     |> Map.put(
       "entry_url",
-      "#{@base_url}#{entry_type}/#{item["id"]}"
+      "#{@base_url}/#{entry_type}/#{item["id"]}"
     )
     |> Map.put(
       "json_map",
