@@ -228,6 +228,24 @@
               </li>
             </ul>
           </td>
+          <td class="w-3/12 border p-0 sm:p-1 md:p-2 dark:text-gray-300">
+            <div class="flex w-full flex-col items-center justify-center">
+              <div class="text-xs">
+                Start Date: <%= res["start_date"] %>
+              </div>
+              <div class="text-xs">
+                End Date: <%= res["end_date"] %>
+              </div>
+              <div class="text-xs">
+                Metadata Last Updated:
+                <span class="date-convert" data-date={res["metadata_updated_at"]}>-</span>
+              </div>
+              <div class="text-xs">
+                Status Updated At:
+                <span class="date-convert" data-date={res["status_updated_at"]}>-</span>
+              </div>
+            </div>
+          </td>
         </tr>
       <% end %>
     </tbody>
@@ -294,6 +312,18 @@
           });
       }
 
+    const displayDate = (date) => {
+      return new Date(date * 1000).toLocaleString();
+    };
+
+      function convertDates() {
+        const dates = document.querySelectorAll(".date-convert");
+        for (const date of dates) {
+          const dateValue = date.dataset.date;
+          date.innerText = displayDate(Number.parseInt(dateValue));
+        }
+      }
+
       // if the sfw checkbox is checked, uncheck the nsfw checkbox and vice versa
       function ratingCheckboxes(clicked) {
           sfw = document.getElementById("sfw")
@@ -313,6 +343,7 @@
       // add event listeners
       updateMediaTypes()
       parseParamsFromURL()
+      convertDates()
       document.getElementById("entry_type").addEventListener("change", updateMediaTypes);
       document.getElementById("sfw").addEventListener("change", () => ratingCheckboxes('sfw'));
     document.getElementById("nsfw").addEventListener("change", () => ratingCheckboxes('nsfw'));
