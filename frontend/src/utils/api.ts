@@ -14,9 +14,9 @@ import { type AppRouter } from "../server/api/root";
 
 const getBaseUrl = () => {
   if (typeof window !== "undefined") {
-    if (process.env.DBSENTINEL_BASE_PATH) {
+    if (process.env.NEXT_PUBLIC_BASE_PATH) {
       // if base path is set, use that (this would be '/dbsentinel') 
-      return process.env.DBSENTINEL_BASE_PATH;
+      return process.env.NEXT_PUBLIC_BASE_PATH;
     } else {
       // browser should use relative url
       return "";

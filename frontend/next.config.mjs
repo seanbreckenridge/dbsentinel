@@ -7,7 +7,7 @@
 
 /** @type {import("next").NextConfig} */
 const config = {
-  basePath: process.env.DBSENTINEL_BASE_PATH ?? undefined,
+  basePath: process.env.BASE_PATH ?? undefined,
   reactStrictMode: true,
   swcMinify: true,
   i18n: {
