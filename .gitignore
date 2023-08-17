@@ -1,4 +1,5 @@
 *.pdf
+/next_frontend
 /data
 /*.json
 *.txt

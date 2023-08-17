@@ -21,6 +21,7 @@ This is a work in progress, but the basics are up at <https://dbsentinel.sean.fi
 - [x] allow user to order by member count
 - [x] log more info if unprocessable error in backend for query
 - [x] search page: update mobile styling to show images
+- [ ] dark mode
 - [ ] API for deleted/denied/unapproved ids/names
 - [x] fix deletion date by reading git history date (currently I think its using approved date)
 - [ ] upload full API dump periodically to a public URL (w ids/names)

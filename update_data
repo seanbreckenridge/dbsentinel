@@ -30,7 +30,10 @@ readonly ARM_REPO_URL='https://github.com/kawaiioverflow/arm'
 ARM_REPO='./data/arm'
 
 # if running local, sync from remote server
-[[ -n "$ON_OS" ]] && wait-for-internet --text 'syncing from server...' && ./scripts/sync_from_remote
+[[ -n "$ON_OS" ]] && wait-for-internet --text 'syncing from server...' && evry 1d -dev-sync-dsentinel-from-remote && {
+	./scripts/sync_from_remote
+	rm -vrf ./data/hash
+}
 
 git_hash_changed() {
 	local ret git_hash
@@ -77,7 +80,7 @@ iter() {
 	printf '[%s] Updating... \n' "$(date)"
 	printf '[%s] Updating... \n' "$(date)" >&2
 	[[ ! -e './data' ]] && mkdir ./data
-	update_arm || return $?
+	update_arm || true
 	[[ -e "$REPO_TARGET" ]] || git clone "$REPO" "$REPO_TARGET"
 	(cd "$REPO_TARGET" && git pull)
 	if git_hash_changed; then
@@ -118,6 +121,7 @@ iter() {
 	# TODO: refresh images every 3 months?
 	set -e
 	set +x
+	true
 }
 
 main() {

@@ -150,6 +150,7 @@ class MetadataCache(URLCache):
             logger.warning(
                 "Couldn't cache info, could be deleted or failed to cache because entry data is broken/unapproved causing the MAL API to fail"
             )
+            # TODO: this needs more testing to make sure we never overwrite good data
             # prevent a broken entry from removing old, valid data
             #
             # If it has valid but failed now, we should just keep the old valid data
@@ -158,7 +159,13 @@ class MetadataCache(URLCache):
                 sc = self.summary_cache.get(uurl)
                 assert sc is not None
                 # check if this has a few keys, i.e. (this isnt {"error": 404})
-                if len(sc.metadata.keys()) > 5:
+                if "error" in sc.metadata and len(sc.metadata.keys()) == 1:
+                    pass
+                else:
+                    # just return the old data
+                    assert "error" not in sc.metadata
+                    # reusing old data is fine, but we should update the timestamp
+                    sc.timestamp = datetime.now()
                     return sc
             logger.warning(
                 "no existing cached data for this entry, saving error to cache"
