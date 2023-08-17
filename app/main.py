@@ -42,12 +42,6 @@ def create_app() -> FastAPI:
     current_app.include_router(summary_router, prefix="/summary")
     current_app.include_router(query_router, prefix="/query")
 
-    @current_app.middleware("http")
-    async def _authenticate(request: Request, call_next: Callable) -> Response:
-        if request.headers.get("Authorization") != settings.BEARER_SECRET:
-            return Response(status_code=401, content="Unauthorized")
-        return await call_next(request)  # type: ignore
-
     # https://github.com/tiangolo/fastapi/issues/3361#issuecomment-1002120988
     @current_app.exception_handler(RequestValidationError)
     async def _validation_exception_handler(

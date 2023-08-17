@@ -95,7 +95,8 @@ iter() {
 	fi
 	if [[ -z "$SKIP_UPDATE_METADATA" ]]; then
 		if wait-for-internet --text 'checking for internet....' --timeout 1; then
-			timeout 2h pipenv run python3 main.py mal update-metadata || return $?
+			# just use evry to track when this last ran
+			evry 1s -update-metadata && timeout 2h pipenv run python3 main.py mal update-metadata || return $?
 		fi
 	fi
 	if curl -s localhost:4001 >/dev/null; then

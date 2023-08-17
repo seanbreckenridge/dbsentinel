@@ -1,0 +1,62 @@
+<header class="px-4 sm:px-6 lg:px-8">
+  <div class="flex items-center justify-between border-b border-zinc-100 py-3 text-sm dark:border-gray-700 dark:bg-black-500">
+    <div class="flex items-center gap-4 text-xl dark:text-zinc-200">
+      <a href="/" class="hover:text-zinc-700 text-lg dark:text-zinc-200">
+        Dbsentinel
+      </a>
+      <a href="/search" class="hover:text-zinc-700 text-lg dark:text-zinc-200">
+      Search
+      </a>
+    </div>
+    <!-- swap between light and dark mode, call the toggle_darkmode function -->
+    <div class="flex items-end">
+      <button class="flex items-center gap-4 leading-6 text-zinc-900 text-lg border border-zinc-300 p-2 rounded-md dark:border-zinc-700 dark:text-zinc-200 mx-2">
+        <span id="darkmode_icon" class="material-icons-outlined text-xl dark:text-zinc-200">
+          Light
+        </span>
+    </button>
+    <div class="flex items-center gap-4 leading-6 text-zinc-900 text-lg border border-zinc-300 p-2 rounded-md dark:border-zinc-700 dark:text-zinc-200 mx-2">
+      <a href="/signup" class="hover:text-zinc-700 text-lg dark:text-zinc-200">
+        Sign up
+      </a>
+    </div>
+    <div class="flex items-center gap-4 leading-6 text-zinc-900 text-lg border border-zinc-300 p-2 rounded-md dark:border-zinc-700 dark:text-zinc-200 mx-2">
+      <a href="/signin" class="hover:text-zinc-700 text-lg dark:text-zinc-200">
+        Sign in
+      </a>
+    </div>
+    </div>
+  </div>
+</header>
+<main class="px-4 py-20 sm:px-6 lg:px-8">
+  <div class="mx-auto max-w-2xl">
+    <.flash_group flash={@flash} />
+    <%= @inner_content %>
+  </div>
+</main>
+ <script>
+   document.addEventListener("DOMContentLoaded", function() {
+     if (
+      localStorage.theme === "dark" ||
+      (!("theme" in localStorage) &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches)
+      ) {
+       document.documentElement.classList.add("dark");
+       document.getElementById("darkmode_icon").innerHTML = "Dark";
+      } else {
+        document.documentElement.classList.remove("dark");
+        document.getElementById("darkmode_icon").innerHTML = "Light";
+      }
+     document.getElementById("darkmode_icon").addEventListener("click", function() {
+       if (document.documentElement.classList.contains("dark")) {
+         document.documentElement.classList.remove("dark");
+         document.getElementById("darkmode_icon").innerHTML = "Light";
+         localStorage.theme = "light";
+       } else {
+         document.documentElement.classList.add("dark");
+         document.getElementById("darkmode_icon").innerHTML = "Dark";
+         localStorage.theme = "dark";
+       }
+     });
+   });
+ </script>
