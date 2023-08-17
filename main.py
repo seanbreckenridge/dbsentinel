@@ -1,6 +1,7 @@
 import sys
 import json
 import logging
+import asyncio
 from pathlib import Path
 
 import click
@@ -113,6 +114,25 @@ def update_metadata(request_failed: bool) -> None:
 
     for mid in unapproved.manga:
         request_metadata(mid, "manga", rerequest_failed=request_failed)
+
+
+@mal.command(short_help="run a full db update")
+def full_db_update() -> None:
+    """
+    this is expensive! -- only do this when necessary
+
+    this reads all the cached data and updates the sqlite db
+    """
+    from mal_id.metadata_cache import check_mal as heartbeat
+
+    if not heartbeat():
+        sys.exit(1)
+
+    from app.db_entry_update import update_database
+
+    click.echo("running full db update...")
+    asyncio.run(update_database())
+    click.echo("done")
 
 
 @mal.command(short_help="print page ranges from indexer")

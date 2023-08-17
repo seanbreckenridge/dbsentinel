@@ -95,7 +95,7 @@ iter() {
 	fi
 	if [[ -z "$SKIP_UPDATE_METADATA" ]]; then
 		if wait-for-internet --text 'checking for internet....' --timeout 1; then
-			timeout 1h pipenv run python3 main.py mal update-metadata || return $?
+			timeout 2h pipenv run python3 main.py mal update-metadata || return $?
 		fi
 	fi
 	if curl -s localhost:4001 >/dev/null; then
@@ -114,11 +114,9 @@ iter() {
 			ssh vultr "curl -s \"${URL}\""
 		fi
 	fi
-	if authd_curl -s localhost:5200/ping >/dev/null; then
-		evry 2h -dbsentinel-full-db-update && authd_curl -s localhost:5200/tasks/full_database_update
-	fi
-	# TODO: do a force update every 3 months?
-	# TODO: refresh images every 3 months?
+	evry 2h -dbsentinel-full-db-update && {
+		pipenv run python3 main.py mal full-db-update || return $?
+	}
 	set -e
 	set +x
 	true

@@ -120,30 +120,23 @@ class MetadataCache(URLCache):
         self, cache_dir: Path = metadatacache_dir, loglevel: int = logging.INFO
     ) -> None:
         self.mal_session = mal_api_session()
-        # hmm -- this expires every ~9 years or so as a fallback for now
-        # when stuff was actually expiring it looked like it was breaking/ovewriting the old
-        # cache even though these were 404s (which was never meant to happen)
-        #
-        # made a backup of the database to somewhere local incase that actually did
-        # malform some of the data in the metadata cache
-        super().__init__(
-            cache_dir=cache_dir, loglevel=loglevel, options={"expiry_duration": "520w"}
-        )
+        super().__init__(cache_dir=cache_dir, loglevel=loglevel)
 
     def request_data(self, url: str, preprocess_url: bool = True) -> Summary:
         #
         # this may never actually be the case, but just want to make sure if we
         # add some refresh mechanism that that does not happen...
-        if preprocess_url:
-            uurl = self.preprocess_url(url)
-        else:
-            uurl = url
+        uurl = self.preprocess_url(url) if preprocess_url else url
         logger.info(f"requesting {uurl}")
         try:
             if "skip_retry" in self.options and self.options["skip_retry"] is True:
                 json_data = _api_request(self.mal_session, uurl)
             else:
                 json_data = api_request(self.mal_session, uurl)
+            # succeeded, return the data
+            return Summary(
+                url=uurl, data={}, metadata=json_data, timestamp=datetime.now()
+            )
         except requests.exceptions.RequestException as ex:
             logger.exception(f"error requesting {uurl}", exc_info=ex)
             logger.warning(ex.response.text)
@@ -158,27 +151,41 @@ class MetadataCache(URLCache):
                 logger.warning("using existing cached data for this entry")
                 sc = self.summary_cache.get(uurl)
                 assert sc is not None
+                logger.info("Updating timestamp to prevent re-requesting this entry")
                 # check if this has a few keys, i.e. (this isnt {"error": 404})
-                if "error" in sc.metadata and len(sc.metadata.keys()) == 1:
-                    pass
-                else:
-                    # just return the old data
-                    assert "error" not in sc.metadata
-                    # reusing old data is fine, but we should update the timestamp
+                if "error" in sc.metadata:
+                    # if we had cached an error, then just return the error
+                    # TODO: should we update the timestamp here? i dont think it hurts to, as this
+                    # is just an error where we have no data. it just prevents possible re-requests
+                    # of the same error in the future
                     sc.timestamp = datetime.now()
                     return sc
-            logger.warning(
-                "no existing cached data for this entry, saving error to cache"
-            )
-            # this just doesnt exist (deleted a long time ago etc.?)
-            # no way to get data for this
-            return Summary(
-                url=uurl,
-                data={},
-                metadata={"error": ex.response.status_code},
-                timestamp=datetime.now(),
-            )
-        return Summary(url=uurl, data={}, metadata=json_data, timestamp=datetime.now())
+                else:
+                    # we failed to get new data, but have old data
+                    # so, just return the old data
+                    assert "error" not in sc.metadata and MetadataCache.has_data(
+                        sc
+                    ), f"{sc.metadata} does not have data"
+                    # reusing old data is fine, but we should update the timestamp so
+                    # we dont try to refresh it again for a while
+                    sc.timestamp = datetime.now()
+                    return sc
+            else:
+                # there is no existing data, and we failed to get new data,
+                # so save an error to the cache
+                # sanity check to make sure were not overwriting good data
+                assert not self.summary_cache.has(uurl)
+                logger.warning(
+                    "no existing cached data for this entry, saving error to cache"
+                )
+                # this just doesnt exist (deleted a long time ago etc.?)
+                # no way to get data for this
+                return Summary(
+                    url=uurl,
+                    data={},
+                    metadata={"error": ex.response.status_code},
+                    timestamp=datetime.now(),
+                )
 
     def refresh_data(self, url: str) -> Summary:
         uurl = self.preprocess_url(url)
@@ -216,6 +223,7 @@ def request_metadata(
         api_url = mcache.BASE_ANIME_URL.format(id_) + "&" + mcache.ANIME_FIELDS
     else:
         api_url = mcache.BASE_MANGA_URL.format(id_) + "&" + mcache.MANGA_FIELDS
+    # if this had failed previouly, try again
     if rerequest_failed:
         sdata = mcache.get(api_url)
         # if theres no data and this isnt a 404, retry

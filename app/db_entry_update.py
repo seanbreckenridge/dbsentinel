@@ -119,6 +119,7 @@ async def add_or_update(
                 )
 
         # if force refreshing an entry, select the single image row from the db
+        # mal_id_to_image is passed in a full update
         if mal_id_to_image is None:
             logger.debug(f"db: {entry_type} {url_id} fetching image row from db")
             with Session(data_engine) as sess:

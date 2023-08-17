@@ -115,9 +115,7 @@ def _pick_image(metadata: ApprovedBase, proxied: ProxiedImage | None) -> Optiona
 
 
 @router.post("/")
-async def get_metadata_counts(
-    info: QueryIn, sess: Session = Depends(get_db)
-) -> QueryOut:
+async def media_query(info: QueryIn, sess: Session = Depends(get_db)) -> QueryOut:
     logger.info(f"query: {info}")
     model = AnimeMetadata if info.entry_type == EntryType.ANIME else MangaMetadata
     entry_type = EntryType.from_str(info.entry_type)

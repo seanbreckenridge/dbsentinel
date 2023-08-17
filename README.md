@@ -1,36 +1,32 @@
 A counterpart to <https://sean.fish/mal_unapproved/>. That lists entries that have yet to be approved, denied entries and deleted entries
 
-Frontend: <https://github.com/seanbreckenridge/dbsentinel-next>
-
 This is a work in progress, but the basics are up at <https://dbsentinel.sean.fish/search>
+
+Incomplete setup instructions:
+
+- Check [app/settings.py](app/settings.py) for the required environment variables
+- `pipenv install --dev`
+- [`checker_mal`](https://github.com/Hiyori-API/checker_mal) could be running on the same machine, if you want to keep an updated anime/manga ID list locally:
+  - Can fill out `usernames.txt` with peoples list to check for new entries
+  - If you have a `animelist.xml` file to use for `python3 main.py mal estimate-deleted-xml`, you can put it in `data/animelist.xml`
+- `pipenv run prod`
 
 ### TODO:
 
-- [x] data backend upadtes using other services
-- [x] task API to connect frontend to data backend
-- [x] frontend with discord login
-- [x] dashboard that shows stats etc.
-- [x] proxy images from MAL incase they get deleted
-- [x] add command to refresh summary for entries with missing images
-- [x] frontend to view approved/denied/deleted/unapproved entries
-- [x] add info on search page letting you know what each approved status means
-- [x] let page be ordered by when items were approved/deleted/denied (guess by metadata if not available)
-- [x] compare against my list to find deleted entries, request that many pages
-- [x] sort by media type
-- [x] add useful links/sorts from the main page
-- [x] allow user to order by member count
-- [x] log more info if unprocessable error in backend for query
-- [x] search page: update mobile styling to show images
-- [ ] dark mode
-- [ ] API for deleted/denied/unapproved ids/names
-- [x] fix deletion date by reading git history date (currently I think its using approved date)
-- [ ] upload full API dump periodically to a public URL (w ids/names)
-- [ ] roles to give people more permissions
-  - [ ] let users refresh data for old entries
-  - [x] connect IDs to anilist (using local `URLCache`)
-  - [x] integrate <https://github.com/kawaiioverflow/arm>
-  - [ ] parse reasons for denials/deletions from thread/allow users to input
+- [ ] refresh data based on popularity/last updated date
+- [ ] frontend in pheonix
+  - [ ] moderators/trusted users
+    - [ ] parse reasons for denials/deletions from thread/allow users to input
+    - [ ] add frontend button to refresh data for entries
+  - [ ] dashboard that shows stats etc.
+  - [ ] frontend to view approved/deleted/denied/unapproved entries
+  - [ ] add info on search page letting you know what each approved status means
+  - [ ] let page be ordered by when items were approved/deleted/denied (guess by metadata if not available)
+  - [ ] sort by media type, member count
+  - [ ] dark mode
   - [ ] connect IDs to tmdb (manually, users can submit requests)
+- [ ] API for deleted/denied/unapproved ids/name
+- [ ] upload full API dump periodically to a public URL (w ids/names)
 - [ ] let user upload their MAL XML export, parse and save data from it to localStorage
-  - [ ] let user find entries that are not on their list
+- [ ] let user find entries that are not on their list
 - [ ] integrate with [notify-bot](https://github.com/seanbreckenridge/mal-notify-bot) so that sources added there get added to the website (also allow items which arent in #feed -- so this can source anything) -- only show on website through a domain allowlist

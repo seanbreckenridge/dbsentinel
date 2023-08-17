@@ -6,6 +6,6 @@ set -eu
 THIS_DIR="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
 cd "${THIS_DIR}" || exit $?
 
-flake8 main.py app/*.py mal_id/*.py
-pytest --ignore=data app/*.py mal_id/*.py
-mypy
+pipenv run python3 -m flake8 main.py app/*.py mal_id/*.py
+pipenv run python3 -m pytest ./app/db_entry_update.py
+pipenv run python3 -m mypy --install-types ./mal_id/ ./app/

@@ -20,21 +20,6 @@ from app.threaded_router import ThreadedRouter
 trouter = ThreadedRouter()
 
 
-@trouter.get("/full_database_update")
-async def full_update() -> str:
-    """
-    this is expensive! -- only do this when necessary
-
-    happens once every 10 minutes, pinged from the ./update_data script
-    after other stuff has been updated
-    """
-    from app.db_entry_update import update_database
-
-    await update_database()
-
-    return "done with db update"
-
-
 def _fetch_data(
     entry_type: EntryType, entry_id: int
 ) -> Union[AnimeMetadata, MangaMetadata]:
