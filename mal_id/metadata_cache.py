@@ -120,9 +120,14 @@ class MetadataCache(URLCache):
         self, cache_dir: Path = metadatacache_dir, loglevel: int = logging.INFO
     ) -> None:
         self.mal_session = mal_api_session()
-        # expires once a year, if user doesnt request a refresh in some other way
+        # hmm -- this expires every ~9 years or so as a fallback for now
+        # when stuff was actually expiring it looked like it was breaking/ovewriting the old
+        # cache even though these were 404s (which was never meant to happen)
+        #
+        # made a backup of the database to somewhere local incase that actually did
+        # malform some of the data in the metadata cache
         super().__init__(
-            cache_dir=cache_dir, loglevel=loglevel, options={"expiry_duration": "52w"}
+            cache_dir=cache_dir, loglevel=loglevel, options={"expiry_duration": "520w"}
         )
 
     def request_data(self, url: str, preprocess_url: bool = True) -> Summary:

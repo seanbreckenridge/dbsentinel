@@ -75,6 +75,7 @@ update_arm() {
 
 iter() {
 	printf '[%s] Updating... \n' "$(date)"
+	printf '[%s] Updating... \n' "$(date)" >&2
 	[[ ! -e './data' ]] && mkdir ./data
 	update_arm || return $?
 	[[ -e "$REPO_TARGET" ]] || git clone "$REPO" "$REPO_TARGET"
@@ -111,7 +112,7 @@ iter() {
 		fi
 	fi
 	if authd_curl -s localhost:5200/ping >/dev/null; then
-		evry 1h -dbsentinel-full-db-update && authd_curl -s localhost:5200/tasks/full_database_update
+		evry 2h -dbsentinel-full-db-update && authd_curl -s localhost:5200/tasks/full_database_update
 	fi
 	# TODO: do a force update every 3 months?
 	# TODO: refresh images every 3 months?
@@ -125,7 +126,7 @@ main() {
 	if [[ "$1" == '-l' ]]; then
 		while true; do
 			sleep 10m
-			iter
+			iter || true
 		done
 	fi
 }
