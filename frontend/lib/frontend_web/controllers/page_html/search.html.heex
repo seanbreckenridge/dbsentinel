@@ -89,8 +89,8 @@
         id="sort"
         class="ml-2 pr-8 mr-3 rounded-md border-2 border-gray-300 p-2 dark:bg-gray-800 dark:text-white"
       >
-        <option value="asc">Ascending</option>
         <option value="desc">Descending</option>
+        <option value="asc">Ascending</option>
       </select>
       </label>
       <label for="page" class="my-1 text-lg font-bold dark:text-gray-300">
@@ -338,8 +338,11 @@
       }
 
       // parse the url params from values and set the input values
-      function parseParamsFromURL() {
+      function parseParamsFromURL(only) {
         new URL(window.location.href).searchParams.forEach((value, key) => {
+            if (only !== null && key != only) {
+              return;
+            }
             const input = document.getElementById(key);
             if (input) {
               if (input.type === "checkbox") {
@@ -392,9 +395,10 @@
           }
       }
 
-      // add event listeners
+      parseParamsFromURL(null);
       updateMediaTypes()
-      parseParamsFromURL()
+      // need to parse the media type again, since the media type options are updated
+      parseParamsFromURL("media_type");
       convertDates()
       document.getElementById("entry_type").addEventListener("change", updateMediaTypes);
       document.getElementById("sfw").addEventListener("change", () => ratingCheckboxes('sfw'));
