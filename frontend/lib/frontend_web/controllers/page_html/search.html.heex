@@ -132,20 +132,22 @@
     </button>
     <div class="w-full flex items-center justify-center dark:text-gray-300">
       <div class="flex flex-col w-full justify-center items-center">
-      <%= if @data.total_count == 0 do %>
-      <div>
-        No Results
-      </div>
-    <% else %>
-      <div>
-        Total Count: <%= @data.total_count %>
-      </div>
-    <% end %>
-    <%= if length(@data.results) == 0 do %>
-      <div>
-        No More Results, go <a href="#" class="prev-page text-blue-500 dark:text-blue-400">back</a> a page
-      </div>
-    <% end %>
+        <%= if @data.total_count == 0 do %>
+          <div>
+            No Results
+          </div>
+        <% else %>
+          <div>
+            Total Count: <%= @data.total_count %>
+          </div>
+        <% end %>
+        <%= if length(@data.results) == 0 do %>
+          <div>
+            No More Results, go
+            <a href="#" class="prev-page text-blue-500 dark:text-blue-400">back</a>
+            a page
+          </div>
+        <% end %>
       </div>
     </div>
     <button class="next-page p-3 rounded-md border-2 border-gray-300 dark:bg-gray-800 dark:text-white">
@@ -153,133 +155,133 @@
     </button>
   </div>
   <%= if length(@data.results) > 0 do %>
-  <table class="max-w-full table-fixed">
-    <thead>
-      <tr class="border-2 border-black bg-gray-100 dark:bg-inherit dark:border-gray-100 dark:text-gray-300">
-        <th class="p-2">
-          <!-- image -->
-        </th>
-        <th class="p-2">Meta</th>
-        <th class="p-2">Data</th>
-        <th class="cursor flex flex-row items-center justify-center p-2">
-          <div>Dates</div>
-          <!-- button that tells you about dates when you click it -->
-          <button
-            id="date_info"
-            type="button"
-            onclick="dateInfo()"
-            class="ml-2 p-1 rounded-md border-2 border-gray-300"
-          >
-            ?
-          </button>
-        </th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- loop through results -->
-      <%= for res <- @data.results do %>
-        <tr class="w-full">
-          <td class="w-1/12 border border-gray-900 dark:border-gray-100">
-            <%= if res["image_url"] do %>
-              <a title="View Image" target="_blank" href={res["image_url"]} rel="noreferrer">
-                <img src={res["image_url"]} alt={res["title"]} class="max-h-44 max-w-44" />
-              </a>
-            <% else %>
-              <div class="w-full h-full flex items-center justify-center dark:text-gray-300">
-                No Image
+    <table class="max-w-full table-fixed">
+      <thead>
+        <tr class="border-2 border-black bg-gray-100 dark:bg-inherit dark:border-gray-100 dark:text-gray-300">
+          <th class="p-2">
+            <!-- image -->
+          </th>
+          <th class="p-2">Meta</th>
+          <th class="p-2">Data</th>
+          <th class="cursor flex flex-row items-center justify-center p-2">
+            <div>Dates</div>
+            <!-- button that tells you about dates when you click it -->
+            <button
+              id="date_info"
+              type="button"
+              onclick="dateInfo()"
+              class="ml-2 p-1 rounded-md border-2 border-gray-300"
+            >
+              ?
+            </button>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- loop through results -->
+        <%= for res <- @data.results do %>
+          <tr class="w-full">
+            <td class="w-1/12 border border-gray-900 dark:border-gray-100">
+              <%= if res["image_url"] do %>
+                <a title="View Image" target="_blank" href={res["image_url"]} rel="noreferrer">
+                  <img src={res["image_url"]} alt={res["title"]} class="max-h-44 max-w-44" />
+                </a>
+              <% else %>
+                <div class="w-full h-full flex items-center justify-center dark:text-gray-300">
+                  No Image
+                </div>
+              <% end %>
+            </td>
+            <td class="w-2/12 border p-2 text-gray-900 dark:text-gray-300 dark:border-gray-100">
+              <div class="flex w-full flex-col items-center justify-center">
+                <div>
+                  ID:
+                  <%= if res["approved_status"] == "approved" or res["approved_status"] == "unapproved" do %>
+                    <a
+                      class="text-blue-500 dark:text-blue-400"
+                      href={res["url"]}
+                      target="_blank"
+                      rel="noreferrer"
+                      %
+                    >
+                      <%= res["id"] %>
+                    </a>
+                  <% else %>
+                    <%= res["id"] %>
+                  <% end %>
+                </div>
+                <div class="my-1 text-xs">
+                  <%= if is_nil(res["nsfw"]) do %>
+                    Unknown
+                  <% else %>
+                    <%= if res["nsfw"] do %>
+                      NSFW
+                    <% else %>
+                      SFW
+                    <% end %>
+                  <% end %>
+                </div>
+                <div class="text-xs">
+                  <%= res["approved_status"] %>
+                </div>
               </div>
-            <% end %>
-          </td>
-          <td class="w-2/12 border p-2 text-gray-900 dark:text-gray-300 dark:border-gray-100">
-            <div class="flex w-full flex-col items-center justify-center">
-              <div>
-                ID:
-                <%= if res["approved_status"] == "approved" or res["approved_status"] == "unapproved" do %>
+            </td>
+            <td class="w-6/12 border p-2 text-gray-900 dark:text-gray-300 dark:border-gray-100">
+              <div class="flex w-full flex-col items-center justify-center">
+                <div><%= res["title"] %></div>
+              </div>
+              <hr class="my-2 w-10/12 mx-auto" />
+              <ul class="mb-2 flex w-full flex-col items-center justify-center text-sm sm:flex-row">
+                <li class="mx-3 flex flex-row items-center justify-center">
+                  media type: <%= res["media_type"] %>
+                </li>
+                <li class="mx-3 flex flex-row items-center justify-center">
+                  members: <%= res["members"] %>
+                </li>
+                <li class="mx-3 flex flex-row items-center justify-center">
+                  ep duration: <%= res["average_episode_duration"] %>
+                </li>
+              </ul>
+              <ul class="mb-2 flex w-full flex-col items-center justify-center text-sm sm:flex-row">
+                <%= for {jk, jv} <- res["json_map"] do %>
+                  <li class="mx-3 flex flex-row items-center justify-center">
+                    <%= jk %>: <%= jv %>
+                  </li>
+                <% end %>
+                <li>
                   <a
                     class="text-blue-500 dark:text-blue-400"
-                    href={res["url"]}
+                    href={res["entry_url"]}
                     target="_blank"
-                    rel="noreferrer"
-                    %
                   >
-                    <%= res["id"] %>
+                    more info
                   </a>
-                <% else %>
-                  <%= res["id"] %>
-                <% end %>
-              </div>
-              <div class="my-1 text-xs">
-                <%= if is_nil(res["nsfw"]) do %>
-                  Unknown
-                <% else %>
-                  <%= if res["nsfw"] do %>
-                    NSFW
-                  <% else %>
-                    SFW
-                  <% end %>
-                <% end %>
-              </div>
-              <div class="text-xs">
-                <%= res["approved_status"] %>
-              </div>
-            </div>
-          </td>
-          <td class="w-6/12 border p-2 text-gray-900 dark:text-gray-300 dark:border-gray-100">
-            <div class="flex w-full flex-col items-center justify-center">
-              <div><%= res["title"] %></div>
-            </div>
-            <hr class="my-2 w-10/12 mx-auto" />
-            <ul class="mb-2 flex w-full flex-col items-center justify-center text-sm sm:flex-row">
-              <li class="mx-3 flex flex-row items-center justify-center">
-                media type: <%= res["media_type"] %>
-              </li>
-              <li class="mx-3 flex flex-row items-center justify-center">
-                members: <%= res["members"] %>
-              </li>
-              <li class="mx-3 flex flex-row items-center justify-center">
-                ep duration: <%= res["average_episode_duration"] %>
-              </li>
-            </ul>
-            <ul class="mb-2 flex w-full flex-col items-center justify-center text-sm sm:flex-row">
-              <%= for {jk, jv} <- res["json_map"] do %>
-                <li class="mx-3 flex flex-row items-center justify-center">
-                  <%= jk %>: <%= jv %>
                 </li>
-              <% end %>
-              <li>
-                <a
-                  class="text-blue-500 dark:text-blue-400"
-                  href={res["entry_url"]}
-                  target="_blank"
-                >
-                  more info
-                </a>
-              </li>
-            </ul>
-          </td>
-          <td class="w-3/12 border p-0 sm:p-1 md:p-2 dark:text-gray-300">
-            <div class="flex w-full flex-col items-center justify-center">
-              <div class="text-xs">
-                Start Date: <%= res["start_date"] %>
+              </ul>
+            </td>
+            <td class="w-3/12 border p-0 sm:p-1 md:p-2 dark:text-gray-300">
+              <div class="flex w-full flex-col items-center justify-center">
+                <div class="text-xs">
+                  Start Date: <%= res["start_date"] %>
+                </div>
+                <div class="text-xs">
+                  End Date: <%= res["end_date"] %>
+                </div>
+                <div class="text-xs">
+                  Metadata Last Updated:
+                  <span class="date-convert" data-date={res["metadata_updated_at"]}>-</span>
+                </div>
+                <div class="text-xs">
+                  Status Updated At:
+                  <span class="date-convert" data-date={res["status_updated_at"]}>-</span>
+                </div>
               </div>
-              <div class="text-xs">
-                End Date: <%= res["end_date"] %>
-              </div>
-              <div class="text-xs">
-                Metadata Last Updated:
-                <span class="date-convert" data-date={res["metadata_updated_at"]}>-</span>
-              </div>
-              <div class="text-xs">
-                Status Updated At:
-                <span class="date-convert" data-date={res["status_updated_at"]}>-</span>
-              </div>
-            </div>
-          </td>
-        </tr>
-      <% end %>
-    </tbody>
-  </table>
-<% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
 </section>
 <script>
   let animeMediaTypes = [
