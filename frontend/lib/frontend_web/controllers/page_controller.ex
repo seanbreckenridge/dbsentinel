@@ -36,9 +36,23 @@ defmodule Frontend.DataServer do
   defp parse_media_type("all"), do: nil
   defp parse_media_type(s) when is_binary(s), do: s
 
+  defp average_episode_duration(nil), do: "-"
+  defp average_episode_duration(0), do: "-"
+  defp average_episode_duration(s) when is_float(s), do: average_episode_duration(round(s))
+  defp average_episode_duration(n) when is_integer(n) do
+    count = n |> Kernel./(60) |> round()
+    case count do
+      0 -> "-"
+      _ -> "#{count} min"
+    end
+  end
+
+  defp episode_volume_chapter(nil), do: "-"
+  defp episode_volume_chapter(0), do: "-"
+  defp episode_volume_chapter(s) when is_integer(s), do: s
+
   defp strip_string(nil), do: nil
   defp strip_string(""), do: nil
-
   defp strip_string(s) when is_binary(s) do
     case s |> String.trim() do
       "" -> nil
@@ -65,19 +79,7 @@ defmodule Frontend.DataServer do
       unslugify(item["media_type"]) || "unknown"
     )
     |> Map.put("member_count", item["member_count"] || "-")
-    |> Map.put(
-      "average_episode_duration",
-      if is_nil(item["average_episode_duration"]) do
-        "-"
-      else
-        (item["average_episode_duration"]
-         |> Kernel./(60)
-         |> Float.to_string()
-         |> String.split(".")
-         |> List.first()) <>
-          " min"
-      end
-    )
+    |> Map.put("average_episode_duration", average_episode_duration(item["average_episode_duration"]))
     # link to the entry pageon the frontend
     |> Map.put(
       "entry_url",
@@ -88,7 +90,7 @@ defmodule Frontend.DataServer do
       item["json_data"]
       |> Map.to_list()
       |> Enum.filter(fn {k, _} -> MapSet.member?(@allowed_json_keys, k) end)
-      |> Enum.map(fn {k, v} -> {unslugify(k), v} end)
+      |> Enum.map(fn {k, v} -> {unslugify(k), episode_volume_chapter(v)} end)
       # rename num_episodes to episodes
       |> Enum.map(fn {k, v} ->
         case k do

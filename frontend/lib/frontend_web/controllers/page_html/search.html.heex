@@ -253,25 +253,25 @@
                 </div>
               </div>
             </td>
-            <td dclass="w-6/12 border p-2 text-gray-900 dark:text-gray-300 dark:border-gray-100">
-              <div class="flex w-full flex-col items-center justify-center">
+            <td class="w-6/12 border p-2 text-gray-900 dark:text-gray-300 dark:border-gray-">
+              <div class="flex w-full flex-col items-center justify-center dark:text-gray-300">
                 <div><%= res["title"] %></div>
               </div>
               <hr class="my-2 w-10/12 mx-auto" />
               <ul class="mb-2 flex w-full flex-col items-center justify-center text-sm sm:flex-row">
-                <li class="mx-3 flex flex-row items-center justify-center">
+                <li class="mx-3 flex flex-row items-center justify-center dark:text-gray-300">
                   media type: <%= res["media_type"] %>
                 </li>
-                <li class="mx-3 flex flex-row items-center justify-center">
-                  members: <%= res["members"] %>
+                <li class="mx-3 flex flex-row items-center justify-center dark:text-gray-300">
+                  members: <%= res["members"] || "-" %>
                 </li>
-                <li class="mx-3 flex flex-row items-center justify-center">
+                <li class="mx-3 flex flex-row items-center justify-center dark:text-gray-300">
                   ep duration: <%= res["average_episode_duration"] %>
                 </li>
               </ul>
               <ul class="mb-2 flex w-full flex-col items-center justify-center text-sm sm:flex-row">
                 <%= for {jk, jv} <- res["json_map"] do %>
-                  <li class="mx-3 flex flex-row items-center justify-center">
+                  <li class="mx-3 flex flex-row items-center justify-center dark:text-gray-300">
                     <%= jk %>: <%= jv %>
                   </li>
                 <% end %>
