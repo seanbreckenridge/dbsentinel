@@ -30,17 +30,13 @@
       </label>
       <label for="status" class="text-lg font-bold dark:text-gray-300 my-2">
         Approved Status
-        <button
-          type="button"
-          class="mx-1 rounded-3xl px-3 border-2 border-gray-300 p-2 dark:bg-gray-800 dark:text-white"
-          onClick="statusInfo()"
-        >
-          ?
+        <button type="button" class="m-1" onClick="statusInfo()">
+          <.icon name="hero-information-circle" />
         </button>
         <select
           id="status"
           name="status"
-          class="ml-2 mr-4 rounded-md border-2 border-gray-300 px-2 dark:bg-gray-800 dark:text-white"
+          class="m-3 mr-4 rounded-md border-2 border-gray-300 px-2 dark:bg-gray-800 dark:text-white"
         >
           <option value="all">All</option>
           <option value="approved">Approved</option>
@@ -126,16 +122,22 @@
     </div>
     <button
       type="submit"
-      class="mt-4 p-2 text-2xl rounded-md border-2 border-gray-300 dark:bg-gray-800 dark:text-white"
+      class="mt-4 p-2 text-2xl rounded-md border-2 border-gray-300 dark:bg-gray-800 dark:text-white flex flex-row items-center justify-center"
     >
-      Search
+      <p class="mr-2">
+        Search
+      </p>
+      <.icon name="hero-magnifying-glass" class="text-2xl" />
     </button>
   </form>
 </section>
 <section class="flex w-full flex-col items-start justify-center p-3">
   <div class="w-full flex justify-between items-center my-1">
-    <button class="prev-page p-3 rounded-lg border-2 border-gray-300 dark:bg-gray-800 dark:text-white">
-      Previous
+    <button class="prev-page p-3 rounded-lg border-2 border-gray-300 dark:bg-gray-800 dark:text-white flex flex-row items-center justify-center">
+      <.icon name="hero-arrow-left" />
+      <p class="ml-2">
+        Previous
+      </p>
     </button>
     <div class="w-full flex items-center justify-center dark:text-gray-300">
       <div class="flex flex-col w-full justify-center items-center">
@@ -157,8 +159,11 @@
         <% end %>
       </div>
     </div>
-    <button class="next-page p-3 rounded-lg border-2 border-gray-300 dark:bg-gray-800 dark:text-white">
-      Next
+    <button class="next-page p-3 rounded-lg border-2 border-gray-300 dark:bg-gray-800 dark:text-white flex flex-row items-center justify-center">
+      <p class="mr-2">
+        Next
+      </p>
+      <.icon name="hero-arrow-right" />
     </button>
   </div>
   <%= if length(@data.results) > 0 do %>
@@ -173,13 +178,8 @@
           <th class="cursor flex flex-row items-center justify-center p-2">
             <div>Dates</div>
             <!-- button that tells you about dates when you click it -->
-            <button
-              id="date_info"
-              type="button"
-              onclick="dateInfo()"
-              class="mx-2 rounded-3xl px-2 border-2 border-gray-300 bg-white dark:bg-inherit dark:text-ray-300"
-            >
-              ?
+            <button id="date_info" type="button" onclick="dateInfo()" class="m-1">
+              <.icon name="hero-information-circle" />
             </button>
           </th>
         </tr>

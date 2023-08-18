@@ -16,8 +16,11 @@
     </div>
     <!-- swap between light and dark mode, call the toggle_darkmode function -->
     <div class="flex items-end">
-      <button class="flex items-center gap-4 leading-6 text-zinc-900 text-lg border border-zinc-300 p-2 rounded-md dark:border-zinc-700 dark:text-zinc-200 mx-2">
-        <span id="darkmode_icon" class="material-icons-outlined text-xl dark:text-zinc-200">
+      <button
+        id="darkmode_icon"
+        class="flex items-center gap-4 leading-6 text-zinc-900 text-lg border border-zinc-300 p-2 rounded-md dark:border-zinc-700 dark:text-zinc-200 mx-2"
+      >
+        <span class="text-xl dark:text-zinc-200">
           Light
         </span>
       </button>
@@ -57,32 +60,50 @@
 </footer>
 <script>
   // dark theme
-  document.addEventListener("DOMContentLoaded", function() {
-      if (
-          localStorage.theme === "dark" ||
-          (!("theme" in localStorage) &&
-              window.matchMedia("(prefers-color-scheme: dark)").matches)
-      ) {
-          document.documentElement.classList.add("dark");
+    document.addEventListener("DOMContentLoaded", function() {
+
+      // stores the theme in localStorage, updates the classList on the html element
+      // which propagates the CSS to all children
+      function setTheme(mode) {
+        if (mode === "dark") {
+          if (!document.documentElement.classList.contains("dark")) {
+            document.documentElement.classList.add("dark");
+          }
           document.getElementById("darkmode_icon").innerHTML = "Dark";
           localStorage.theme = "dark";
-      } else {
-          document.documentElement.classList.remove("dark");
+        } else {
+          if (document.documentElement.classList.contains("dark")) {
+            document.documentElement.classList.remove("dark");
+          }
           document.getElementById("darkmode_icon").innerHTML = "Light";
           localStorage.theme = "light";
+        }
       }
-      document.getElementById("darkmode_icon").addEventListener("click", function() {
-          if (document.documentElement.classList.contains("dark")) {
-              document.documentElement.classList.remove("dark");
-              document.getElementById("darkmode_icon").innerHTML = "Light";
-              localStorage.theme = "light";
-              console.log("switching to light mode")
-          } else {
-              document.documentElement.classList.add("dark");
-              document.getElementById("darkmode_icon").innerHTML = "Dark";
-              localStorage.theme = "dark";
-              console.log("switching to dark mode")
-          }
-      });
+
+      function setupDarkMode() {
+        // user has explicitly chosen light/dark mode
+        if ("theme" in localStorage) {
+          setTheme(localStorage.theme);
+          return;
+        }
+        if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+          setTheme("dark");
+        } else {
+          setTheme("light");
+        }
+      }
+
+      function toggleDarkmode() {
+        if (localStorage.theme === "dark") {
+          console.log("switching to light mode")
+          setTheme("light");
+        } else {
+          console.log("switching to dark mode")
+          setTheme("dark");
+        }
+      }
+
+      setupDarkMode();
+      document.getElementById("darkmode_icon").addEventListener("click", toggleDarkmode);
   });
 </script>

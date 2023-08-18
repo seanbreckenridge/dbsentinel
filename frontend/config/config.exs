@@ -14,8 +14,7 @@ config :frontend,
   static_url: "/dbsentinel_assets"
 
 config :tesla,
-  adapter: Tesla.Adapter.Hackney,
-  recv_timeout: 30_000,
+  adapter: {Tesla.Adapter.Hackney, recv_timeout: 30_000},
   engine: Jason
 
 # Configures the endpoint

@@ -1,10 +1,10 @@
 defmodule Frontend.DataServer do
   use Tesla
-
-  plug(Tesla.Middleware.Logger)
+  adapter({Tesla.Adapter.Hackney, recv_timeout: 10_000})
 
   @url Application.compile_env(:frontend, :data_server_url)
 
+  plug(Tesla.Middleware.Logger)
   plug(Tesla.Middleware.BaseUrl, @url)
 
   plug(Tesla.Middleware.Headers, [
@@ -12,6 +12,14 @@ defmodule Frontend.DataServer do
   ])
 
   plug(Tesla.Middleware.JSON)
+
+  plug(Tesla.Middleware.Retry,
+    max_retries: 3,
+    delay: 500,
+    retry_interval: 500,
+    max_delay: 5000,
+    retry_statuses: [500]
+  )
 
   defp page(n) when is_nil(n), do: page(1)
   defp page(n) when is_binary(n), do: page(String.to_integer(n))
@@ -92,7 +100,12 @@ defmodule Frontend.DataServer do
     )
   end
 
-  def parse_search_response(nil), do: []
+  def parse_search_response(nil),
+    do: %{
+      results: [],
+      entry_type: nil,
+      total_count: 0
+    }
 
   def parse_search_response(response) when is_map(response) do
     items =
@@ -179,12 +192,16 @@ defmodule FrontendWeb.PageController do
       case Frontend.DataServer.search(params) do
         {:ok, response} ->
           case response.status do
-            200 -> {response.body, conn}
-            _ -> {nil, conn |> put_flash(:error, "Failed to get search results")}
+            200 ->
+              {response.body, conn}
+
+            _ ->
+              {nil,
+               conn |> put_flash(:error, "Failed to get search results. Please try again later")}
           end
 
         {:error, _} ->
-          {nil, conn |> put_flash(:error, "Failed to get search results")}
+          {nil, conn |> put_flash(:error, "Failed to get search results. Please try again later")}
       end
 
     assign(conn, :page_title, "Search")
