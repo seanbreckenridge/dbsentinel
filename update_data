@@ -107,7 +107,7 @@ iter() {
 			pipenv run python3 main.py mal estimate-deleted-animelist-xml --request --timid || return $?
 		}
 	fi
-	evry 1h -dbsentinel-full-db-update && {
+	evry 1 hour -dbsentinel-full-db-update && {
 		local -a args=()
 		[[ -n "$RCOUNT" ]] && args+=('--rerequest-oldest' "$RCOUNT")
 		pipenv run python3 main.py mal full-db-update "${args[@]}" || return $?
