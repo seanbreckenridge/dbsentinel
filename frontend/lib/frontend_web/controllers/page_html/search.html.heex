@@ -19,14 +19,14 @@
     <div class="items-left m-1 flex flex-col justify-center sm:flex-row">
       <label for="entry_type" class="text-lg font-bold dark:text-gray-300 my-2">
         Entry Type
-      <select
-        name="entry_type"
-        id="entry_type"
-        class="mx-2 mr-4 pr-8 rounded-md border-2 border-gray-300 p-2 dark:bg-gray-800 dark:text-white"
-      >
-        <option value="anime">Anime</option>
-        <option value="manga">Manga</option>
-      </select>
+        <select
+          name="entry_type"
+          id="entry_type"
+          class="mx-2 mr-4 pr-8 rounded-md border-2 border-gray-300 p-2 dark:bg-gray-800 dark:text-white"
+        >
+          <option value="anime">Anime</option>
+          <option value="manga">Manga</option>
+        </select>
       </label>
       <label for="status" class="text-lg font-bold dark:text-gray-300 my-2">
         Approved Status
@@ -34,94 +34,94 @@
           type="button"
           class="mx-1 rounded-3xl px-3 border-2 border-gray-300 p-2 dark:bg-gray-800 dark:text-white"
           onClick="statusInfo()"
-          >
+        >
           ?
         </button>
-      <select
-        id="status"
-        name="status"
-        class="ml-2 mr-4 rounded-md border-2 border-gray-300 px-2 dark:bg-gray-800 dark:text-white"
-      >
-        <option value="all">All</option>
-        <option value="approved">Approved</option>
-        <option value="unapproved">Unapproved</option>
-        <option value="deleted">Deleted</option>
-        <option value="denied">Denied</option>
-      </select>
+        <select
+          id="status"
+          name="status"
+          class="ml-2 mr-4 rounded-md border-2 border-gray-300 px-2 dark:bg-gray-800 dark:text-white"
+        >
+          <option value="all">All</option>
+          <option value="approved">Approved</option>
+          <option value="unapproved">Unapproved</option>
+          <option value="deleted">Deleted</option>
+          <option value="denied">Denied</option>
+        </select>
       </label>
       <label for="media_type" class="text-lg font-bold dark:text-gray-300 my-2">
         Media Type
-      <select
-        name="media_type"
-        id="media_type"
-        class="ml-2 rounded-md border-2 border-gray-300 p-2 dark:bg-gray-800 dark:text-white"
-      >
-        <option value="all">All</option>
-      </select>
+        <select
+          name="media_type"
+          id="media_type"
+          class="ml-2 rounded-md border-2 border-gray-300 p-2 dark:bg-gray-800 dark:text-white"
+        >
+          <option value="all">All</option>
+        </select>
       </label>
     </div>
     <div class="items-left m-1 flex flex-col justify-center sm:flex-row">
       <label for="order_by" class="text-lg font-bold dark:text-gray-300 my-1">
         Order By
-      <select
-        name="order_by"
-        id="order_by"
-        class="ml-2 mr-3 rounded-md border-2 border-gray-300 p-2 dark:bg-gray-800 dark:text-white"
-      >
-        <option value="id">ID</option>
-        <option value="title">Title</option>
-        <option value="start_date">Start Date</option>
-        <option value="end_date">End Date</option>
-        <option value="status_updated_at">Status Updated At</option>
-        <option value="metadata_updated_at">
-          Metadata Updated At
-        </option>
-        <option value="member_count">Popularity</option>
-        <option value="average_episode_duration">
-          Episode Duration
-        </option>
-      </select>
+        <select
+          name="order_by"
+          id="order_by"
+          class="ml-2 mr-3 rounded-md border-2 border-gray-300 p-2 dark:bg-gray-800 dark:text-white"
+        >
+          <option value="id">ID</option>
+          <option value="title">Title</option>
+          <option value="start_date">Start Date</option>
+          <option value="end_date">End Date</option>
+          <option value="status_updated_at">Status Updated At</option>
+          <option value="metadata_updated_at">
+            Metadata Updated At
+          </option>
+          <option value="member_count">Popularity</option>
+          <option value="average_episode_duration">
+            Episode Duration
+          </option>
+        </select>
       </label>
       <label for="sort" class="text-lg font-bold dark:text-gray-300 my-1">
         Sort
-      <select
-        name="sort"
-        id="sort"
-        class="ml-2 pr-8 mr-3 rounded-md border-2 border-gray-300 p-2 dark:bg-gray-800 dark:text-white"
-      >
-        <option value="desc">Descending</option>
-        <option value="asc">Ascending</option>
-      </select>
+        <select
+          name="sort"
+          id="sort"
+          class="ml-2 pr-8 mr-3 rounded-md border-2 border-gray-300 p-2 dark:bg-gray-800 dark:text-white"
+        >
+          <option value="desc">Descending</option>
+          <option value="asc">Ascending</option>
+        </select>
       </label>
       <label for="page" class="my-1 text-lg font-bold dark:text-gray-300">
         Page
-      <input
-        type="number"
-        name="page"
-        id="page"
-        class="ml-2 rounded-md border-2 border-gray-300 p-2 dark:bg-gray-800 dark:text-white"
-        value="1"
-      />
+        <input
+          type="number"
+          name="page"
+          id="page"
+          class="ml-2 rounded-md border-2 border-gray-300 p-2 dark:bg-gray-800 dark:text-white"
+          value="1"
+        />
       </label>
     </div>
     <div class="items-left m-1 flex flex-col justify-center sm:flex-row">
       <label for="sfw" class="text-lg font-bold dark:text-gray-300">
         SFW
-      <input
-        type="checkbox"
-        name="sfw"
-        id="sfw"
-        class="ml-2 rounded-md border-2 border-gray-300 p-2"
-      />
+        <input
+          type="checkbox"
+          name="sfw"
+          id="sfw"
+          class="ml-2 rounded-md border-2 border-gray-300 p-2"
+        />
       </label>
       <label for="nsfw" class="text-lg font-bold dark:text-gray-300">
         NSFW
-      <input
-        type="checkbox"
-        name="nsfw"
-        id="nsfw"
-        class="ml-2 rounded-md border-2 border-gray-300 p-2"
-      />
+        <input
+          type="checkbox"
+          name="nsfw"
+          id="nsfw"
+          class="ml-2 rounded-md border-2 border-gray-300 p-2"
+        />
       </label>
     </div>
     <button
@@ -319,7 +319,6 @@
   function statusInfo() {
     alert("Approved: Approved and you can add it to your list\nUnapproved: Not approved, but still visible if you know the ID.\nDeleted: Deleted from websites/animelists. If not archived elsewhere, the data is gone forever.\nDenied: Was unapproved, but a moderator denied it because they determined it did not meet MALs DB Guidelines")
   }
-
 
   document.addEventListener("DOMContentLoaded", () => {
 
