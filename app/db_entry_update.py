@@ -152,7 +152,7 @@ async def add_or_update(
             if mal_image_url is not None:
                 # if this isnt already in the database
                 if image_key not in mal_id_to_image:
-                    logger.info("db: adding proxied image to database...")
+                    logger.info(f"db: adding proxied image for {entry_type} {url_id}")
                     with Session(data_engine) as sess:
                         sess.add(
                             ProxiedImage(
@@ -171,7 +171,7 @@ async def add_or_update(
                         or mal_id_to_image[image_key].mal_url != mal_image_url
                     ):
                         logger.info(
-                            "db: mal or proxied image changed, updating database..."
+                            "db: mal or proxied image changed for {entry_type} {url_id}"
                         )
                         with Session(data_engine) as sess:
                             sess.exec(
