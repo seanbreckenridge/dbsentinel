@@ -204,7 +204,7 @@ class ByIdQueryIn(BaseModel):
 
 class ByIdRawOut(BaseModel):
     id: int
-    proxied_image: str
+    proxied_image: Optional[str]
     json_data: dict
 
 
@@ -237,8 +237,8 @@ async def media_query_by_id(
     json_data["approved_status"] = row.approved_status
     json_data["media_type"] = row.media_type
     json_data["member_count"] = row.member_count
-    json_data["status_updated_at"] = row.status_changed_at.timestamp()
-    json_data["metadata_updated_at"] = row.updated_at.timestamp()
+    json_data["status_updated_at"] = int(row.status_changed_at.timestamp())
+    json_data["metadata_updated_at"] = int(row.updated_at.timestamp())
     json_data["start_date"] = _serialize_date(row.start_date)
     json_data["end_date"] = _serialize_date(row.end_date)
 
