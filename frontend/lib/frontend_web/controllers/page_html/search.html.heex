@@ -414,7 +414,7 @@
           }
       }
 
-      function hideImages() {
+      function blurImages() {
         const blurButton = document.getElementById("blur")
         const enable = blurButton.checked
         const images = document.querySelectorAll(".cover-image.nsfw")
@@ -442,9 +442,9 @@
       updateMediaTypes()
       // need to parse the media type again, since the media type options are updated
       parseParamsFromURL("media_type");
-      hideImages()
+      blurImages()
       convertDates()
-      document.getElementById("blur").addEventListener("change", hideImages);
+      document.getElementById("blur").addEventListener("change", blurImages);
       document.getElementById("entry_type").addEventListener("change", updateMediaTypes);
       document.getElementById("sfw").addEventListener("change", () => ratingCheckboxes('sfw'));
       document.getElementById("nsfw").addEventListener("change", () => ratingCheckboxes('nsfw'));
