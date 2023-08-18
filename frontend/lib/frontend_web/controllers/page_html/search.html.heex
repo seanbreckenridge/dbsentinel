@@ -13,28 +13,34 @@
       type="text"
       name="title"
       id="title"
-      className="w-full p-2 border-2 border-gray-300 rounded-lg dark:bg-gray-800 dark:text-white"
-      placeholder="Search..."
+      class="sm:w-full md:w-3/4 lg:w-1/2 p-2 border-2 border-gray-300 rounded-lg dark:bg-gray-800 dark:text-white"
+      placeholder="Enter a title to search for..."
     />
     <div class="items-left m-1 flex flex-col justify-center sm:flex-row">
-      <label for="entry_type" class="text-lg font-bold dark:text-gray-300">
+      <label for="entry_type" class="text-lg font-bold dark:text-gray-300 my-2">
         Entry Type
-      </label>
       <select
         name="entry_type"
         id="entry_type"
-        class="ml-2 rounded-md border-2 border-gray-300 p-2 dark:bg-gray-800 dark:text-white"
+        class="mx-2 mr-4 pr-8 rounded-md border-2 border-gray-300 p-2 dark:bg-gray-800 dark:text-white"
       >
         <option value="anime">Anime</option>
         <option value="manga">Manga</option>
       </select>
-      <label for="status" class="text-lg font-bold dark:text-gray-300">
-        Approved Status
       </label>
+      <label for="status" class="text-lg font-bold dark:text-gray-300 my-2">
+        Approved Status
+        <button
+          type="button"
+          class="mx-1 rounded-3xl px-3 border-2 border-gray-300 p-2 dark:bg-gray-800 dark:text-white"
+          onClick="statusInfo()"
+          >
+          ?
+        </button>
       <select
         id="status"
         name="status"
-        class="ml-2 rounded-md border-2 border-gray-300 p-2 dark:bg-gray-800 dark:text-white"
+        class="ml-2 mr-4 rounded-md border-2 border-gray-300 px-2 dark:bg-gray-800 dark:text-white"
       >
         <option value="all">All</option>
         <option value="approved">Approved</option>
@@ -42,9 +48,9 @@
         <option value="deleted">Deleted</option>
         <option value="denied">Denied</option>
       </select>
-      <label for="media_type" class="text-lg font-bold dark:text-gray-300">
-        Media Type
       </label>
+      <label for="media_type" class="text-lg font-bold dark:text-gray-300 my-2">
+        Media Type
       <select
         name="media_type"
         id="media_type"
@@ -52,15 +58,15 @@
       >
         <option value="all">All</option>
       </select>
+      </label>
     </div>
     <div class="items-left m-1 flex flex-col justify-center sm:flex-row">
-      <label for="order_by" class="text-lg font-bold dark:text-gray-300">
+      <label for="order_by" class="text-lg font-bold dark:text-gray-300 my-1">
         Order By
-      </label>
       <select
         name="order_by"
         id="order_by"
-        class="ml-2 rounded-md border-2 border-gray-300 p-2 dark:bg-gray-800 dark:text-white"
+        class="ml-2 mr-3 rounded-md border-2 border-gray-300 p-2 dark:bg-gray-800 dark:text-white"
       >
         <option value="id">ID</option>
         <option value="title">Title</option>
@@ -75,20 +81,20 @@
           Episode Duration
         </option>
       </select>
-      <label for="sort" class="text-lg font-bold dark:text-gray-300">
-        Sort
       </label>
+      <label for="sort" class="text-lg font-bold dark:text-gray-300 my-1">
+        Sort
       <select
         name="sort"
         id="sort"
-        class="ml-2 rounded-md border-2 border-gray-300 p-2 dark:bg-gray-800 dark:text-white"
+        class="ml-2 pr-8 mr-3 rounded-md border-2 border-gray-300 p-2 dark:bg-gray-800 dark:text-white"
       >
         <option value="asc">Ascending</option>
         <option value="desc">Descending</option>
       </select>
-      <label for="page" class="text-lg font-bold dark:text-gray-300">
-        Page
       </label>
+      <label for="page" class="my-1 text-lg font-bold dark:text-gray-300">
+        Page
       <input
         type="number"
         name="page"
@@ -96,30 +102,31 @@
         class="ml-2 rounded-md border-2 border-gray-300 p-2 dark:bg-gray-800 dark:text-white"
         value="1"
       />
+      </label>
     </div>
     <div class="items-left m-1 flex flex-col justify-center sm:flex-row">
       <label for="sfw" class="text-lg font-bold dark:text-gray-300">
         SFW
-      </label>
       <input
         type="checkbox"
         name="sfw"
         id="sfw"
         class="ml-2 rounded-md border-2 border-gray-300 p-2"
       />
+      </label>
       <label for="nsfw" class="text-lg font-bold dark:text-gray-300">
         NSFW
-      </label>
       <input
         type="checkbox"
         name="nsfw"
         id="nsfw"
         class="ml-2 rounded-md border-2 border-gray-300 p-2"
       />
+      </label>
     </div>
     <button
       type="submit"
-      class="mt-2 p-2 rounded-md border-2 border-gray-300 dark:bg-gray-800 dark:text-white"
+      class="mt-4 p-2 text-2xl rounded-md border-2 border-gray-300 dark:bg-gray-800 dark:text-white"
     >
       Search
     </button>
@@ -127,17 +134,17 @@
 </section>
 <section class="flex w-full flex-col items-start justify-center p-3">
   <div class="w-full flex justify-between items-center my-1">
-    <button class="prev-page p-3 rounded-md border-2 border-gray-300 dark:bg-gray-800 dark:text-white">
+    <button class="prev-page p-3 rounded-lg border-2 border-gray-300 dark:bg-gray-800 dark:text-white">
       Previous
     </button>
     <div class="w-full flex items-center justify-center dark:text-gray-300">
       <div class="flex flex-col w-full justify-center items-center">
         <%= if @data.total_count == 0 do %>
-          <div>
+          <div class="font-semibold text-lg">
             No Results
           </div>
         <% else %>
-          <div>
+          <div class="font-semibold text-lg">
             Total Count: <%= @data.total_count %>
           </div>
         <% end %>
@@ -150,7 +157,7 @@
         <% end %>
       </div>
     </div>
-    <button class="next-page p-3 rounded-md border-2 border-gray-300 dark:bg-gray-800 dark:text-white">
+    <button class="next-page p-3 rounded-lg border-2 border-gray-300 dark:bg-gray-800 dark:text-white">
       Next
     </button>
   </div>
@@ -170,7 +177,7 @@
               id="date_info"
               type="button"
               onclick="dateInfo()"
-              class="ml-2 p-1 rounded-md border-2 border-gray-300"
+              class="mx-2 rounded-3xl px-2 border-2 border-gray-300 bg-white dark:bg-inherit dark:text-ray-300"
             >
               ?
             </button>
@@ -181,7 +188,7 @@
         <!-- loop through results -->
         <%= for res <- @data.results do %>
           <tr class="w-full">
-            <td class="w-1/12 border border-gray-900 dark:border-gray-100">
+            <td class="w-1/12 border border-gray-300 dark:border-gray-100">
               <%= if res["image_url"] do %>
                 <a title="View Image" target="_blank" href={res["image_url"]} rel="noreferrer">
                   <img src={res["image_url"]} alt={res["title"]} class="max-h-44 max-w-44" />
@@ -262,10 +269,10 @@
             <td class="w-3/12 border p-0 sm:p-1 md:p-2 dark:text-gray-300">
               <div class="flex w-full flex-col items-center justify-center">
                 <div class="text-xs">
-                  Start Date: <%= res["start_date"] %>
+                  Start Date: <%= res["start_date"] || "-" %>
                 </div>
                 <div class="text-xs">
-                  End Date: <%= res["end_date"] %>
+                  End Date: <%= res["end_date"] || "-" %>
                 </div>
                 <div class="text-xs">
                   Metadata Last Updated:
@@ -304,6 +311,15 @@
       "novel",
       "one_shot",
   ];
+
+  function dateInfo() {
+    alert("These deleted/denied are estimates based on when data was added/last cached, and not necessarily when the entry was deleted/denied.");
+  }
+
+  function statusInfo() {
+    alert("Approved: Approved and you can add it to your list\nUnapproved: Not approved, but still visible if you know the ID.\nDeleted: Deleted from websites/animelists. If not archived elsewhere, the data is gone forever.\nDenied: Was unapproved, but a moderator denied it because they determined it did not meet MALs DB Guidelines")
+  }
+
 
   document.addEventListener("DOMContentLoaded", () => {
 
@@ -375,10 +391,6 @@
               nsfw.checked = false
           }
       }
-
-    function dateInfo() {
-      alert("These deleted/denied are estimates based on when data was added/last cached, and not necessarily when the entry was deleted/denied.");
-    }
 
       // add event listeners
       updateMediaTypes()

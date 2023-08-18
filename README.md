@@ -18,14 +18,14 @@ This is mostly meant to act as an public archive. Database guidelines are finick
 ### TODO:
 
 - [ ] refresh data based on popularity/last updated date
-- [ ] frontend in pheonix
+- [x] frontend in pheonix
   - [ ] register/login
   - [ ] moderators/trusted users
     - [ ] parse reasons for denials/deletions from thread/allow users to input
     - [ ] add frontend button to refresh data for entries
   - [x] dashboard that shows stats etc.
   - [x] frontend to view approved/deleted/denied/unapproved entries
-  - [ ] add info on search page letting you know what each approved status means
+  - [x] add info on search page letting you know what each approved status means
   - [x] let page be ordered by when items were approved/deleted/denied (guess by metadata if not available)
   - [ ] sort by media type, member count
   - [x] dark mode
