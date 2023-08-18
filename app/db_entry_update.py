@@ -171,7 +171,7 @@ async def add_or_update(
                         or mal_id_to_image[image_key].mal_url != mal_image_url
                     ):
                         logger.info(
-                            "db: mal or proxied image changed for {entry_type} {url_id}"
+                            f"db: mal or proxied image changed for {entry_type} {url_id}"
                         )
                         with Session(data_engine) as sess:
                             sess.exec(

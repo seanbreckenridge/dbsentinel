@@ -36,7 +36,7 @@
         <select
           id="status"
           name="status"
-          class="m-3 mr-4 rounded-md border-2 border-gray-300 px-2 dark:bg-gray-800 dark:text-white"
+          class="mx-3 mr-4 rounded-md border-2 border-gray-300 px-2 dark:bg-gray-800 dark:text-white"
         >
           <option value="all">All</option>
           <option value="approved">Approved</option>
@@ -101,7 +101,7 @@
       </label>
     </div>
     <div class="items-left m-1 flex flex-col justify-center sm:flex-row">
-      <label for="sfw" class="text-lg font-bold dark:text-gray-300">
+      <label for="sfw" class="text-lg font-bold dark:text-gray-300 mr-2">
         SFW
         <input
           type="checkbox"
@@ -110,13 +110,23 @@
           class="ml-2 rounded-md border-2 border-gray-300 p-2"
         />
       </label>
-      <label for="nsfw" class="text-lg font-bold dark:text-gray-300">
+      <label for="nsfw" class="text-lg font-bold dark:text-gray-300 mr-2">
         NSFW
         <input
           type="checkbox"
           name="nsfw"
           id="nsfw"
           class="ml-2 rounded-md border-2 border-gray-300 p-2"
+        />
+      </label>
+      <label for="blur" class="text-lg font-bold dark:text-gray-300">
+        Blur NSFW
+        <input
+          type="checkbox"
+          name="blur"
+          id="blur"
+          class="ml-2 rounded-md border-2 border-gray-300 p-2"
+          checked
         />
       </label>
     </div>
@@ -200,7 +210,7 @@
                   <img
                     src={res["image_url"]}
                     alt="Failed to fetch image from MAL"
-                    class="max-h-44 max-w-44"
+                    class={"max-h-44 max-w-44 cover-image " <> if res["nsfw"] == true do "nsfw" else "" <> "" end}
                   />
                 </a>
               <% else %>
@@ -243,7 +253,7 @@
                 </div>
               </div>
             </td>
-            <td class="w-6/12 border p-2 text-gray-900 dark:text-gray-300 dark:border-gray-100">
+            <td dclass="w-6/12 border p-2 text-gray-900 dark:text-gray-300 dark:border-gray-100">
               <div class="flex w-full flex-col items-center justify-center">
                 <div><%= res["title"] %></div>
               </div>
@@ -404,11 +414,37 @@
           }
       }
 
+      function hideImages() {
+        const blurButton = document.getElementById("blur")
+        const enable = blurButton.checked
+        const images = document.querySelectorAll(".cover-image.nsfw")
+        for (const image of images) {
+          if (enable) {
+            localStorage.setItem("blurNSFW", "true")
+            image.classList.add("blur")
+          } else {
+            localStorage.setItem("blurNSFW", "false")
+            image.classList.remove("blur")
+          }
+        }
+      }
+
+      const blurSetting = localStorage.getItem("blurNSFW")
+      if (blurSetting === "true") {
+        console.log("reading blur setting true from local storage")
+        document.getElementById("blur").checked = true
+      } else if (blurSetting === "false") {
+        console.log("reading blur setting false from local storage")
+        document.getElementById("blur").checked = false
+      }
+
       parseParamsFromURL(null);
       updateMediaTypes()
       // need to parse the media type again, since the media type options are updated
       parseParamsFromURL("media_type");
+      hideImages()
       convertDates()
+      document.getElementById("blur").addEventListener("change", hideImages);
       document.getElementById("entry_type").addEventListener("change", updateMediaTypes);
       document.getElementById("sfw").addEventListener("change", () => ratingCheckboxes('sfw'));
       document.getElementById("nsfw").addEventListener("change", () => ratingCheckboxes('nsfw'));

@@ -97,11 +97,6 @@ defmodule Frontend.DataServerState do
 
   defp parse_evry_file!(name) do
     {_, value} = parse_evry_file(name)
-
-    if value == nil do
-      raise "Could not parse #{name}"
-    end
-
     value
   end
 
