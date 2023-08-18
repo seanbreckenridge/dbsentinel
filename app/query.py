@@ -164,8 +164,8 @@ async def media_query(info: QueryIn, sess: Session = Depends(get_db)) -> QueryOu
     count = sess.exec(select(func.count()).select_from(query.subquery())).first()  # type: ignore
     assert isinstance(count, int)
 
-    if info.offset > count:
-        info.offset = 0
+    # if info.offset > count:
+    #     info.offset = 0
 
     # limit/offset
     query = query.limit(info.limit).offset(info.offset)

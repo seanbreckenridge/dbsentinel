@@ -1,6 +1,7 @@
 <.flash_group flash={@flash} />
 <section class="flex w-full flex-col items-start justify-center p-3">
   <form
+    id="search-form"
     class="flex w-full flex-col items-start justify-center p-3"
     onSubmit="/search"
     method="GET"
@@ -32,7 +33,7 @@
       </label>
       <select
         id="status"
-        name="approved_status"
+        name="status"
         class="ml-2 rounded-md border-2 border-gray-300 p-2 dark:bg-gray-800 dark:text-white"
       >
         <option value="all">All</option>
@@ -125,6 +126,33 @@
   </form>
 </section>
 <section class="flex w-full flex-col items-start justify-center p-3">
+  <div class="w-full flex justify-between items-center my-1">
+    <button class="prev-page p-3 rounded-md border-2 border-gray-300 dark:bg-gray-800 dark:text-white">
+      Previous
+    </button>
+    <div class="w-full flex items-center justify-center dark:text-gray-300">
+      <div class="flex flex-col w-full justify-center items-center">
+      <%= if @data.total_count == 0 do %>
+      <div>
+        No Results
+      </div>
+    <% else %>
+      <div>
+        Total Count: <%= @data.total_count %>
+      </div>
+    <% end %>
+    <%= if length(@data.results) == 0 do %>
+      <div>
+        No More Results, go <a href="#" class="prev-page text-blue-500 dark:text-blue-400">back</a> a page
+      </div>
+    <% end %>
+      </div>
+    </div>
+    <button class="next-page p-3 rounded-md border-2 border-gray-300 dark:bg-gray-800 dark:text-white">
+      Next
+    </button>
+  </div>
+  <%= if length(@data.results) > 0 do %>
   <table class="max-w-full table-fixed">
     <thead>
       <tr class="border-2 border-black bg-gray-100 dark:bg-inherit dark:border-gray-100 dark:text-gray-300">
@@ -139,6 +167,7 @@
           <button
             id="date_info"
             type="button"
+            onclick="dateInfo()"
             class="ml-2 p-1 rounded-md border-2 border-gray-300"
           >
             ?
@@ -156,7 +185,7 @@
                 <img src={res["image_url"]} alt={res["title"]} class="max-h-44 max-w-44" />
               </a>
             <% else %>
-              <div class="w-full h-full flex items-center justify-center">
+              <div class="w-full h-full flex items-center justify-center dark:text-gray-300">
                 No Image
               </div>
             <% end %>
@@ -250,6 +279,7 @@
       <% end %>
     </tbody>
   </table>
+<% end %>
 </section>
 <script>
   let animeMediaTypes = [
@@ -324,6 +354,14 @@
         }
       }
 
+      // attach event listeners to prev/next buttons
+      function updatePageAndGo(pageDiff) {
+        const page = document.getElementById("page");
+        const pageValue = Number.parseInt(page.value);
+        page.value = pageValue + pageDiff;
+        document.getElementById("search-form").submit();
+      }
+
       // if the sfw checkbox is checked, uncheck the nsfw checkbox and vice versa
       function ratingCheckboxes(clicked) {
           sfw = document.getElementById("sfw")
@@ -346,7 +384,13 @@
       convertDates()
       document.getElementById("entry_type").addEventListener("change", updateMediaTypes);
       document.getElementById("sfw").addEventListener("change", () => ratingCheckboxes('sfw'));
-    document.getElementById("nsfw").addEventListener("change", () => ratingCheckboxes('nsfw'));
-    document.getElementById("date_info").addEventListener("click", dateInfo);
+      document.getElementById("nsfw").addEventListener("change", () => ratingCheckboxes('nsfw'));
+      document.querySelectorAll(".prev-page").forEach((el) => {
+        el.addEventListener("click", () => updatePageAndGo(-1));
+      });
+
+      document.querySelectorAll(".next-page").forEach((el) => {
+        el.addEventListener("click", () => updatePageAndGo(1));
+      });
   })
 </script>
