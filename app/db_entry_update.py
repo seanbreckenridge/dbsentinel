@@ -381,8 +381,9 @@ async def update_database(
 
     known: Set[str] = set()
     in_db = await status_map()
-
     mal_id_image_have = malid_to_image()
+
+    expired_entries: int = 0
 
     approved = approved_ids()
     logger.info("db: reading from linear history...")
@@ -436,6 +437,11 @@ async def update_database(
                 else:
                     logger.info(f"old main image: {old_main_image}")
                 smmry = request_metadata(r_id, r_type, force_rerequest=True)
+        else:
+            requested_at = smmry.timestamp
+            assert requested_at is not None
+            if now - requested_at > update_if_older_than:
+                expired_entries += 1
 
         # figure out when this was approved/deleted
         status_changed_at = None
@@ -474,6 +480,8 @@ async def update_database(
         )
         ekey = r_appearances[0].key
         known.add(ekey)
+
+    logger.info(f"db: {expired_entries} entries are currently expired")
 
     unapproved = unapproved_ids()
     logger.info("db: updating from unapproved anime history...")
