@@ -59,7 +59,7 @@ defmodule Frontend.DataServerState do
 
   def handle_info(:update_evry_files, state) do
     # reschedule
-    Process.send_after(self(), :update_evry_files, 5 * 60 * 1000)
+    Process.send_after(self(), :update_evry_files, 10 * 60 * 1000)
     {:noreply, parse_evry_files(state)}
   end
 

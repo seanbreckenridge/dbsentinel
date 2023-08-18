@@ -136,8 +136,7 @@ defmodule Frontend.DataServer do
   end
 
   def search(params) do
-    params = parse_params(params)
-    post("/query/", params)
+    post("/query/", parse_params(params))
   end
 
   def by_id(id, type) do
