@@ -190,8 +190,18 @@
           <tr class="w-full">
             <td class="w-1/12 border border-gray-300 dark:border-gray-100">
               <%= if res["image_url"] do %>
-                <a title="View Image" target="_blank" href={res["image_url"]} rel="noreferrer" class="dark:text-gray-300">
-                  <img src={res["image_url"]} alt="Failed to fetch image from MAL" class="max-h-44 max-w-44" />
+                <a
+                  title="View Image"
+                  target="_blank"
+                  href={res["image_url"]}
+                  rel="noreferrer"
+                  class="dark:text-gray-300"
+                >
+                  <img
+                    src={res["image_url"]}
+                    alt="Failed to fetch image from MAL"
+                    class="max-h-44 max-w-44"
+                  />
                 </a>
               <% else %>
                 <div class="w-full h-full flex items-center justify-center dark:text-gray-300">
