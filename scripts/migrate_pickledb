@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 
+"""
+mal changed their api from api-cdn.myanimelist.net to cdn.myanimelist.net
+previously I had stored the whole URL as the key in the pickledb
+this script migrates the pickledb to use the path (stuff after .net) as the key instead
+"""
+
 import json
 from urllib.parse import urlparse
 
