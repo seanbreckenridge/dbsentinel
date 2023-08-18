@@ -1,0 +1,22 @@
+#!/usr/bin/env python3
+
+import json
+from urllib.parse import urlparse
+
+from pathlib import Path
+import click
+
+
+@click.command()
+@click.argument("FILE")
+def main(file: Path) -> None:
+    with open(file, "r") as f:
+        data = json.load(f)
+
+    new_data = {urlparse(key).path: value for key, value in data.items()}
+
+    click.echo(json.dumps(new_data, indent=4))
+
+
+if __name__ == "__main__":
+    main()

@@ -30,49 +30,6 @@ class AnilistCache(URLCache):
             id
             idMal
             type
-            status
-            title {
-                romaji
-                english
-                native
-            }
-            externalLinks {
-                id
-                site
-                url
-            }
-            episodes
-            duration
-            volumes
-            chapters
-            startDate {
-                year
-                month
-                day
-            }
-            endDate {
-                year
-                month
-                day
-            }
-            genres
-            tags {
-                id
-                name
-                description
-                category
-                rank
-                isGeneralSpoiler
-                isMediaSpoiler
-                isAdult
-            }
-            seasonYear
-            season
-            format
-            isAdult
-            countryOfOrigin
-            isLicensed
-            source
         }}"""
         mtype = media_type.upper()
         assert mtype in ("ANIME", "MANGA")

@@ -3,6 +3,7 @@ import json
 import logging
 import asyncio
 from pathlib import Path
+from typing import Optional
 
 import click
 
@@ -117,7 +118,8 @@ def update_metadata(request_failed: bool) -> None:
 
 
 @mal.command(short_help="run a full db update")
-def full_db_update() -> None:
+@click.option("--rerequest-oldest", type=int, default=None, help="rerequest and update data for oldest N entries")
+def full_db_update(rerequest_oldest: Optional[int]) -> None:
     """
     this is expensive! -- only do this when necessary
 
@@ -131,7 +133,7 @@ def full_db_update() -> None:
     from app.db_entry_update import update_database
 
     click.echo("running full db update...")
-    asyncio.run(update_database())
+    asyncio.run(update_database(update_outdated_metadata=rerequest_oldest))
     click.echo("done")
 
 

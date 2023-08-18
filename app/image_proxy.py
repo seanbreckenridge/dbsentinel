@@ -75,8 +75,9 @@ async def _get_image_bytes(url: str) -> bytes | None:
 
 async def proxy_image(url: str) -> str | None:
     db = image_db()
-    if db.exists(url):
-        resp = db.get(url)
+    img_key = urlparse(url).path
+    if db.exists(img_key):
+        resp = db.get(img_key)
         if resp == 404:
             return None
         assert isinstance(resp, str)
@@ -90,7 +91,7 @@ async def proxy_image(url: str) -> str | None:
         # download image to memory
         image_bytes = await _get_image_bytes(url)
         if image_bytes is None:
-            db.set(url, 404)
+            db.set(img_key, 404)
             return None
 
         # slugify path
@@ -104,7 +105,7 @@ async def proxy_image(url: str) -> str | None:
             ExtraArgs={"ContentType": "image/jpg"},
         )
 
-        assert db.set(url, key)
+        assert db.set(img_key, key)
         https_url = _prefix_url(key)
         logger.info(f"image_proxy: uploaded to {https_url}")
 

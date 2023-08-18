@@ -96,7 +96,7 @@ iter() {
 	if [[ -z "$SKIP_UPDATE_METADATA" ]]; then
 		if wait-for-internet --text 'checking for internet....' --timeout 1; then
 			# just use evry to track when this last ran
-			evry 1s -update-metadata && timeout 2h pipenv run python3 main.py mal update-metadata || return $?
+			evry 1s -update-metadata && pipenv run python3 main.py mal update-metadata || return $?
 		fi
 	fi
 	if curl -s localhost:4001 >/dev/null; then
@@ -107,8 +107,10 @@ iter() {
 			pipenv run python3 main.py mal estimate-deleted-animelist-xml --request --timid || return $?
 		}
 	fi
-	evry 2h -dbsentinel-full-db-update && {
-		pipenv run python3 main.py mal full-db-update || return $?
+	evry 1h -dbsentinel-full-db-update && {
+		local -a args=()
+		[[ -n "$REREREQUEST_ON_UPDATE" ]] && args+=('--rerequest-oldest' "$REREREQUEST_ON_UPDATE")
+		pipenv run python3 main.py mal full-db-update "${args[@]}" || return $?
 	}
 	set -e
 	set +x
