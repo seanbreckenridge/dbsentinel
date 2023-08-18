@@ -11,6 +11,7 @@ Goals
 Data Sources:
 
 - [mal-id-cache](https://github.com/seanbreckenridge/mal-id-cache) git history, which is updated by [checker_mal](https://github.com/Hiyori-API/checker_mal). `checker_mal` also indexes the unapproved data, which this pings periodically to grab/find new approved entries from MAL
+- [MyAnimeList](https://myanimelist.net/), obviously, which this archives data from
 
 This is mostly meant to act as an public archive. Database guidelines are finicky and what is considered anime is not the same by all, so saving deleted and denied entries is useful for many reasons (re-submitting entries etc.)
 
