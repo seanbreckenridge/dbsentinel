@@ -38,4 +38,4 @@ esac
 mix phx.digest
 mix assets.deploy
 mix ecto.migrate
-mix phx.server
+exec mix phx.server
