@@ -32,6 +32,7 @@ This is mostly meant to act as an public archive. Database guidelines are finick
   - [ ] connect IDs to tmdb (manually, users can submit requests)
 - [ ] API for deleted/denied/unapproved ids/name
 - [ ] upload full API dump periodically to a public URL (w ids/names)
+- [ ] discord notifications if database has not been updated in a while to check for glitches
 - [ ] let user upload their MAL XML export, parse and save data from it to localStorage
 - [ ] let user find entries that are not on their list
 - [ ] integrate with [notify-bot](https://github.com/seanbreckenridge/mal-notify-bot) so that sources added there get added to the website (also allow items which arent in #feed -- so this can source anything) -- only show on website through a domain allowlist
