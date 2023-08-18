@@ -106,14 +106,6 @@ iter() {
 		evry 6 hours -dbsentinel-delete-estimate && {
 			pipenv run python3 main.py mal estimate-deleted-animelist-xml --request --timid || return $?
 		}
-	elif [[ -n "$VULTR_UPDATE" ]]; then
-		# manual update sshing as a stopgap
-		QUERY="$(python3 main.py mal estimate-user-recent ./usernames.txt --print-url)" || return $?
-		if [[ -n "$QUERY" ]]; then
-			URL="localhost:4001/api/pages?${QUERY}"
-			# shellcheck disable=SC2029
-			ssh vultr "curl -s \"${URL}\""
-		fi
 	fi
 	evry 2h -dbsentinel-full-db-update && {
 		pipenv run python3 main.py mal full-db-update || return $?
