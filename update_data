@@ -131,6 +131,9 @@ main() {
 			sleep 10m
 			iter || true
 		done
+	elif [[ "$1" == '-o' ]]; then
+		sleep 10m
+		# just exit, let supervisor restart us so we dont get stuck..?
 	fi
 }
 

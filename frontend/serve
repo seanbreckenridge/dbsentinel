@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+set -eu
+
+THIS_DIR="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
+cd "${THIS_DIR}" || exit $?
+
+readonly DEFAULT_SECRET="${REPOS:-${HOME}}/vps/secret"
+
+export MIX_ENV=prod
+export PORT=4600
+if [[ -n "$DEFAULT_SECRET" ]]; then
+	FILEPATH="$DEFAULT_SECRET"
+else
+	echo 'Could not find secret file in expected locations'
+	exit 1
+fi
+
+export SECRET_KEY_BASE
+
+mix deps.get --only prod
+mix compile
+
+SECRET_KEY_BASE="$(jq -r '.dbsentinel_secret' <"$FILEPATH")"
+DATABASE_PATH="${THIS_DIR}/../data/pheonix_db.sqlite"
+
+export SECRET_KEY_BASE DATABASE_PATH
+
+case "${1:-''}" in
+-i)
+	echo 'Dropping into shell...'
+	exec bash
+	;;
+
+*) ;;
+esac
+
+mix phx.digest
+mix assets.deploy
+mix ecto.migrate
+mix phx.server

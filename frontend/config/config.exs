@@ -11,7 +11,7 @@ config :frontend,
   ecto_repos: [Frontend.Repo],
   data_server_url: "http://localhost:5200",
   base_url: "/dbsentinel",
-  static_url: "/dbsentinel/static"
+  static_url: "/dbsentinel_assets"
 
 config :tesla,
   adapter: Tesla.Adapter.Hackney,
