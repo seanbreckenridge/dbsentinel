@@ -5,8 +5,6 @@ cd "${THIS_DIR}" || exit $?
 
 set -o pipefail
 
-source ./.env
-
 havecmd() {
 	local BINARY ERRMSG
 	BINARY="${1:?Must provide command to check}"
@@ -61,13 +59,6 @@ git_hash_changed() {
 	return "${ret}"
 }
 
-authd_curl() {
-	echo curl "$@"
-	set +x
-	curl --header "Authorization: ${BEARER_SECRET?:No secret set}" "$@"
-	set -x
-}
-
 update_arm() {
 	[[ -d "${ARM_REPO}" ]] || git clone "${ARM_REPO_URL}" "${ARM_REPO}"
 	(
@@ -80,7 +71,7 @@ iter() {
 	printf '[%s] Updating... \n' "$(date)"
 	printf '[%s] Updating... \n' "$(date)" >&2
 	[[ ! -e './data' ]] && mkdir ./data
-	update_arm || true
+	# update_arm || true
 	[[ -e "$REPO_TARGET" ]] || git clone "$REPO" "$REPO_TARGET"
 	(cd "$REPO_TARGET" && git pull)
 	if git_hash_changed; then
