@@ -22,7 +22,7 @@ mix deps.get --only prod
 mix compile
 
 SECRET_KEY_BASE="$(jq -r '.dbsentinel_secret' <"$FILEPATH")"
-DATABASE_PATH="${THIS_DIR}/../data/pheonix_db.sqlite"
+DATABASE_PATH="${THIS_DIR}/../data/user.sqlite"
 
 export SECRET_KEY_BASE DATABASE_PATH
 
