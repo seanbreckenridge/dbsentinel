@@ -68,7 +68,7 @@ defmodule Frontend.DataServerState do
     cond do
       state.statistics == %{} ->
         # try to update
-        send self(), :update_statistics
+        send(self(), :update_statistics)
         {:reply, {:error, "No statistics available"}, state}
 
       true ->

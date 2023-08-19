@@ -39,8 +39,10 @@ defmodule Frontend.DataServer do
   defp average_episode_duration(nil), do: "-"
   defp average_episode_duration(0), do: "-"
   defp average_episode_duration(s) when is_float(s), do: average_episode_duration(round(s))
+
   defp average_episode_duration(n) when is_integer(n) do
     count = n |> Kernel./(60) |> round()
+
     case count do
       0 -> "-"
       _ -> "#{count} min"
@@ -53,6 +55,7 @@ defmodule Frontend.DataServer do
 
   defp strip_string(nil), do: nil
   defp strip_string(""), do: nil
+
   defp strip_string(s) when is_binary(s) do
     case s |> String.trim() do
       "" -> nil
@@ -79,7 +82,10 @@ defmodule Frontend.DataServer do
       unslugify(item["media_type"]) || "unknown"
     )
     |> Map.put("member_count", item["member_count"] || "-")
-    |> Map.put("average_episode_duration", average_episode_duration(item["average_episode_duration"]))
+    |> Map.put(
+      "average_episode_duration",
+      average_episode_duration(item["average_episode_duration"])
+    )
     # link to the entry pageon the frontend
     |> Map.put(
       "entry_url",
@@ -180,7 +186,7 @@ defmodule FrontendWeb.PageController do
     {statistics, conn} =
       case GenServer.call(Frontend.DataServerState, :get_statistics) do
         {:ok, statistics} -> {statistics, conn}
-          # Note: when this fails, it tries to update the statistics
+        # Note: when this fails, it tries to update the statistics
         {:error, _} -> {%{}, conn |> put_flash(:error, "Failed to get statistics")}
       end
 

@@ -9,3 +9,4 @@ cd "${THIS_DIR}" || exit $?
 pipenv run python3 -m flake8 main.py app/*.py mal_id/*.py
 pipenv run python3 -m pytest ./app/db_entry_update.py
 pipenv run python3 -m mypy --install-types ./mal_id/ ./app/
+cd ./frontend/ && mix format
