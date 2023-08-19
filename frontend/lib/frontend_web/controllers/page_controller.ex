@@ -142,8 +142,8 @@ defmodule Frontend.DataServer do
         media_type: parse_media_type(params["media_type"]),
         nsfw: nsfw_param,
         json_data: params["json_data"],
-        approved_status: params["status"] || "approved",
-        order_by: params["order_by"] || "status_updated_at",
+        approved_status: params["status"] || "all",
+        order_by: params["order_by"] || "id",
         sort: params["sort"] || "desc"
       },
       page(params["page"])
@@ -180,7 +180,8 @@ defmodule FrontendWeb.PageController do
     {statistics, conn} =
       case GenServer.call(Frontend.DataServerState, :get_statistics) do
         {:ok, statistics} -> {statistics, conn}
-        {:error, _} -> {nil, conn |> put_flash(:error, "Failed to get statistics")}
+          # Note: when this fails, it tries to update the statistics
+        {:error, _} -> {%{}, conn |> put_flash(:error, "Failed to get statistics")}
       end
 
     # assigns page title 

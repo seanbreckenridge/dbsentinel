@@ -1,6 +1,6 @@
 defmodule Frontend.DataServerState do
   @moduledoc """
-  A genserver that keeps track of the state of the data server
+  A genserver that keeps track of the state of the data serverupdate_st
   """
   use GenServer
   require Logger
@@ -18,28 +18,29 @@ defmodule Frontend.DataServerState do
       called_full_db_update: nil
     }
 
-    # update state 1 second after start
-    Process.send_after(self(), :update_statistics, 1000)
-    Process.send_after(self(), :update_evry_files, 1000)
+    # start state update loops
+    Process.send_after(self(), :update_statistics_loop, 0)
+    Process.send_after(self(), :update_evry_files_loop, 0)
 
     {:ok, state}
   end
 
-  def handle_call(:get_statistics, _from, state) do
-    cond do
-      state.statistics == %{} ->
-        {:reply, {:error, "No statistics available"}, state}
+  def handle_info(:update_statistics_loop, state) do
+    Process.send_after(self(), :update_statistics, 1000)
+    # reschedule to run once an hour
+    Process.send_after(self(), :update_statistics_loop, 60 * 60 * 1000)
+    {:noreply, state}
+  end
 
-      true ->
-        {:reply, {:ok, state.statistics}, state}
-    end
+  def handle_info(:update_evry_files_loop, state) do
+    Process.send_after(self(), :update_evry_files, 1000)
+    # reschedule to run once every 10 minutes
+    Process.send_after(self(), :update_evry_files_loop, 10 * 60 * 1000)
+    {:noreply, state}
   end
 
   # call self to request statistics once an hour
   def handle_info(:update_statistics, state) do
-    # reschedule
-    Process.send_after(self(), :update_statistics, 60 * 60 * 1000)
-
     case request_statistics() do
       {:ok, statistics} ->
         Logger.info("Updated statistics")
@@ -63,6 +64,18 @@ defmodule Frontend.DataServerState do
     {:noreply, parse_evry_files(state)}
   end
 
+  def handle_call(:get_statistics, _from, state) do
+    cond do
+      state.statistics == %{} ->
+        # try to update
+        send self(), :update_statistics
+        {:reply, {:error, "No statistics available"}, state}
+
+      true ->
+        {:reply, {:ok, state.statistics}, state}
+    end
+  end
+
   defp map_keys_to_atoms(map) do
     map |> Enum.map(fn {k, v} -> {String.to_atom(k), v} end) |> Map.new()
   end
@@ -76,11 +89,11 @@ defmodule Frontend.DataServerState do
             {:ok, statistics}
 
           {:error, _} ->
-            {:error, "Could not parse statistics"}
+            {:error, "Could not parse statistics as JSON"}
         end
 
       {:error, _} ->
-        {:error, "Could not get statistics"}
+        {:error, "Could not get statistics, data server is probably down/unresponsive"}
     end
   end
 
