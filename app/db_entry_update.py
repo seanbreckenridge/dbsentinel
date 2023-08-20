@@ -424,7 +424,9 @@ async def update_database(
             # check if its expired
             requested_at = smmry.timestamp
             assert requested_at is not None
-            if now - requested_at > update_if_older_than:
+            # update manga at a slower rate
+            upd = update_if_older_than if r_type == "anime" else timedelta(days=update_if_older_than.days * 2)
+            if now - requested_at > upd:
                 logger.info(
                     f"Rerequesting expired data for {r_type} {r_id}, requesting {update_outdated_metadata} more..."
                 )
