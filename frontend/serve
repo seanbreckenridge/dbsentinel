@@ -35,7 +35,6 @@ case "${1:-''}" in
 *) ;;
 esac
 
-mix phx.digest
+mix prod.setup
 mix assets.deploy
-mix ecto.migrate
 exec mix phx.server
