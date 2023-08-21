@@ -31,7 +31,7 @@ def create_app() -> FastAPI:
         top_stats = snapshot.statistics("lineno")
         return list(map(str, top_stats[:count]))
 
-    from .tasks import trouter as tasks_router
+    from .tasks import router as tasks_router
     from .summary import router as summary_router
     from .query import router as query_router
 

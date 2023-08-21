@@ -3,21 +3,18 @@ from typing import Union
 from sqlmodel import Session
 from sqlmodel.sql.expression import select
 from pydantic import BaseModel
-from fastapi import Response
+from fastapi import Response, APIRouter
 
 from mal_id.log import logger
+from mal_id.metadata_cache import has_metadata
 from app.db import (
     EntryType,
     data_engine,
     AnimeMetadata,
     MangaMetadata,
 )
-from app.threaded_router import ThreadedRouter
 
-# each route only allows one connection to be made at a time
-# to rate limit requests to MAL
-# and prevent full_update from corrupting the db while its already running
-trouter = ThreadedRouter()
+router = APIRouter()
 
 
 def _fetch_data(
@@ -37,11 +34,15 @@ def _fetch_data(
     return data
 
 
+def _has_data(entry_type: EntryType, entry_id: int) -> bool:
+    return has_metadata(entry_id, entry_type.value.lower())
+
+
 class Error(BaseModel):
     error: str
 
 
-@trouter.get("/refresh_entry")
+@router.get("/refresh_entry")
 async def refresh_entry(
     entry_type: EntryType, entry_id: int, response: Response
 ) -> Union[AnimeMetadata, MangaMetadata, Error]:
@@ -50,10 +51,14 @@ async def refresh_entry(
     """
     from app.db_entry_update import refresh_entry as refresh
 
-    logger.info(f"starting refreshing {entry_type} {entry_id}")
+    logger.info(f"refreshing {entry_type} {entry_id}")
+    if not _has_data(entry_type, entry_id):
+        logger.error(f"no data for {entry_type} {entry_id}, cant refresh")
+        return Error(error="That id does not have any data saved, cant refresh")
+
     await refresh(
         entry_id=entry_id,
-        entry_type=entry_type,
+        entry_type=entry_type.value.lower(),
     )
     try:
         response.status_code = 200

@@ -40,7 +40,9 @@ def api_url_to_parts(url: str) -> tuple[str, int]:
 
 def mal_url_to_parts(url: str) -> tuple[str, int]:
     uu = urlparse(url)
-    assert uu.path.startswith("/anime") or uu.path.startswith("/manga"), f"broken url {url}"
+    assert uu.path.startswith("/anime") or uu.path.startswith(
+        "/manga"
+    ), f"broken url {url}"
     is_anime = uu.path.startswith("/anime")
     entry_type = "anime" if is_anime else "manga"
     url_id = uu.path.split("/")[2]
