@@ -16,6 +16,14 @@
       Recently Submitted Unapproved Anime
     </a>
   </div>
+  <div class="flex w-full flex-col items-center justify-center sm:flex-row">
+    <a
+      href={Routes.page_path(@conn, :search) <> "?entry_type=anime&status=deleted&order_by=status_updated_at&sort=desc"}
+      class="m-2 text-blue-600 transition-colors duration-200 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-500"
+    >
+      Anime Deleted From MAL
+    </a>
+  </div>
 </div>
 <hr class="mx-auto my-2 w-6/12 border-gray-300 dark:border-gray-700" />
 <section class="flex w-full flex-col  items-center px-4 text-center" id="summary">
@@ -44,6 +52,12 @@
       </div>
       <div class="text-sm text-gray-500 dark:text-gray-300">
         Click on a status to search data
+      </div>
+      <div class="pt-6 text-left text-gray-800 dark:text-gray-300">
+        This is mostly meant to act as an public archive. Database guidelines are not exact and what is considered anime is not the same by all (for example: how much live-action, stop motion, length, country of origin, international projects), so saving deleted and denied entries is useful for many reasons (re-submitting entries, for archiving whats been denied before, incase MAL ever drastically changes DB regulations again). If you just want a list of all unapproved anime to check if you're not submitting a duplicate, see <a
+          href="https://sean.fish/mal_unapproved/"
+          class="text-blue-500 transition-colors duration-200 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-500"
+        >mal_unapproved</a>.
       </div>
     </div>
   </div>

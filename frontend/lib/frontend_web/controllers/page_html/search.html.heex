@@ -142,6 +142,8 @@
   </form>
 </section>
 <section class="flex w-full flex-col items-start justify-center p-3">
+  <div class="w-full flex justify-center text-sm text-gray-700 hidden my-2" id="status-info">
+  </div>
   <div class="w-full flex justify-between items-center my-1">
     <button class="prev-page p-3 rounded-lg border-2 border-gray-300 dark:bg-gray-800 dark:text-white flex flex-row items-center justify-center">
       <.icon name="hero-arrow-left" />
@@ -336,8 +338,24 @@
     alert("These deleted/denied are estimates based on when data was added/last cached, and not necessarily when the entry was deleted/denied.");
   }
 
+  const info = {
+    approved: "Approved and you can add it to your list on MAL",
+    unapproved: "Not approved, but still visible on MAL if you know the ID.",
+    deleted: "Deleted from MALs website and all user animelists. If not archived elsewhere, the data is gone forever.",
+    denied: "Was unapproved, but a moderator denied it because they determined it did not meet MALs DB Guidelines"
+  }
+
+  function capitalize(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+  }
+
+  function statusText(status) {
+    return `${capitalize(status)}: ${info[status]}`
+  }
+
   function statusInfo() {
-    alert("Approved: Approved and you can add it to your list on MAL\nUnapproved: Not approved, but still visible on MAL if you know the ID.\nDeleted: Deleted from MALs website and all user animelists. If not archived elsewhere, the data is gone forever.\nDenied: Was unapproved, but a moderator denied it because they determined it did not meet MALs DB Guidelines")
+    const text = Object.entries(info).map(([key, value]) => statusText(key)).join("\n\n");
+    alert(text);
   }
 
   document.addEventListener("DOMContentLoaded", () => {
@@ -438,16 +456,34 @@
         document.getElementById("blur").checked = false
       }
 
+      function describeStatus() {
+          const statusSelected = document.getElementById("status").value
+          const statusInfoButton = document.getElementById("status-info")
+          if (!statusInfoButton) {
+            return
+          }
+          if (statusSelected !== "all") {
+            statusInfoButton.innerText = statusText(statusSelected)
+            statusInfoButton.classList.remove("hidden")
+          } else {
+            statusInfoButton.innerText = ""
+            statusInfoButton.classList.add("hidden")
+          }
+      }
+
       parseParamsFromURL(null);
       updateMediaTypes()
       // need to parse the media type again, since the media type options are updated
       parseParamsFromURL("media_type");
       blurImages()
+      describeStatus()
+
       convertDates()
       document.getElementById("blur").addEventListener("change", blurImages);
       document.getElementById("entry_type").addEventListener("change", updateMediaTypes);
       document.getElementById("sfw").addEventListener("change", () => ratingCheckboxes('sfw'));
       document.getElementById("nsfw").addEventListener("change", () => ratingCheckboxes('nsfw'));
+      document.getElementById("status").addEventListener("change", describeStatus);
       document.querySelectorAll(".prev-page").forEach((el) => {
         el.addEventListener("click", () => updatePageAndGo(-1));
       });
