@@ -40,7 +40,7 @@ def api_url_to_parts(url: str) -> tuple[str, int]:
 
 def mal_url_to_parts(url: str) -> tuple[str, int]:
     uu = urlparse(url)
-    assert uu.path.startswith("/anime") or uu.path.startswith("/manga")
+    assert uu.path.startswith("/anime") or uu.path.startswith("/manga"), f"broken url {url}"
     is_anime = uu.path.startswith("/anime")
     entry_type = "anime" if is_anime else "manga"
     url_id = uu.path.split("/")[2]
@@ -547,7 +547,7 @@ async def update_database(
     # check if any other items exist that arent in the db already
     # those were denied or deleted (long time ago)
     all_urls = set()
-    for keyfile in Path(metadatacache_dir).rglob("*/key"):
+    for keyfile in (Path(metadatacache_dir) / "data").rglob("*/key"):
         all_urls.add(keyfile.read_text().strip())
     for entry_type, entry_id in map(mal_url_to_parts, all_urls):
         key = f"{entry_type}_{entry_id}"
