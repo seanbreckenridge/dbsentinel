@@ -181,6 +181,8 @@ end
 defmodule FrontendWeb.PageController do
   use FrontendWeb, :controller
 
+  @base_url Application.compile_env(:frontend, :base_url, "")
+
   def home(conn, _params) do
     # request the statistics from the data genserver
     {statistics, conn} =
@@ -231,9 +233,15 @@ defmodule FrontendWeb.PageController do
   def by_id(conn, %{"id" => id, "type" => type}) do
     {type, conn} =
       case type do
-        "anime" -> {"anime", conn}
-        "manga" -> {"manga", conn}
-        type -> {type, conn |> put_flash(:error, "Invalid type #{type}") |> redirect(to: "/")}
+        "anime" ->
+          {"anime", conn}
+
+        "manga" ->
+          {"manga", conn}
+
+        type ->
+          {type,
+           conn |> put_flash(:error, "Invalid type #{type}") |> redirect(to: "#{@base_url}/")}
       end
 
     case Frontend.DataServer.by_id(id, type) do
@@ -244,7 +252,7 @@ defmodule FrontendWeb.PageController do
       {:error, _} ->
         conn
         |> put_flash(:error, "Failed to get #{type} with id #{id}")
-        |> redirect(to: "/")
+        |> redirect(to: "#{@base_url}/")
     end
   end
 end
