@@ -2,7 +2,7 @@ A counterpart to <https://sean.fish/mal_unapproved/>. That lists entries that ha
 
 This is a work in progress, but the basics are up at <https://sean.fish/dbsentinel>
 
-Goals
+## Goals
 
 - Index MyAnimeList approved and unapproved anime/manga
 - Save/keep track of deleted/denied (user-submitted entries which are denied by MAL moderators because they dont meet site guidelines), so the data is not lost forever
