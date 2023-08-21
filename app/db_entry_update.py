@@ -549,7 +549,7 @@ async def update_database(
     all_urls = set()
     for keyfile in Path(metadatacache_dir).rglob("*/key"):
         all_urls.add(keyfile.read_text().strip())
-    for entry_type, entry_id in map(api_url_to_parts, all_urls):
+    for entry_type, entry_id in map(mal_url_to_parts, all_urls):
         key = f"{entry_type}_{entry_id}"
         if key in known:
             continue
