@@ -42,7 +42,7 @@ class AnilistCache(URLCache):
         if response.status_code > 400 and response.status_code < 500:
             logger.warning(f"Anilist returned {response.status_code}, not found")
             return None
-        data: Dict[str, Any] = response.json()
+        data: Dict[str, Any] = response.json()["data"]["Media"]
         return data
 
     @staticmethod
