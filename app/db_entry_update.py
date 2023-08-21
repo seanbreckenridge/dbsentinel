@@ -38,6 +38,15 @@ def api_url_to_parts(url: str) -> tuple[str, int]:
     return entry_type, int(url_id)
 
 
+def mal_url_to_parts(url: str) -> tuple[str, int]:
+    uu = urlparse(url)
+    assert uu.path.startswith("/anime") or uu.path.startswith("/manga")
+    is_anime = uu.path.startswith("/anime")
+    entry_type = "anime" if is_anime else "manga"
+    url_id = uu.path.split("/")[2]
+    return entry_type, int(url_id)
+
+
 def test_api_url_to_parts() -> None:
     assert api_url_to_parts(
         "https://api.myanimelist.net/v2/manga/113372?nsfw=true&fields=id,title,main_picture,alternative_titles,start_date,end_date,synopsis,mean,rank,popularity,num_list_users,num_scoring_users,nsfw,created_at,updated_at,media_type,status,genres,num_volumes,num_chapters,authors{first_name,last_name},pictures,background,related_anime,related_manga,recommendations,serialization{name}"
@@ -46,6 +55,18 @@ def test_api_url_to_parts() -> None:
     assert api_url_to_parts(
         "https://api.myanimelist.net/v2/anime/48420?nsfw=true&fields=id,title,main_picture,alternative_titles,start_date,end_date,synopsis,mean,rank,popularity,num_list_users,num_scoring_users,nsfw,created_at,updated_at,media_type,status,genres,num_episodes,start_season,broadcast,source,average_episode_duration,rating,pictures,background,related_anime,related_manga,recommendations,studios,statistics"
     ) == ("anime", 48420)
+
+
+def test_mal_url_to_parts() -> None:
+    assert mal_url_to_parts("https://myanimelist.net/anime/48420/86") == (
+        "anime",
+        48420,
+    )
+
+    assert mal_url_to_parts("https://myanimelist.net/manga/113372/86") == (
+        "manga",
+        113372,
+    )
 
 
 class ImageData(NamedTuple):
@@ -100,7 +121,7 @@ async def add_or_update(
     refresh_images: bool = False,
     skip_images: bool = False,
 ) -> None:
-    entry_type, url_id = api_url_to_parts(summary.url)
+    entry_type, url_id = mal_url_to_parts(summary.url)
     entry_enum = EntryType.from_str(entry_type)
     assert entry_type in ("anime", "manga")
 
@@ -425,7 +446,11 @@ async def update_database(
             requested_at = smmry.timestamp
             assert requested_at is not None
             # update manga at a slower rate
-            upd = update_if_older_than if r_type == "anime" else timedelta(days=update_if_older_than.days * 2)
+            upd = (
+                update_if_older_than
+                if r_type == "anime"
+                else timedelta(days=update_if_older_than.days * 2)
+            )
             if now - requested_at > upd:
                 logger.info(
                     f"Rerequesting expired data for {r_type} {r_id}, requesting {update_outdated_metadata} more..."

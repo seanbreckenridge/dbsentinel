@@ -1,0 +1,76 @@
+#!/usr/bin/env python3
+
+"""
+Changes the api urls in the metadata cache to the myanimelist urls
+
+this is nicer incase the MAL API fields ever change
+
+once this is done, move old cache somewhere else, and this to that dir
+
+migrate_myanimelist_urls out
+mv ./data/metadata/data old_cache
+mv ./out/data/ ./data/metadata
+"""
+
+import os
+import sys
+import shutil
+from pathlib import Path
+
+import click
+
+this_dir = Path(__file__).parent.absolute()
+sys.path.append(str(this_dir.parent))
+
+from app.db_entry_update import api_url_to_parts, mal_url_to_parts
+from mal_id.metadata_cache import metadata_cache, MetadataCache
+
+
+@click.command()
+@click.argument("OUTPUT_DIR", type=click.Path(exists=False, path_type=Path))
+def main(output_dir: Path) -> None:
+    assert not output_dir.exists(), f"{output_dir} does not exist"
+
+    old_cache = metadata_cache()
+    new_cache = MetadataCache(cache_dir=Path(output_dir))
+
+    old_cache_dd = old_cache.summary_cache.data_dir
+    assert old_cache_dd.exists()
+
+    # read each keyfile, get the URL, convert it to a new one
+    # use summarycache to completely read the entry, then write it to the new cache
+
+    for key_path in old_cache_dd.rglob("*/key"):
+        key_url = key_path.read_text().strip()
+        try:
+            entry_type, url_id = api_url_to_parts(key_url)
+        except AssertionError:
+            print(f"Skipping {key_url}")
+            continue
+
+        assert entry_type in ("anime", "manga")
+
+        updated_url = f"https://myanimelist.net/{entry_type}/{url_id}"
+
+        # read the entry from the old cache
+        assert old_cache.summary_cache.has(key_url)
+        entry = old_cache.summary_cache.get(key_url)
+        assert entry is not None, f"{key_url} not in old cache"
+
+        # update the url
+        entry.url = updated_url
+
+        # write the entry to the new cache
+        new_cache.summary_cache.put(updated_url, entry)
+
+        # print(f"Updated {key_url} to {updated_url}")
+        # print(f"Old path: {key_path.parent}")
+        assert new_cache.summary_cache.has(
+            updated_url
+        ), f"{updated_url} not in new cache"
+        new_path = new_cache.summary_cache.dir_cache.get(updated_url)
+        # print(f"New path: {new_path}")
+
+
+if __name__ == "__main__":
+    main()

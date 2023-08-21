@@ -7,7 +7,7 @@ from typing import Optional
 
 import click
 
-from mal_id.metadata_cache import request_metadata
+from mal_id.metadata_cache import request_metadata, has_metadata
 from mal_id.linear_history import track_diffs, iter_linear_history
 from mal_id.ids import (
     unapproved_ids,
@@ -97,28 +97,53 @@ def check_mal() -> None:
 
 @mal.command(short_help="request missing data using API")
 @click.option("--request-failed", is_flag=True, help="re-request failed entries")
-def update_metadata(request_failed: bool) -> None:
+@click.option(
+    "--print-missing", is_flag=True, help="print missing entries instead of requesting"
+)
+def update_metadata(request_failed: bool, print_missing: bool) -> None:
     """
     request missing entry metadata using MAL API
     """
     from mal_id.metadata_cache import check_mal as heartbeat
 
+    total_missing = 0
+
     if not heartbeat():
         sys.exit(1)
 
     for hs in iter_linear_history():
-        request_metadata(hs.entry_id, hs.e_type, rerequest_failed=request_failed)
+        if print_missing and not has_metadata(hs.entry_id, hs.e_type):
+            total_missing += 1
+            click.echo(f"{hs.entry_id} {hs.e_type}")
+        else:
+            request_metadata(hs.entry_id, hs.e_type, rerequest_failed=request_failed)
 
     unapproved = unapproved_ids()
     for aid in unapproved.anime:
-        request_metadata(aid, "anime", rerequest_failed=request_failed)
+        if print_missing and not has_metadata(aid, "anime"):
+            total_missing += 1
+            click.echo(f"{aid} anime")
+        else:
+            request_metadata(aid, "anime", rerequest_failed=request_failed)
 
     for mid in unapproved.manga:
-        request_metadata(mid, "manga", rerequest_failed=request_failed)
+        if print_missing and not has_metadata(mid, "manga"):
+            total_missing += 1
+            click.echo(f"{mid} manga")
+        else:
+            request_metadata(mid, "manga", rerequest_failed=request_failed)
+
+    if print_missing:
+        click.echo(f"total missing: {total_missing}")
 
 
 @mal.command(short_help="run a full db update")
-@click.option("--rerequest-oldest", type=int, default=None, help="rerequest and update data for oldest N entries")
+@click.option(
+    "--rerequest-oldest",
+    type=int,
+    default=None,
+    help="rerequest and update data for oldest N entries",
+)
 def full_db_update(rerequest_oldest: Optional[int]) -> None:
     """
     this is expensive! -- only do this when necessary

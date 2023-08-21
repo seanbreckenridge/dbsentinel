@@ -123,22 +123,37 @@ class MetadataCache(URLCache):
         super().__init__(cache_dir=cache_dir, loglevel=loglevel)
 
     def request_data(self, url: str, preprocess_url: bool = True) -> Summary:
-        #
-        # this may never actually be the case, but just want to make sure if we
-        # add some refresh mechanism that that does not happen...
-        uurl = self.preprocess_url(url) if preprocess_url else url
-        logger.info(f"requesting {uurl}")
+        mal_id = int(url.split("/")[-1])
+        media_type = url.split("/")[-2]
+        assert media_type in ("anime", "manga")
+
+        # this is the URL we use as they key, but not the one we cache
+        myanimelist_url = url
+        del url  # to be safe
+
+        # this is the actual URL we want to request
+        if media_type == "anime":
+            api_url = self.BASE_ANIME_URL.format(mal_id) + "&" + self.ANIME_FIELDS
+        else:
+            api_url = self.BASE_MANGA_URL.format(mal_id) + "&" + self.MANGA_FIELDS
+
+        api_url = self.preprocess_url(api_url) if preprocess_url else api_url
+
+        logger.info(f"requesting {api_url}")
         try:
             if "skip_retry" in self.options and self.options["skip_retry"] is True:
-                json_data = _api_request(self.mal_session, uurl)
+                json_data = _api_request(self.mal_session, api_url)
             else:
-                json_data = api_request(self.mal_session, uurl)
+                json_data = api_request(self.mal_session, api_url)
             # succeeded, return the data
             return Summary(
-                url=uurl, data={}, metadata=json_data, timestamp=datetime.now()
+                url=myanimelist_url,
+                data={},
+                metadata=json_data,
+                timestamp=datetime.now(),
             )
         except requests.exceptions.RequestException as ex:
-            logger.exception(f"error requesting {uurl}", exc_info=ex)
+            logger.exception(f"error requesting {api_url}", exc_info=ex)
             logger.warning(ex.response.text)
             logger.warning(
                 "Couldn't cache info, could be deleted or failed to cache because entry data is broken/unapproved causing the MAL API to fail"
@@ -147,9 +162,9 @@ class MetadataCache(URLCache):
             # prevent a broken entry from removing old, valid data
             #
             # If it has valid but failed now, we should just keep the old valid data
-            if self.summary_cache.has(uurl):
+            if self.summary_cache.has(myanimelist_url):
                 logger.warning("using existing cached data for this entry")
-                sc = self.summary_cache.get(uurl)
+                sc = self.summary_cache.get(myanimelist_url)
                 assert sc is not None
                 logger.info("Updating timestamp to prevent re-requesting this entry")
                 # check if this has a few keys, i.e. (this isnt {"error": 404})
@@ -174,14 +189,14 @@ class MetadataCache(URLCache):
                 # there is no existing data, and we failed to get new data,
                 # so save an error to the cache
                 # sanity check to make sure were not overwriting good data
-                assert not self.summary_cache.has(uurl)
+                assert not self.summary_cache.has(myanimelist_url)
                 logger.warning(
                     "no existing cached data for this entry, saving error to cache"
                 )
                 # this just doesnt exist (deleted a long time ago etc.?)
                 # no way to get data for this
                 return Summary(
-                    url=uurl,
+                    url=myanimelist_url,
                     data={},
                     metadata={"error": ex.response.status_code},
                     timestamp=datetime.now(),
@@ -219,23 +234,34 @@ def request_metadata(
     mcache: MetadataCache = metadata_cache(),
 ) -> Summary:
     assert entry_type in {"anime", "manga"}
-    if entry_type == "anime":
-        api_url = mcache.BASE_ANIME_URL.format(id_) + "&" + mcache.ANIME_FIELDS
-    else:
-        api_url = mcache.BASE_MANGA_URL.format(id_) + "&" + mcache.MANGA_FIELDS
+    # use this as the key for the cache
+    url_key = "https://myanimelist.net/{}/{}".format(entry_type, id_)
     # if this had failed previouly, try again
+    #
+    # this may never actually be the case, but just want to make sure if we
+    # add some refresh mechanism that that does not happen...
     if rerequest_failed:
-        sdata = mcache.get(api_url)
+        sdata = mcache.get(url_key)
         # if theres no data and this isnt a 404, retry
         if not MetadataCache.has_data(sdata) and not MetadataCache.is_404(sdata):
             logger.info("re-requesting failed entry: {}".format(sdata.metadata))
-            return mcache.refresh_data(api_url)
+            return mcache.refresh_data(url_key)
     elif force_rerequest:
         logger.info("re-requesting entry")
         try:
             mcache.options["skip_retry"] = True
-            dat = mcache.refresh_data(api_url)
+            dat = mcache.refresh_data(url_key)
         finally:
             mcache.options["skip_retry"] = False
         return dat
-    return mcache.get(api_url)
+    return mcache.get(url_key)
+
+
+def has_metadata(
+    id_: int,
+    entry_type: str,
+) -> bool:
+    assert entry_type in {"anime", "manga"}
+    # use this as the key for the cache
+    url_key = "https://myanimelist.net/{}/{}".format(entry_type, id_)
+    return metadata_cache().summary_cache.has(url_key)
