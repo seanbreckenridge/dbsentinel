@@ -25,4 +25,4 @@ esac
 
 mix prod.setup
 mix assets.deploy
-exec mix phx.server
+exec mix dbsentinel.prod.server

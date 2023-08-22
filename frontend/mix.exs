@@ -72,7 +72,8 @@ defmodule Frontend.MixProject do
       "assets.setup": ["tailwind.install --if-missing", "esbuild.install --if-missing"],
       "assets.build": ["tailwind default", "esbuild default"],
       "assets.deploy": ["tailwind default --minify", "esbuild default --minify", "phx.digest"],
-      "prod.setup": ["ecto.create", "ecto.migrate", "phx.digest.clean"]
+      "prod.setup": ["ecto.create", "ecto.migrate", "phx.digest.clean"],
+      "dbsentinel.prod.server": ["phx.server"]
     ]
   end
 end
