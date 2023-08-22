@@ -30,7 +30,42 @@ class AnilistCache(URLCache):
             id
             idMal
             type
+            status
+            title {
+                romaji
+                english
+                native
+            }
+            genres
+            tags {
+                id
+                name
+                description
+                category
+                rank
+                isGeneralSpoiler
+                isMediaSpoiler
+                isAdult
+            }
+            seasonYear
+            season
+            format
+            isAdult
+            countryOfOrigin
+            isLicensed
+            source
+            externalLinks {
+                id
+                url
+                site
+                siteId
+                type
+                language
+                notes
+                isDisabled
+            }
         }}"""
+        # islicensed describes whether its official licensed or doujin work
         mtype = media_type.upper()
         assert mtype in ("ANIME", "MANGA")
         variables = {"id": mal_id, "type": mtype}

@@ -271,7 +271,8 @@ def dbs() -> None:
 
 
 @dbs.command(short_help="update anilist ids")
-def anilist_update() -> None:
+@click.option("--only", type=click.Choice(["anime", "manga"]), default=None)
+def anilist_update(only: str) -> None:
     """
     update anilist ids
     """
@@ -282,11 +283,13 @@ def anilist_update() -> None:
 
     approved = approved_ids()
 
-    for mal_id in approved.anime:
-        ac.get("https://myanimelist.net/anime/{}".format(mal_id))
+    if only is None or only == "anime":
+        for mal_id in approved.anime:
+            ac.get("https://myanimelist.net/anime/{}".format(mal_id))
 
-    for mal_id in approved.manga:
-        ac.get("https://myanimelist.net/manga/{}".format(mal_id))
+    if only is None or only == "manga":
+        for mal_id in approved.manga:
+            ac.get("https://myanimelist.net/manga/{}".format(mal_id))
 
 
 @dbs.command(short_help="print syobocal urls which have MAL urls")
