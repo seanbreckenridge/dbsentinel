@@ -115,7 +115,7 @@ def track_diffs() -> Iterator[Entry]:
         # hmmm -- this seems to add a bunch of duplicates?
         # but it does work fine for what we want to do, so I think its fine
         #
-        # this is shrinked in main.py mal clean-linear-history by
+        # this is shrunk in main.py mal clean-linear-history by
         # only retaining the first and last time an approved/deleted pair appears in history,
         # since thats all we want from the git state
         for mal_id in list(state):
