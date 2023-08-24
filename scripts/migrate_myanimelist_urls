@@ -12,9 +12,7 @@ mv ./data/metadata/data old_cache
 mv ./out/data/ ./data/metadata
 """
 
-import os
 import sys
-import shutil
 from pathlib import Path
 
 import click
@@ -22,7 +20,7 @@ import click
 this_dir = Path(__file__).parent.absolute()
 sys.path.append(str(this_dir.parent))
 
-from app.db_entry_update import api_url_to_parts, mal_url_to_parts
+from app.db_entry_update import api_url_to_parts
 from mal_id.metadata_cache import metadata_cache, MetadataCache
 
 
