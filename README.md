@@ -23,6 +23,7 @@ This is mostly meant to act as an public archive. Database guidelines are finick
   - [ ] moderators/trusted users
     - [ ] parse reasons for denials/deletions from thread/allow users to input
     - [ ] add frontend button to refresh data for entries
+    - [ ] UI to force remove/ban an entry
   - [x] dashboard that shows stats etc.
   - [x] frontend to view approved/deleted/denied/unapproved entries
   - [x] add info on search page letting you know what each approved status means

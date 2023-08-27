@@ -53,6 +53,7 @@ class Unapproved(NamedTuple):
 
 
 UNAPPROVED_API_BASE = "https://sean.fish/mal_unapproved/api/"
+# UNAPPROVED_API_BASE = "http://localhost:4001/mal_unapproved/api/"
 
 SANITY_CHECK_AMOUNT = 10
 
@@ -87,28 +88,35 @@ def _read_unapproved(path: Path, mtime: int) -> List[Any]:
     return data
 
 
-def _update_unapproved(etype: str, cache_filepath: Path) -> List[Any]:
+def _update_unapproved(
+    etype: str, cache_filepath: Path, skip_request: bool
+) -> List[Any]:
     """
     manages requesting/updating the cachefiles for anime/manga
 
     if the data hasnt changed, this will return the memcached data
     using the path/mtime as a key in the lru_cache above
     """
-    url = UNAPPROVED_API_BASE + etype
     data: List[Any] = []
-    write_data = True  # dont want to overwrite/change mtime if theres no new data
-    if not cache_filepath.exists():
-        data = _request_unapproved(url)
+    if skip_request:
+        data = []
+        write_data = False
     else:
-        if cache_filepath.stat().st_mtime < (time.time() - REREQUEST_TIME):
-            try:
-                logger.debug("Unapproved expired: {}".format(etype))
-                data = _request_unapproved(url)
-            except (RuntimeError, requests.exceptions.RequestException) as e:
-                logger.exception(str(e), exc_info=e)
-                write_data = False
-    # either the data hasnt changed (hasnt been 10 minutes, or the request failed and we should fallback)
-    if data == []:
+        url = UNAPPROVED_API_BASE + etype
+        data = []
+        write_data = True  # dont want to overwrite/change mtime if theres no new data
+        if not cache_filepath.exists():
+            data = _request_unapproved(url)
+        else:
+            if cache_filepath.stat().st_mtime < (time.time() - REREQUEST_TIME):
+                try:
+                    logger.debug("Unapproved expired: {}".format(etype))
+                    data = _request_unapproved(url)
+                except (RuntimeError, requests.exceptions.RequestException) as e:
+                    logger.exception(str(e), exc_info=e)
+                    write_data = False
+    # either the data hasnt changed (hasnt been 10 minutes, or the request failed and we should fallback to local file)
+    if len(data) == 0:
         data = _read_unapproved(cache_filepath, int(cache_filepath.stat().st_mtime))
         write_data = False
     assert (
@@ -117,13 +125,14 @@ def _update_unapproved(etype: str, cache_filepath: Path) -> List[Any]:
     if write_data:
         cache_filepath.write_bytes(orjson.dumps(data))
     else:
-        logger.debug("Skipped writing unapproved data, request failed or no new data")
+        logger.debug(f"Skipped writing unapproved data, request failed or no new data for {etype}")
     return data
 
 
 def unapproved_ids() -> Unapproved:
-    anime = _update_unapproved("anime", unapproved_anime_path)
-    manga = _update_unapproved("manga", unapproved_manga_path)
+    anime = _update_unapproved("anime", unapproved_anime_path, skip_request=False)
+    # MAL changed HTML, so no longer can get unapproved manga from there
+    manga = _update_unapproved("manga", unapproved_manga_path, skip_request=True)
     return Unapproved(
         anime_info=[Entry(**a) for a in anime], manga_info=[Entry(**m) for m in manga]
     )

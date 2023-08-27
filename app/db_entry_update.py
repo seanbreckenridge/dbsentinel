@@ -515,6 +515,10 @@ async def update_database(
     unapproved = unapproved_ids()
     logger.info("db: updating from unapproved anime history...")
     for aid in unapproved.anime:
+        aid_key = f"anime_{aid}"
+        if aid_key in known:
+            logger.warning(f"skipping anime {aid} as it was already processed this run")
+            continue
         smmry = request_metadata(aid, "anime")
         await add_or_update(
             summary=smmry,
@@ -527,10 +531,14 @@ async def update_database(
             skip_images=skip_proxy_images,
             mal_id_to_image=mal_id_image_have,
         )
-        known.add(f"anime_{aid}")
+        known.add(aid_key)
 
     logger.info("db: updating from unapproved manga history...")
     for mid in unapproved.manga:
+        mid_key = f"manga_{mid}"
+        if mid_key in known:
+            logger.warning(f"skipping manga {mid} as it was already processed this run")
+            continue
         smmry = request_metadata(mid, "manga")
         await add_or_update(
             summary=smmry,
@@ -543,7 +551,7 @@ async def update_database(
             skip_images=skip_proxy_images,
             mal_id_to_image=mal_id_image_have,
         )
-        known.add(f"manga_{mid}")
+        known.add(mid_key)
 
     logger.info("db: checking for deleted entries...")
     # check if any other items exist that arent in the db already
