@@ -147,6 +147,11 @@
     id="status-info"
   >
   </div>
+  <%= if @entry_status == "unapproved" and @entry_type == "manga" do %>
+    <div class="w-full mx-auto text-red-500 mb-2">
+      MAL changed the workaround I was using to find unapproved manga entries, so these are only accurate as of Aug 25 2023. For more info see <a href="https://sean.fish/mal_unapproved/manga" class="text-blue-500 dark:text-blue-400">here</a>. Approved entires should have their status updated properly, I just can't find any new unapproved manga right now
+    </div>
+  <% end %>
   <div class="w-full flex justify-between items-center my-1">
     <button class="prev-page p-3 rounded-lg border-2 border-gray-300 dark:bg-gray-800 dark:text-white flex flex-row items-center justify-center">
       <.icon name="hero-arrow-left" />

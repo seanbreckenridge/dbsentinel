@@ -217,7 +217,8 @@ defmodule FrontendWeb.PageController do
 
     assign(conn, :page_title, "Search")
     |> render(:search,
-      params: params,
+      entry_type: params["entry_type"] || "anime",
+      entry_status: params["status"] || "all",
       data: Frontend.DataServer.parse_search_response(response_body)
     )
   end
