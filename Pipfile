@@ -7,12 +7,10 @@ name = "pypi"
 click = "*"
 orjson = "*"
 requests = "*"
-malexport = {git = "https://github.com/seanbreckenridge/malexport/"}
-url-cache = "==0.0.7"
 fastapi = "==0.99.0"  # last release before pydantic 2.0, so I can keep using sqlmodel
 sqlmodel = ">=0.0.8"
 GitPython = "*"
-uvicorn = {extras = ["standard"], version = "*"}
+uvicorn = {extras = ["standard"] }
 more-itertools = "*"
 ipdb = "*"
 pickledb = "*"
@@ -20,6 +18,8 @@ boto3 = "*"
 httpx = "*"
 alembic = "*"
 pydantic = "<2.0.0"
+url-cache = "*"
+malexport = "*"
 
 [dev-packages]
 mypy = "*"
