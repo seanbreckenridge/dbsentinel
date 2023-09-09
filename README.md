@@ -33,6 +33,7 @@ This is mostly meant to act as an public archive. Database guidelines are finick
   - [ ] connect IDs to tmdb (manually, users can submit requests)
 - [ ] API for deleted/denied/unapproved ids/name
 - [ ] upload full API dump periodically to a public URL (w ids/names)
+- [ ] queries should work on alternative titles as well
 - [ ] discord notifications if database has not been updated in a while to check for glitches (only if a glitch happens again, have since updated how things happen)
 - [ ] let user upload their MAL XML export, parse and save data from it to localStorage
 - [ ] let user find entries that are not on their list

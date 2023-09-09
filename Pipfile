@@ -18,7 +18,7 @@ boto3 = "*"
 httpx = "*"
 alembic = "*"
 pydantic = "<2.0.0"
-url-cache = "*"
+url-cache = ">=0.0.9"
 malexport = "*"
 
 [dev-packages]
