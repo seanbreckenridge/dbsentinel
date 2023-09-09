@@ -71,7 +71,7 @@ class AnilistId(SQLModel, table=True):
     anilist_id: int = Field()
 
 
-connect_args = {"check_same_thread": False}
+connect_args = {"check_same_thread": False, "timeout": 15}
 data_engine = create_engine(
     sqlite_db_uri, echo=settings.SQL_ECHO, connect_args=connect_args
 )
