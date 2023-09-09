@@ -131,8 +131,7 @@ def _update_unapproved(
 
 def unapproved_ids() -> Unapproved:
     anime = _update_unapproved("anime", unapproved_anime_path, skip_request=False)
-    # MAL changed HTML, so no longer can get unapproved manga from there
-    manga = _update_unapproved("manga", unapproved_manga_path, skip_request=True)
+    manga = _update_unapproved("manga", unapproved_manga_path, skip_request=False)
     return Unapproved(
         anime_info=[Entry(**a) for a in anime], manga_info=[Entry(**m) for m in manga]
     )
