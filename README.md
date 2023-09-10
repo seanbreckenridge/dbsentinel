@@ -48,7 +48,7 @@ This is mostly meant to act as an public archive. Database guidelines are finick
 ## Incomplete setup instructions:
 
 - Check [app/settings.py](app/settings.py) for the required environment variables
-- Create a venv at .venv: `python3 -m venv .venv`
+- Create a venv at .venv: `python3 -m virtualenv .venv`
 - `source .venv/bin/activate`
 - `pip install -r requirements.txt`
 - [`checker_mal`](https://github.com/Hiyori-API/checker_mal) could be running on the same machine, if you want to keep an updated anime/manga ID list locally:
