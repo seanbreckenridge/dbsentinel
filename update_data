@@ -16,7 +16,6 @@ havecmd() {
 }
 
 set -e
-havecmd pipenv
 havecmd evry "Install with 'cargo install evry'"
 havecmd wait-for-internet "Install with 'cargo install wait-for-internet'"
 
@@ -26,6 +25,10 @@ readonly HASH_FILE='./data/hash'
 
 readonly ARM_REPO_URL='https://github.com/kawaiioverflow/arm'
 ARM_REPO='./data/arm'
+
+in_env() {
+	.venv/bin/python "$@"
+}
 
 # if running local, sync from remote server
 [[ -n "$ON_OS" ]] && wait-for-internet --text 'syncing from server...' && evry 1d -dev-sync-dsentinel-from-remote && {
@@ -67,6 +70,10 @@ update_arm() {
 	)
 }
 
+run_in_venv() {
+	.venv/bin/python
+}
+
 iter() {
 	printf '[%s] Updating... \n' "$(date)"
 	printf '[%s] Updating... \n' "$(date)" >&2
@@ -75,33 +82,33 @@ iter() {
 	[[ -e "$REPO_TARGET" ]] || git clone "$REPO" "$REPO_TARGET"
 	(cd "$REPO_TARGET" && git pull)
 	if git_hash_changed; then
-		pipenv run python3 main.py mal linear-history >'./data/data.jsonl' || exit $?
-		pipenv run python3 main.py mal clean-linear-history || exit $?
+		in_env main.py mal linear-history >'./data/data.jsonl' || exit $?
+		in_env main.py mal clean-linear-history || exit $?
 	fi
 	set -x
 	set +e
-	if ! pipenv run python3 main.py mal check-mal; then
+	if ! in_env main.py mal check-mal; then
 		echo 'mal is down, skipping updates...'
 		return 1
 	fi
 	if [[ -z "$SKIP_UPDATE_METADATA" ]]; then
 		if wait-for-internet --text 'checking for internet....' --timeout 1; then
 			# just use evry to track when this last ran
-			evry 1s -update-metadata && pipenv run python3 main.py mal update-metadata || return $?
+			evry 1s -update-metadata && in_env main.py mal update-metadata || return $?
 		fi
 	fi
 	if curl -s localhost:4001 >/dev/null; then
 		evry 30 minutes -dbsentinel-user-estimate && {
-			pipenv run python3 main.py mal estimate-user-recent ./usernames.txt --request --timid || return $?
+			in_env main.py mal estimate-user-recent ./usernames.txt --request --timid || return $?
 		}
 		evry 6 hours -dbsentinel-delete-estimate && {
-			pipenv run python3 main.py mal estimate-deleted-animelist-xml --request --timid || return $?
+			in_env main.py mal estimate-deleted-animelist-xml --request --timid || return $?
 		}
 	fi
 	evry 1 hour -dbsentinel-full-db-update && {
 		local -a args=()
 		[[ -n "$RCOUNT" ]] && args+=('--rerequest-oldest' "$RCOUNT")
-		pipenv run python3 main.py mal full-db-update "${args[@]}" || return $?
+		in_env main.py mal full-db-update "${args[@]}" || return $?
 	}
 	set -e
 	set +x

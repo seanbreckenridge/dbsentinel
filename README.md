@@ -48,8 +48,10 @@ This is mostly meant to act as an public archive. Database guidelines are finick
 ## Incomplete setup instructions:
 
 - Check [app/settings.py](app/settings.py) for the required environment variables
-- `pipenv install --dev`
+- Create a venv at .venv: `python3 -m venv .venv`
+- `source .venv/bin/activate`
+- `pip install -r requirements.txt`
 - [`checker_mal`](https://github.com/Hiyori-API/checker_mal) could be running on the same machine, if you want to keep an updated anime/manga ID list locally:
   - Can fill out `usernames.txt` with peoples list to check for new entries
   - If you have a `animelist.xml` file to use for `python3 main.py mal estimate-deleted-xml`, you can put it in `data/animelist.xml`
-- `pipenv run prod`
+- `scripts/in_venv prod`

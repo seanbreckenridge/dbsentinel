@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# used to manage venv
+
+THIS_DIR="$(realpath "$(dirname "${BASH_SOURCE[0]}")")/.."
+cd "${THIS_DIR}" || exit $?
+
+if [[ ! -d .venv ]]; then
+	echo "Virtualenv doesnt exist, create it with the right pyenv version..."
+	exit 1
+fi
+
+source .venv/bin/activate
+
+case "$1" in
+prod)
+	alembic upgrade head && uvicorn app.main:app --port 5200
+	;;
+dev)
+	uvicorn app.main:app --workers 1 --port 5200 --reload-exclude data
+	;;
+alembic)
+	shift
+	alembic "$@"
+	;;
+alembic_create_migration)
+	shift
+	alembic revision --autogenerate "$@"
+	;;
+*)
+	exec "$@"
+	;;
+esac
