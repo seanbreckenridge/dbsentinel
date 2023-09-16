@@ -384,10 +384,9 @@ async def update_database(
     refresh_images: bool = False,
     force_update_db: bool = False,
     skip_proxy_images: bool = False,
-    update_outdated_metadata: Optional[
-        int
-    ] = None,  # updates this many entries of data if the data is older than 'update_if_older_than'
-    update_if_older_than: timedelta = timedelta(days=210),
+    # updates this many entries of data if the data is older than 'update_if_older_than'
+    update_outdated_metadata: Optional[int] = None,
+    update_if_older_than: timedelta = timedelta(days=182),  # 6 months
 ) -> None:
     if update_outdated_metadata is not None:
         assert update_outdated_metadata > 0
