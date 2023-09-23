@@ -193,7 +193,7 @@ class MetadataCache(URLCache):
                 logger.warning(
                     "no existing cached data for this entry, saving error to cache"
                 )
-                # this just doesnt exist (deleted a long time ago etc.?)
+                # this just doesn't exist (deleted a long time ago etc.?)
                 # no way to get data for this
                 return Summary(
                     url=myanimelist_url,
