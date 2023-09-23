@@ -78,7 +78,7 @@ class ImageData(NamedTuple):
 
 # ???
 # who even knows what gray nsfw means??
-# some that have hentai in manga are marked grey, others arent?
+# some that have hentai in manga are marked grey, others aren't?
 def is_nsfw(jdata: Dict[str, Any]) -> Optional[bool]:
     if "rating" in jdata:
         return bool(jdata["rating"] == "rx")
@@ -173,7 +173,7 @@ async def add_or_update(
             image_key = (entry_enum, url_id)
 
             if mal_image_url is not None:
-                # if this isnt already in the database
+                # if this isn't already in the database
                 if image_key not in mal_id_to_image:
                     logger.info(f"db: adding proxied image for {entry_type} {url_id}")
                     with Session(data_engine) as sess:
@@ -247,7 +247,7 @@ async def add_or_update(
         await sleep(0)
 
     if entry_in_db:
-        # update the entry if the status has changed or if this didnt exist in the db
+        # update the entry if the status has changed or if this didn't exist in the db
         if force_update or (
             (
                 current_approved_status is not None
@@ -266,7 +266,7 @@ async def add_or_update(
                 kwargs["approved_status"] = current_approved_status
             if status_changed_at is not None:
                 kwargs["status_changed_at"] = status_changed_at
-            # this upadtes all the metadata for the entry as its popped from the json
+            # this updates all the metadata for the entry as its popped from the json
             # the status_changed_at/datetime is not dependent on code here, its read from the JSON linear history etc.
             stmt = (
                 update(use_model)
@@ -553,7 +553,7 @@ async def update_database(
         known.add(mid_key)
 
     logger.info("db: checking for deleted entries...")
-    # check if any other items exist that arent in the db already
+    # check if any other items exist that aren't in the db already
     # those were denied or deleted (long time ago)
     all_urls = set()
     for keyfile in (Path(metadatacache_dir) / "data").rglob("*/key"):
@@ -586,7 +586,7 @@ async def refresh_entry(*, entry_id: int, entry_type: str) -> None:
     logger.info(f"db: refreshed data for {entry_type} {entry_id}")
     # just update the basic metadata
     # Note:
-    # this doesnt updated current_approved_status or status_changed_at
+    # this doesn't updated current_approved_status or status_changed_at
     # that should be done by the full update
     await add_or_update(
         summary=summary,

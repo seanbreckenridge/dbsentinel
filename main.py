@@ -311,7 +311,7 @@ def server() -> None:
     "--refresh-images",
     is_flag=True,
     default=False,
-    help="refresh images which couldnt be cached",
+    help="refresh images which couldn't be cached",
 )
 @click.option(
     "--force-update-db",

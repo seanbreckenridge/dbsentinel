@@ -167,7 +167,7 @@ class MetadataCache(URLCache):
                 sc = self.summary_cache.get(myanimelist_url)
                 assert sc is not None
                 logger.info("Updating timestamp to prevent re-requesting this entry")
-                # check if this has a few keys, i.e. (this isnt {"error": 404})
+                # check if this has a few keys, i.e. (this isn't {"error": 404})
                 if "error" in sc.metadata:
                     # if we had cached an error, then just return the error
                     # TODO: should we update the timestamp here? i dont think it hurts to, as this
@@ -236,13 +236,13 @@ def request_metadata(
     assert entry_type in {"anime", "manga"}
     # use this as the key for the cache
     url_key = "https://myanimelist.net/{}/{}".format(entry_type, id_)
-    # if this had failed previouly, try again
+    # if this had failed previously, try again
     #
     # this may never actually be the case, but just want to make sure if we
     # add some refresh mechanism that that does not happen...
     if rerequest_failed:
         sdata = mcache.get(url_key)
-        # if theres no data and this isnt a 404, retry
+        # if there's no data and this isn't a 404, retry
         if not MetadataCache.has_data(sdata) and not MetadataCache.is_404(sdata):
             logger.info("re-requesting failed entry: {}".format(sdata.metadata))
             return mcache.refresh_data(url_key)

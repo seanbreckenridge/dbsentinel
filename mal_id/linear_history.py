@@ -97,7 +97,7 @@ def track_diffs() -> Iterator[Entry]:
         state = anime if sn.entry_type == "anime" else manga
         ids_at_this_commit = set(sn.data["sfw"] + sn.data["nsfw"])
 
-        # check if any that are in this commit arent already 'approved' at this time
+        # check if any that are in this commit aren't already 'approved' at this time
         # aren't already in state
         for mal_id in ids_at_this_commit:
             # already approved
@@ -117,7 +117,7 @@ def track_diffs() -> Iterator[Entry]:
         #
         # this is shrunk in main.py mal clean-linear-history by
         # only retaining the first and last time an approved/deleted pair appears in history,
-        # since thats all we want from the git state
+        # since that's all we want from the git state
         for mal_id in list(state):
             # are not in this commit...
             if mal_id not in ids_at_this_commit:

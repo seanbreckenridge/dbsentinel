@@ -78,7 +78,7 @@ REREQUEST_TIME = 60 * 5
 def _read_unapproved(path: Path, mtime: int) -> List[Any]:
     """
     Reads the unapproved anime/manga from the cache file,
-    or from memory if the mtime hasnt changed
+    or from memory if the mtime hasn't changed
     """
     logger.debug(
         f"Caching new unapproved path {path} with updated at {datetime.fromtimestamp(mtime)} in memory"
@@ -94,7 +94,7 @@ def _update_unapproved(
     """
     manages requesting/updating the cachefiles for anime/manga
 
-    if the data hasnt changed, this will return the memcached data
+    if the data hasn't changed, this will return the memcached data
     using the path/mtime as a key in the lru_cache above
     """
     data: List[Any] = []
@@ -104,7 +104,7 @@ def _update_unapproved(
     else:
         url = UNAPPROVED_API_BASE + etype
         data = []
-        write_data = True  # dont want to overwrite/change mtime if theres no new data
+        write_data = True  # dont want to overwrite/change mtime if there's no new data
         if not cache_filepath.exists():
             data = _request_unapproved(url)
         else:
@@ -115,7 +115,7 @@ def _update_unapproved(
                 except (RuntimeError, requests.exceptions.RequestException) as e:
                     logger.exception(str(e), exc_info=e)
                     write_data = False
-    # either the data hasnt changed (hasnt been 10 minutes, or the request failed and we should fallback to local file)
+    # either the data hasn't changed (hasn't been 10 minutes, or the request failed and we should fallback to local file)
     if len(data) == 0:
         data = _read_unapproved(cache_filepath, int(cache_filepath.stat().st_mtime))
         write_data = False
@@ -184,7 +184,7 @@ def estimate_using_user_recent(list_type: str, username: str) -> int:
     and choose the max page number
 
     this requests a recent user's list, and uses checks if there are any
-    ids in that list which arent in the approved cache
+    ids in that list which aren't in the approved cache
     """
     assert list_type in {"anime", "manga"}
     logger.info(f"Estimating {list_type}list using {username}")

@@ -3,7 +3,7 @@
 """
 Changes the api urls in the metadata cache to the myanimelist urls
 
-this is nicer incase the MAL API fields ever change
+this is nicer in case the MAL API fields ever change
 
 once this is done, move old cache somewhere else, and this to that dir
 

@@ -5,7 +5,7 @@ THIS_DIR="$(realpath "$(dirname "${BASH_SOURCE[0]}")")/.."
 cd "${THIS_DIR}" || exit $?
 
 if [[ ! -d .venv ]]; then
-	echo "Virtualenv doesnt exist, create it with the right pyenv version..."
+	echo "Virtualenv doesn't exist, create it with the right pyenv version..."
 	exit 1
 fi
 

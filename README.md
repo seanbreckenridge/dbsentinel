@@ -42,7 +42,7 @@ This is mostly meant to act as an public archive. Database guidelines are finick
   - [ ] API which receives an ID and returns if its a donghua/aeni, can be used with a userscript to add a tag to the page
 - [ ] integrate with [notify-bot](https://github.com/seanbreckenridge/mal-notify-bot)
   - [x] refresh command refreshes both
-  - [ ] so that sources added there get added to the website (also allow items which arent in #feed -- so this can source anything) -- only show on website through a domain allowlist
+  - [ ] so that sources added there get added to the website (also allow items which aren't in #feed -- so this can source anything) -- only show on website through a domain allowlist
 - [ ] cache data for people
 
 ## Incomplete setup instructions:

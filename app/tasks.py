@@ -53,9 +53,9 @@ async def refresh_entry(
 
     logger.info(f"refreshing {entry_type} {entry_id}")
     if not _has_data(entry_type, entry_id):
-        logger.error(f"no data for {entry_type} {entry_id}, cant refresh")
+        logger.error(f"no data for {entry_type} {entry_id}, can't refresh")
         response.status_code = 400
-        return Error(error="That id does not have any data saved, cant refresh")
+        return Error(error="That id does not have any data saved, can't refresh")
 
     await refresh(
         entry_id=entry_id,
