@@ -128,7 +128,10 @@ async def media_query(info: QueryIn, sess: Session = Depends(get_db)) -> QueryOu
     )
 
     if info.title:
-        query = query.where(model.title.like(f"%{info.title}%"))  # type: ignore
+        if info.title.isnumeric():
+            query = query.where((model.id == int(info.title)) | (model.title.like(f"%{info.title}%")))  # type: ignore
+        else:
+            query = query.where(model.title.like(f"%{info.title}%"))  # type: ignore
 
     if info.nsfw is not None:
         query = query.where(model.nsfw == info.nsfw)
