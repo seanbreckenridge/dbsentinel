@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # used to manage venv
 
+set -e
+set -o pipefail
+
 THIS_DIR="$(realpath "$(dirname "${BASH_SOURCE[0]}")")/.."
 cd "${THIS_DIR}" || exit $?
 
@@ -13,18 +16,18 @@ source .venv/bin/activate
 
 case "$1" in
 prod)
-	alembic upgrade head && uvicorn app.main:app --port 5200
+	alembic upgrade head && exec uvicorn app.main:app --port 5200
 	;;
 dev)
-	uvicorn app.main:app --workers 1 --port 5200 --reload-exclude data
+	exec uvicorn app.main:app --workers 1 --port 5200 --reload-exclude data
 	;;
 alembic)
 	shift
-	alembic "$@"
+	exec alembic "$@"
 	;;
 alembic_create_migration)
 	shift
-	alembic revision --autogenerate "$@"
+	exec alembic revision --autogenerate "$@"
 	;;
 *)
 	exec "$@"
