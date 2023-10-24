@@ -1,0 +1,174 @@
+#!/usr/bin/env python3
+
+"""
+A prototype using cached MAL/anilist data for generating weights to match
+data for https://github.com/Hiyori-API/hiyori-cli
+
+Output: Average weights: [0.34303597543138303, 0.6272418835915565, 0.02942965779467949]
+"""
+
+import sys
+from typing import Iterator, Dict, Any, Tuple
+from pathlib import Path
+
+this_dir = Path(__file__).parent.absolute()
+sys.path.append(str(this_dir.parent))
+
+from sqlalchemy.orm import Session
+from sqlalchemy.sql.expression import select
+from app.db import AnimeMetadata, data_engine
+from mal_id.anilist_cache import anilist_cache, Summary
+
+ac = anilist_cache()
+
+
+def mal_anime_ids() -> list[int]:
+    """
+    Get all MAL anime ids
+    """
+    with Session(data_engine) as session:
+        return [anime[0] for anime in session.execute(select(AnimeMetadata.id))]
+
+
+def iter_mal_anilist_pairs() -> Iterator[Tuple[AnimeMetadata, Summary]]:
+    """
+    Iterate through all MAL anime ids and find the corresponding anilist data
+    """
+    for mal_id in mal_anime_ids():
+        mal_url = f"https://myanimelist.net/anime/{mal_id}"
+        if ac.in_cache(mal_url):
+            anilist_data = ac.get(mal_url)
+            if ac.is_404(anilist_data):
+                continue
+            with Session(data_engine) as session:
+                mal_data = session.execute(
+                    select(AnimeMetadata).where(AnimeMetadata.id == mal_id)
+                ).first()
+                assert mal_data is not None
+            yield mal_data[0], anilist_data
+
+
+using_fields = ["title", "year", "type"]
+
+
+def compare_field_with_weights(
+    mal_data: AnimeMetadata,
+    anilist_data: Summary,
+    field: str,
+    weights: Tuple[float, float, float],
+) -> float:
+    """
+    weights index corresponds to the weights for each field in using_fields
+
+    compare the field with the weights and return a score
+    """
+    assert field in using_fields
+    if field == "title":
+        import textdistance
+
+        use_weight = weights[0]
+
+        mal_title = mal_data.title
+        anilist_title = anilist_data.metadata["title"]["romaji"]
+
+        xx = textdistance.jaro_winkler.normalized_similarity(mal_title, anilist_title)
+        assert 0 <= xx <= 1.0
+        return xx * use_weight
+
+    elif field == "year":
+        use_weight = weights[1]
+
+        mal_year = mal_data.start_date
+        if mal_year is None:
+            mal_year = 0
+        else:
+            mal_year = mal_year.year
+        anilist_year = anilist_data.metadata["seasonYear"]
+        if anilist_year is None:
+            anilist_year = 0
+
+        if (
+            mal_year is None
+            or anilist_year is None
+            or int(mal_year) == 0
+            or int(anilist_year) == 0
+        ):
+            return 0
+
+        if mal_year == anilist_year:
+            return 1.0 * use_weight
+        else:
+            val = (1.0 - abs(mal_year - anilist_year) / 5) * use_weight
+            if val <= 0.0:
+                val = 0.0
+            return val
+    elif field == "type":
+        use_weight = weights[2]
+
+        mal_type = mal_data.media_type
+        if mal_type is None:
+            mal_type = "Unknown"
+        anilist_type = anilist_data.metadata["format"]
+
+        import textdistance
+
+        xx = textdistance.jaro_winkler.normalized_similarity(mal_type, anilist_type)
+        assert 0 <= xx <= 1.0
+        return xx * use_weight
+    else:
+        assert False, "should not be here"
+
+
+def weights_generator(n: int) -> Iterator[Tuple[float, ...]]:
+    import itertools
+
+    # this should generate all possible combinations of weights that add up to 1.0
+    # for example, if n = 2, then it should generate (0.0, 1.0), (0.1, 0.9), (0.2, 0.8), ..., (1.0, 0.0)
+    # if n = 3,
+    #
+    for weights in itertools.product(
+        *[[i * 0.1 for i in range(n**2 + 1)] for _ in range(n)]
+    ):
+        # brute force check if the sum is 1.0
+        if sum(weights) == 1.0:
+            yield weights
+
+
+# we already know the mal_id and anilist_id match in this case
+def find_best_weights_to_compare(
+    mal_data: AnimeMetadata, anilist_data: Summary
+) -> Tuple[float, float, float]:
+    # use the product of possible weight ranges and step to find the best weights with each field
+    # return the highest weight pair for this entry
+    best_weights = (0.0, 0.0, 0.0)
+    best_score = 0.0
+
+    for weight in weights_generator(n=3):
+        score = 0.0
+        for field in using_fields:
+            assert len(weight) == 3
+            score += compare_field_with_weights(mal_data, anilist_data, field, weight)
+        if score > best_score:
+            best_score = score
+            best_weights = weight
+
+            print(f"Found better weights: {best_weights} with score {best_score}")
+
+    return best_weights
+
+
+def main():
+    all_weights: list[Tuple[float, float, float]] = []
+    for animemetadata, anilistmetadata in iter_mal_anilist_pairs():
+        print(anilistmetadata.metadata["title"]["romaji"])
+        best_scores = find_best_weights_to_compare(animemetadata, anilistmetadata)
+        all_weights.append(best_scores)
+
+    import numpy as np
+
+    items = [float(x) for x in np.mean(all_weights, axis=0)]
+    print(f"Average weights: {items}")
+
+
+if __name__ == "__main__":
+    main()

@@ -125,7 +125,9 @@ def _update_unapproved(
     if write_data:
         cache_filepath.write_bytes(orjson.dumps(data))
     else:
-        logger.debug(f"Skipped writing unapproved data, request failed or no new data for {etype}")
+        logger.debug(
+            f"Skipped writing unapproved data, request failed or no new data for {etype}"
+        )
     return data
 
 
