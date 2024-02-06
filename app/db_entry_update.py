@@ -114,6 +114,7 @@ async def summary_proxy_image(summary: Summary) -> str | None:
 async def add_or_update(
     *,
     summary: Summary,
+    entry_id: int,
     current_approved_status: Status | None = None,
     old_status: Optional[Status] = None,
     in_db: Optional[Set[int]] = None,
@@ -137,9 +138,15 @@ async def add_or_update(
         return
 
     # pop data from the json that get stored in the db
-    aid = int(jdata.pop("id"))
+    entry_id = jdata.pop("id")
+
+    # dont use the ID from the JSON, since it might be incorrect if requests have failed
+    aid = entry_id
+
     if aid <= 0:
-        logger.warning(f"trying to add {entry_type} {aid} with id <= 0! skipping...")
+        logger.warning(
+            f"trying to add {entry_type} {aid} {jdata=} with id <= 0! skipping..."
+        )
         return
 
     if skip_images is False:
@@ -505,6 +512,7 @@ async def update_database(
 
         await add_or_update(
             summary=smmry,
+            entry_id=r_id,
             current_approved_status=current_id_status,
             old_status=old_status,
             in_db=in_db[r_type],
@@ -529,6 +537,7 @@ async def update_database(
         smmry = request_metadata(aid, "anime")
         await add_or_update(
             summary=smmry,
+            entry_id=aid,
             old_status=in_db["anime_status"].get(aid),
             current_approved_status=Status.UNAPPROVED,
             status_changed_at=unapproved_summary_datetime(smmry),
@@ -549,6 +558,7 @@ async def update_database(
         smmry = request_metadata(mid, "manga")
         await add_or_update(
             summary=smmry,
+            entry_id=mid,
             old_status=in_db["manga_status"].get(mid),
             current_approved_status=Status.UNAPPROVED,
             in_db=in_db["manga"],
@@ -574,6 +584,7 @@ async def update_database(
         smmry = request_metadata(entry_id, entry_type)
         await add_or_update(
             summary=smmry,
+            entry_id=entry_id,
             in_db=in_db[entry_type],
             old_status=old_status,
             status_changed_at=deleted_last_datetime(smmry),
@@ -597,6 +608,7 @@ async def refresh_entry(*, entry_id: int, entry_type: str) -> None:
     # this doesn't updated current_approved_status or status_changed_at
     # that should be done by the full update
     await add_or_update(
+        entry_id=entry_id,
         summary=summary,
         force_update=True,
     )
