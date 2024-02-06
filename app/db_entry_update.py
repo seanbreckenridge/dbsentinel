@@ -216,6 +216,9 @@ async def add_or_update(
 
     # pop data from the json that get stored in the db
     aid = int(jdata.pop("id"))
+    if aid <= 0:
+        logger.warning(f"trying to add {entry_type} {aid} with id <= 0! skipping...")
+        return
     title = jdata.pop("title")
     media_type = jdata.pop("media_type", None)
     start_date = parse_date_safe(jdata.pop("start_date", None))
