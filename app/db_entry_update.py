@@ -132,6 +132,10 @@ async def add_or_update(
         logger.debug(f"skipping http error in {entry_type} {url_id}: {jdata['error']}")
         return
 
+    if "id" not in jdata:
+        logger.warning(f"Trying to add data from {jdata=}, no id in MAL info, skipping")
+        return
+
     if skip_images is False:
         img = await summary_proxy_image(summary)  # this is where the image is proxied
         await sleep(0)
