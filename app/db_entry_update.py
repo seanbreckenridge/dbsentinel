@@ -136,6 +136,12 @@ async def add_or_update(
         logger.warning(f"Trying to add data from {jdata=}, no id in MAL info, skipping")
         return
 
+    # pop data from the json that get stored in the db
+    aid = int(jdata.pop("id"))
+    if aid <= 0:
+        logger.warning(f"trying to add {entry_type} {aid} with id <= 0! skipping...")
+        return
+
     if skip_images is False:
         img = await summary_proxy_image(summary)  # this is where the image is proxied
         await sleep(0)
@@ -214,11 +220,6 @@ async def add_or_update(
 
     use_model = AnimeMetadata if entry_type == "anime" else MangaMetadata
 
-    # pop data from the json that get stored in the db
-    aid = int(jdata.pop("id"))
-    if aid <= 0:
-        logger.warning(f"trying to add {entry_type} {aid} with id <= 0! skipping...")
-        return
     title = jdata.pop("title")
     media_type = jdata.pop("media_type", None)
     start_date = parse_date_safe(jdata.pop("start_date", None))
