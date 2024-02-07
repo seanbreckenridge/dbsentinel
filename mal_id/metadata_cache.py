@@ -249,7 +249,8 @@ class MetadataCache(URLCache):
                 summary.metadata.get("num_episodes") == 0
                 or summary.metadata.get("num_chapters") == 0
             )
-            and summary.metadata.get("title", "").lower() == "title"
+            and summary.metadata.get("title", "").lower()
+            in {"title", "", "blocked.", "blocked"}
         ):
             return True
         return False
