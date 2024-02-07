@@ -1,0 +1,65 @@
+#!/usr/bin/env python3
+
+"""
+Removes any items which were saved when MAL was under maintenance
+"""
+
+import sys
+from pathlib import Path
+
+import click
+
+this_dir = Path(__file__).parent.absolute()
+sys.path.append(str(this_dir.parent))
+
+from app.db_entry_update import mal_url_to_parts
+from mal_id.metadata_cache import metadata_cache
+
+
+@click.command()
+def main() -> None:
+    mcache = metadata_cache()
+
+    old_cache_dd = mcache.summary_cache.data_dir
+    assert old_cache_dd.exists()
+
+    # read each keyfile, get the URL, convert it to a new one
+    # use summarycache to completely read the entry, then write it to the new cache
+
+    for key_path in old_cache_dd.rglob("*/key"):
+        key_url = key_path.read_text().strip()
+        try:
+            entry_type, url_id = mal_url_to_parts(key_url)
+        except AssertionError:
+            print(f"Skipping {key_url}")
+            continue
+
+        assert entry_type in ("anime", "manga")
+        if url_id <= 0:
+            click.echo(f"{key_path}: id is {url_id}, skipping", err=True)
+            continue
+
+        url_key = f"https://myanimelist.net/{entry_type}/{url_id}"
+
+        assert mcache.summary_cache.has(url_key)
+        data = mcache.summary_cache.get(url_key)
+
+        if data is None:
+            click.echo(f"{key_path}: {url_key} is None, skipping", err=True)
+            continue
+
+        md = dict(data.metadata)
+        msg = md.get("message", "").lower()
+        is_broken = False
+        if "currently under maintenance" in msg:
+            is_broken = True
+
+        if md.get("title") == "Title" and md.get("num_chapters") == 0:
+            is_broken = True
+
+        if is_broken:
+            click.echo(f"{key_path}: {url_key} {md=} is broken, skipping")
+
+
+if __name__ == "__main__":
+    main()

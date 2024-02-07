@@ -8,27 +8,24 @@ from datetime import datetime
 from threading import Lock
 
 import click
-import backoff
 import requests
 
 from malexport.exporter.mal_session import MalSession
 from malexport.exporter.account import Account
-from url_cache.core import URLCache, Summary
+from url_cache.core import URLCache
+from url_cache.model import Summary
 
-from mal_id.common import backoff_handler
 from mal_id.paths import metadatacache_dir
 from mal_id.log import logger
+
+
+class MALIsDownError(Exception):
+    pass
 
 
 MAL_API_LOCK = Lock()
 
 
-@backoff.on_exception(
-    lambda: backoff.constant(5),
-    requests.exceptions.RequestException,
-    max_tries=3,
-    on_backoff=backoff_handler,
-)
 def api_request(session: MalSession, url: str, recursed_times: int = 0) -> Any:
     return _api_request(session, url, recursed_times)
 
@@ -57,6 +54,15 @@ def _api_request(session: MalSession, url: str, recursed_times: int = 0) -> Any:
         logger.warning("API rate limit exceeded, waiting")
         time.sleep(60)
         resp.raise_for_status()
+
+    if resp.status_code == 504:
+        logger.warning(resp.text)
+        if recursed_times >= 1:
+            raise MALIsDownError("MAL returned 504 for entry, skipping for now")
+        else:
+            logger.warning(f"{url} recieved a 504, waiting and retrying once")
+            time.sleep(10)
+            return api_request(session, url, recursed_times + 1)
 
     # for any other error, backoff for a minute and then retry
     # if over 5 times, raise the error
@@ -178,7 +184,7 @@ class MetadataCache(URLCache):
                 else:
                     # we failed to get new data, but have old data
                     # so, just return the old data
-                    assert "error" not in sc.metadata and MetadataCache.has_data(
+                    assert "error" not in sc.metadata and MetadataCache.has_basic_data(
                         sc
                     ), f"{sc.metadata} does not have data"
                     # reusing old data is fine, but we should update the timestamp so
@@ -201,6 +207,16 @@ class MetadataCache(URLCache):
                     metadata={"error": ex.response.status_code},
                     timestamp=datetime.now(),
                 )
+        except MALIsDownError:
+            logger.error(
+                "MAL is down, skipping this entry for now. Will try again later."
+            )
+            return Summary(
+                url=myanimelist_url,
+                data={},
+                metadata={"error": 504},
+                timestamp=datetime.now(),
+            )
 
     def refresh_data(self, url: str) -> Summary:
         uurl = self.preprocess_url(url)
@@ -212,10 +228,40 @@ class MetadataCache(URLCache):
     def is_404(summary: Summary) -> bool:
         if "error" in summary.metadata:
             return bool(summary.metadata["error"] == 404)
+
         return False
 
     @staticmethod
-    def has_data(summary: Summary) -> bool:
+    def has_broken_data(summary: Summary) -> bool:
+        if "error" in summary.metadata and summary.metadata["error"] in {
+            429,
+            504,
+        }:  # 429 probably has never happened
+            return True
+
+        if "currently under maintenance" in summary.metadata.get("message", "").lower():
+            return True
+        if summary.metadata.get("id") in {-1, 0}:
+            return True
+        # this is a sort of broken response that MAL returns sometimes when its down
+        # {'id': -1, 'title': 'Title', 'num_chapters': 0, 'status': 'currently_publishing', 'media_type': 'manga'}
+        if (
+            set(summary.metadata.keys()).issubset(
+                {"id", "title", "num_chapters", "status", "num_episodes", "media_type"}
+            )
+            and (
+                summary.metadata.get("num_episodes") == 0
+                or summary.metadata.get("num_chapters") == 0
+            )
+            and summary.metadata.get("title", "").lower() == "title"
+        ):
+            return True
+        return False
+
+    @staticmethod
+    def has_basic_data(summary: Summary) -> bool:
+        if "error" in summary.metadata:
+            return False
         return all(k in summary.metadata for k in ("title", "id"))
 
 
@@ -242,8 +288,7 @@ def request_metadata(
     # add some refresh mechanism that that does not happen...
     if rerequest_failed:
         sdata = mcache.get(url_key)
-        # if there's no data and this isn't a 404, retry
-        if not MetadataCache.has_data(sdata) and not MetadataCache.is_404(sdata):
+        if MetadataCache.is_404(sdata):
             logger.info("re-requesting failed entry: {}".format(sdata.metadata))
             return mcache.refresh_data(url_key)
     elif force_rerequest:
@@ -254,7 +299,14 @@ def request_metadata(
         finally:
             mcache.options["skip_retry"] = False
         return dat
-    return mcache.get(url_key)
+
+    # if something has truly broken data (like, 504s from when MAL was down, or during maintenance periods), re-request it
+    data = mcache.get(url_key)
+    if MetadataCache.has_broken_data(data):
+        logger.info(f"Previously saved broken {data=}, retrying...")
+        return mcache.refresh_data(url_key)
+    else:
+        return data
 
 
 def has_metadata(
