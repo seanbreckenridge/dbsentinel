@@ -128,6 +128,7 @@ async def add_or_update(
     entry_enum = EntryType.from_str(entry_type)
     assert entry_type in ("anime", "manga")
 
+    # NOTE: this is where items are skipped if they 504/404 error in any way
     jdata = dict(summary.metadata)
     if "error" in jdata:
         logger.debug(f"skipping http error in {entry_type} {url_id}: {jdata['error']}")
@@ -138,10 +139,11 @@ async def add_or_update(
         return
 
     # pop data from the json that get stored in the db
-    entry_id = jdata.pop("id")
+    jdata.pop("id")
 
     # dont use the ID from the JSON, since it might be incorrect if requests have failed
     aid = entry_id
+    del entry_id
 
     if aid <= 0:
         logger.warning(
