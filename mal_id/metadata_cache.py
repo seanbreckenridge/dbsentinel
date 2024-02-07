@@ -4,7 +4,7 @@ import logging
 from typing import Any
 from functools import cache
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 from threading import Lock
 
 import click
@@ -228,7 +228,6 @@ class MetadataCache(URLCache):
     def is_404(summary: Summary) -> bool:
         if "error" in summary.metadata:
             return bool(summary.metadata["error"] == 404)
-
         return False
 
     @staticmethod
@@ -302,11 +301,20 @@ def request_metadata(
 
     # if something has truly broken data (like, 504s from when MAL was down, or during maintenance periods), re-request it
     data = mcache.get(url_key)
+    # been_more_than_a_week
     if MetadataCache.has_broken_data(data):
-        logger.info(f"Previously saved broken {data=}, retrying...")
-        return mcache.refresh_data(url_key)
-    else:
-        return data
+        assert data.timestamp is not None
+        time_since_last_request = timedelta(
+            seconds=time.time() - data.timestamp.timestamp()
+        )
+        if time_since_last_request.days > 7:
+            logger.info(f"Previously saved broken {data=}, retrying...")
+            return mcache.refresh_data(url_key)
+        else:
+            logger.info(
+                f"Previously saved broken {data=}, waiting {timedelta(days=7) - time_since_last_request} days before re-requesting"
+            )
+    return data
 
 
 def has_metadata(
