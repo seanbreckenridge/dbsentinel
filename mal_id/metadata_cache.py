@@ -27,10 +27,6 @@ MAL_API_LOCK = Lock()
 
 
 def api_request(session: MalSession, url: str, recursed_times: int = 0) -> Any:
-    return _api_request(session, url, recursed_times)
-
-
-def _api_request(session: MalSession, url: str, recursed_times: int = 0) -> Any:
     with MAL_API_LOCK:
         time.sleep(1)
         resp: requests.Response = session.session.get(url)
@@ -147,8 +143,9 @@ class MetadataCache(URLCache):
 
         logger.info(f"requesting {api_url}")
         try:
+            # TODO: remove, Ive removed backoff from this code
             if "skip_retry" in self.options and self.options["skip_retry"] is True:
-                json_data = _api_request(self.mal_session, api_url)
+                json_data = api_request(self.mal_session, api_url)
             else:
                 json_data = api_request(self.mal_session, api_url)
             # succeeded, return the data
