@@ -61,7 +61,7 @@ def _api_request(session: MalSession, url: str, recursed_times: int = 0) -> Any:
             raise MALIsDownError("MAL returned 504 for entry, skipping for now")
         else:
             logger.warning(f"{url} recieved a 504, waiting and retrying once")
-            time.sleep(10)
+            time.sleep(5)
             return api_request(session, url, recursed_times + 1)
 
     # for any other error, backoff for a minute and then retry
