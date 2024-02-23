@@ -305,7 +305,7 @@ def request_metadata(
         time_since_last_request = timedelta(
             seconds=time.time() - data.timestamp.timestamp()
         )
-        if time_since_last_request.days > 7:
+        if time_since_last_request.days > 3:
             logger.info(f"Previously saved broken {data=}, retrying...")
             return mcache.refresh_data(url_key)
         else:
