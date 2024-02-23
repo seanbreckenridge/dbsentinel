@@ -60,7 +60,10 @@ def _prefix_url(path: str) -> str:
 
 @backoff.on_exception(backoff.expo, httpx.HTTPError, max_tries=3)
 async def _get_image_bytes(url: str) -> bytes | None:
-    async with httpx.AsyncClient() as client:
+    # sometimes the image 301 redirects to what looks
+    # to be MALs internal image server, which is not
+    # SSL enabled properly....
+    async with httpx.AsyncClient(verify=False) as client:
         resp = await client.get(url, follow_redirects=True)
         if resp.status_code == 404:
             logger.warning(f"image_proxy: got 404 for {url}")
