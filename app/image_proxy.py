@@ -76,6 +76,8 @@ async def _get_image_bytes(url: str) -> bytes | None:
 async def proxy_image(url: str) -> str | None:
     db = image_db()
     img_key = urlparse(url).path
+
+    content_type: str
     if db.exists(img_key):
         resp = db.get(img_key)
         if resp == 404:
@@ -86,7 +88,16 @@ async def proxy_image(url: str) -> str | None:
         logger.info(f"image_proxy: uploading {url}")
         path = urlparse(url).path
         ext = Path(path).suffix.strip(".")
-        assert ext in {"jpeg", "jpg"}, f"invalid extension {ext=}"
+
+        match ext:
+            case "jpeg" | "jpg":
+                content_type = "image/jpg"
+            case "webp":
+                content_type = "image/webp"
+            case "png":
+                content_type = "image/png"
+            case _:
+                raise ValueError(f"unknown extension {ext}")
 
         # download image to memory
         image_bytes = await _get_image_bytes(url)
@@ -102,7 +113,7 @@ async def proxy_image(url: str) -> str | None:
             io.BytesIO(image_bytes),
             Bucket=settings.S3_BUCKET,
             Key=key,
-            ExtraArgs={"ContentType": "image/jpg"},
+            ExtraArgs={"ContentType": content_type},
         )
 
         assert db.set(img_key, key)
