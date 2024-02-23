@@ -89,12 +89,14 @@ iter() {
 	set +e
 	if ! in_env main.py mal check-mal; then
 		echo 'mal is down, skipping updates...'
-		return 1
+		return 99
 	fi
 	if [[ -z "$SKIP_UPDATE_METADATA" ]]; then
 		if wait-for-internet --text 'checking for internet....' --timeout 1; then
 			# just use evry to track when this last ran
-			evry 1s -update-metadata && in_env main.py mal update-metadata || return $?
+			evry 1s -update-metadata && {
+				in_env main.py mal update-metadata || return $?
+			}
 		fi
 	fi
 	if curl -s localhost:4001 >/dev/null; then
@@ -121,7 +123,13 @@ main() {
 	if [[ "$1" == '-l' ]]; then
 		while true; do
 			sleep 10m
-			iter || true
+			iter
+			ret=$?
+			if [[ $ret -eq 99 ]]; then
+				sleep 10m
+			elif [[ $ret -ne 0 ]]; then
+				return $ret
+			fi
 		done
 	fi
 }
