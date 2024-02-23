@@ -86,7 +86,7 @@ async def proxy_image(url: str) -> str | None:
         logger.info(f"image_proxy: uploading {url}")
         path = urlparse(url).path
         ext = Path(path).suffix.strip(".")
-        assert ext in {"jpeg", "jpg"}
+        assert ext in {"jpeg", "jpg"}, f"invalid extension {ext=}"
 
         # download image to memory
         image_bytes = await _get_image_bytes(url)
